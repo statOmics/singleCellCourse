@@ -1,23 +1,52 @@
 ---
-title: "My Website"
-output:
-    html_document:
-        code_download: false
-        toc: false
-        number_sections: false
-        code_folding: "none"
+title: "IPVW/ICES single-cell course 2021-2022"
 ---
 
-Hello, Website!
 
-For more information about simple R Markdown websites, please read the documentation at https://bookdown.org/yihui/rmarkdown/rmarkdown-site.html.
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+knitr::include_graphics("./figures/wpGraph.jpeg")
+```
 
-Please also note that simple R Markdown sites are _not_ based on **blogdown**. They are probably good for websites with only a few Rmd documents. For larger-scale and more sophisticated websites (such as blogs), you may want to use **blogdown** instead: https://github.com/rstudio/blogdown.
+# Course Description
 
-***
+High-throughput 'omics studies generate ever larger datasets and, as a consequence, complex data interpretation challenges. This course focusses on statistical concepts involved in preprocessing, quantification, normalization, visualization, integration and differential analysis of single-cell 'omics data. The course will rely exclusively on free and user-friendly open-source tools in R/Bioconductor. We hope that this will provide a solid basis for beginners, but will also bring new perspectives to those already familiar with standard data analysis workflows for proteomics and next-generation sequencing applications.
 
-### Contents
+# Prerequisites
 
-<!-- Placeholder of Table of Contents on the homepage, with links to the actual page and PDF version -->
+The prerequisites  are the successful completion of a basic course of statistics that covers topics on data exploration and descriptive statistics, statistical modeling, and inference: linear models, confidence intervals, t-tests, F-tests, anova, chi-squared test.
+The basis concepts may be revisited in the online course at https://gtpb.github.io/PSLS20/ (English) and in https://statomics.github.io/statistiekCursusNotas/ (Dutch).
 
-- [Example](./example.html) ([PDF](./example.pdf))
+In addition, knowledge of programming in `R` is preferred. A primer to `R` and Data visualization in `R` can be found at:
+
+ - `R` Basics: https://dodona.ugent.be/nl/courses/335/
+ - `R` Data Exploration: https://dodona.ugent.be/nl/courses/345/
+
+
+# Software 
+
+- Participants are required to bring their own laptop with [R](https://www.r-project.org/) version 4.1.1 or greater. 
+
+- We also recommend to also install the latest version of [RStudio](https://www.rstudio.com/products/rstudio/download/).
+
+- Participants who have issues with the installation of the R/Rstudio can use an Rstudio instance in the cloud with all packages installed for the course in the mean time. Note, that this is instance is not for routine use. 
+
+[![Binder](http://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/statOmics/SGA21/binder?urlpath=rstudio)
+
+# Detailed Program
+
+
+1. A brief introduction to sequencing technology.
+
+
+# Instructors
+
+ - [Koen Van den Berge](https://koenvandenberge.github.io/)
+ - [Jeroen Gilis](https://statomics.github.io/pages/jeroen.html)
+
+
+# License
+
+<a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0)
+
