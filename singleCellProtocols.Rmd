@@ -1,5 +1,5 @@
 ---
-title: "Introduction to sequencing: Sequencing technology and preprocessing of sequencing data"
+title: "A very brief intro to major single-cell protocols"
 author: "Koen Van den Berge"
 date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -50,9 +50,16 @@ suppressPackageStartupMessages({
 include_graphics("./figures/smartseq2.png")
 ```
 
-### The 10X Genomics protocol
+# The 10X Genomics Chromium protocol
 
+- The 10X Genonics Chromium protocol is droplet-based, i.e., cells are embedded into nanodroplets within which library preparation steps occur.
+- Within each droplet, gel beads along with reagents are encapsulated together with the cell.
+- These gel beads contain millions of sequences on their surface. These sequences consist of a sequencing adapter ('TruSeq Read'), cell barcode ('10X Barcode'), molecular barcode ('UMI'), and a Poly(dT) to capture polyA'd mRNAs. As of v3, two additional capture sequences may be used for capturing additional molecules, e.g., guide RNAs.
+- The beads are mixed with the cells of our sample, which are then emulated within oil to create nanodroplets. See 'Getting Started with Single Cell Gene Expression' video at 10:40 on the [10X Genomics website](https://www.10xgenomics.com/products/single-cell-gene-expression) for a demonstration. These droplets are often called **GEMs**, for 'Gel beads in EMulsion'.
+- Within these GEMs, the necessary library preparation steps occur, and the produced molecules each contain a cell barcode as well as a Unique Molecular Identifier (UMI), which may then be sequenced.
 
-
-
-
+```{r, echo=FALSE, fig.cap=paste("Figure: The 10X Genomics Chromium protocol. Images from 10X Genomics.")}
+include_graphics("./figures/10xv3Workflow.png")
+include_graphics("./figures/10xv3Beads.png")
+include_graphics("./figures/10xv3Read.png")
+```

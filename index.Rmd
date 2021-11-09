@@ -35,7 +35,9 @@ In addition, knowledge of programming in `R` is preferred. A primer to `R` and D
 # Detailed Program
 
 
-1. A brief introduction to sequencing technology.
+
+1. Lecture: A brief introduction to sequencing technology: [HTML](./introSequencingBulk.html), [[PDF](./introSequencingBulk.pdf)].
+2. Lecture: The two most popular single-cell RNA-seq protocols: [HTML](./singleCellProtocols.html), [[PDF](./singleCellProtocols.pdf)].
 
 
 # Instructors
