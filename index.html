@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>IPVW/ICES single-cell course 2021-2022</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">My Website</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="example.html">Example</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li class="dropdown-header">Lab 1</li>
+    <li class="dropdown-header">Lab 2</li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">IPVW/ICES single-cell course 2021-2022</h1>
+
+</div>
+
+
+<p><img src="figures/wpGraph.jpeg" /><!-- --></p>
+<div id="course-description" class="section level1">
+<h1><span class="header-section-number">1</span> Course Description</h1>
+<p>High-throughput ’omics studies generate ever larger datasets and, as a consequence, complex data interpretation challenges. This course focusses on statistical concepts involved in preprocessing, quantification, normalization, visualization, integration and differential analysis of single-cell ’omics data. The course will rely exclusively on free and user-friendly open-source tools in R/Bioconductor. We hope that this will provide a solid basis for beginners, but will also bring new perspectives to those already familiar with standard data analysis workflows for proteomics and next-generation sequencing applications.</p>
+</div>
+<div id="prerequisites" class="section level1">
+<h1><span class="header-section-number">2</span> Prerequisites</h1>
+<p>The prerequisites are the successful completion of a basic course of statistics that covers topics on data exploration and descriptive statistics, statistical modeling, and inference: linear models, confidence intervals, t-tests, F-tests, anova, chi-squared test. The basis concepts may be revisited in the online course at <a href="https://gtpb.github.io/PSLS20/" class="uri">https://gtpb.github.io/PSLS20/</a> (English) and in <a href="https://statomics.github.io/statistiekCursusNotas/" class="uri">https://statomics.github.io/statistiekCursusNotas/</a> (Dutch).</p>
+<p>In addition, knowledge of programming in <code>R</code> is preferred. A primer to <code>R</code> and Data visualization in <code>R</code> can be found at:</p>
+<ul>
+<li><code>R</code> Basics: <a href="https://dodona.ugent.be/nl/courses/335/" class="uri">https://dodona.ugent.be/nl/courses/335/</a></li>
+<li><code>R</code> Data Exploration: <a href="https://dodona.ugent.be/nl/courses/345/" class="uri">https://dodona.ugent.be/nl/courses/345/</a></li>
+</ul>
+</div>
+<div id="software" class="section level1">
+<h1><span class="header-section-number">3</span> Software</h1>
+<ul>
+<li><p>Participants are required to bring their own laptop with <a href="https://www.r-project.org/">R</a> version 4.1.1 or greater.</p></li>
+<li><p>We also recommend to also install the latest version of <a href="https://www.rstudio.com/products/rstudio/download/">RStudio</a>.</p></li>
+<li><p>Participants who have issues with the installation of the R/Rstudio can use an Rstudio instance in the cloud with all packages installed for the course in the mean time. Note, that this is instance is not for routine use.</p></li>
+</ul>
+<p><a href="https://mybinder.org/v2/gh/statOmics/SGA21/binder?urlpath=rstudio"><img src="http://mybinder.org/badge.svg" alt="Binder" /></a></p>
+</div>
+<div id="detailed-program" class="section level1">
+<h1><span class="header-section-number">4</span> Detailed Program</h1>
+<ol style="list-style-type: decimal">
+<li>A brief introduction to sequencing technology.</li>
+</ol>
+</div>
+<div id="instructors" class="section level1">
+<h1><span class="header-section-number">5</span> Instructors</h1>
+<ul>
+<li><a href="https://koenvandenberge.github.io/">Koen Van den Berge</a></li>
+<li><a href="https://statomics.github.io/pages/jeroen.html">Jeroen Gilis</a></li>
+</ul>
+</div>
+<div id="license" class="section level1">
+<h1><span class="header-section-number">6</span> License</h1>
+<p><a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></p>
+<p>This project is licensed under the <a href="https://creativecommons.org/licenses/by-nc-sa/4.0">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a></p>
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiSVBWVy9JQ0VTIHNpbmdsZS1jZWxsIGNvdXJzZSAyMDIxLTIwMjIiCi0tLQoKCmBgYHtyIGVjaG89RkFMU0UsIHdhcm5pbmc9RkFMU0UsIG1lc3NhZ2U9RkFMU0V9CmtuaXRyOjppbmNsdWRlX2dyYXBoaWNzKCIuL2ZpZ3VyZXMvd3BHcmFwaC5qcGVnIikKYGBgCgojIENvdXJzZSBEZXNjcmlwdGlvbgoKSGlnaC10aHJvdWdocHV0ICdvbWljcyBzdHVkaWVzIGdlbmVyYXRlIGV2ZXIgbGFyZ2VyIGRhdGFzZXRzIGFuZCwgYXMgYSBjb25zZXF1ZW5jZSwgY29tcGxleCBkYXRhIGludGVycHJldGF0aW9uIGNoYWxsZW5nZXMuIFRoaXMgY291cnNlIGZvY3Vzc2VzIG9uIHN0YXRpc3RpY2FsIGNvbmNlcHRzIGludm9sdmVkIGluIHByZXByb2Nlc3NpbmcsIHF1YW50aWZpY2F0aW9uLCBub3JtYWxpemF0aW9uLCB2aXN1YWxpemF0aW9uLCBpbnRlZ3JhdGlvbiBhbmQgZGlmZmVyZW50aWFsIGFuYWx5c2lzIG9mIHNpbmdsZS1jZWxsICdvbWljcyBkYXRhLiBUaGUgY291cnNlIHdpbGwgcmVseSBleGNsdXNpdmVseSBvbiBmcmVlIGFuZCB1c2VyLWZyaWVuZGx5IG9wZW4tc291cmNlIHRvb2xzIGluIFIvQmlvY29uZHVjdG9yLiBXZSBob3BlIHRoYXQgdGhpcyB3aWxsIHByb3ZpZGUgYSBzb2xpZCBiYXNpcyBmb3IgYmVnaW5uZXJzLCBidXQgd2lsbCBhbHNvIGJyaW5nIG5ldyBwZXJzcGVjdGl2ZXMgdG8gdGhvc2UgYWxyZWFkeSBmYW1pbGlhciB3aXRoIHN0YW5kYXJkIGRhdGEgYW5hbHlzaXMgd29ya2Zsb3dzIGZvciBwcm90ZW9taWNzIGFuZCBuZXh0LWdlbmVyYXRpb24gc2VxdWVuY2luZyBhcHBsaWNhdGlvbnMuCgojIFByZXJlcXVpc2l0ZXMKClRoZSBwcmVyZXF1aXNpdGVzICBhcmUgdGhlIHN1Y2Nlc3NmdWwgY29tcGxldGlvbiBvZiBhIGJhc2ljIGNvdXJzZSBvZiBzdGF0aXN0aWNzIHRoYXQgY292ZXJzIHRvcGljcyBvbiBkYXRhIGV4cGxvcmF0aW9uIGFuZCBkZXNjcmlwdGl2ZSBzdGF0aXN0aWNzLCBzdGF0aXN0aWNhbCBtb2RlbGluZywgYW5kIGluZmVyZW5jZTogbGluZWFyIG1vZGVscywgY29uZmlkZW5jZSBpbnRlcnZhbHMsIHQtdGVzdHMsIEYtdGVzdHMsIGFub3ZhLCBjaGktc3F1YXJlZCB0ZXN0LgpUaGUgYmFzaXMgY29uY2VwdHMgbWF5IGJlIHJldmlzaXRlZCBpbiB0aGUgb25saW5lIGNvdXJzZSBhdCBodHRwczovL2d0cGIuZ2l0aHViLmlvL1BTTFMyMC8gKEVuZ2xpc2gpIGFuZCBpbiBodHRwczovL3N0YXRvbWljcy5naXRodWIuaW8vc3RhdGlzdGlla0N1cnN1c05vdGFzLyAoRHV0Y2gpLgoKSW4gYWRkaXRpb24sIGtub3dsZWRnZSBvZiBwcm9ncmFtbWluZyBpbiBgUmAgaXMgcHJlZmVycmVkLiBBIHByaW1lciB0byBgUmAgYW5kIERhdGEgdmlzdWFsaXphdGlvbiBpbiBgUmAgY2FuIGJlIGZvdW5kIGF0OgoKIC0gYFJgIEJhc2ljczogaHR0cHM6Ly9kb2RvbmEudWdlbnQuYmUvbmwvY291cnNlcy8zMzUvCiAtIGBSYCBEYXRhIEV4cGxvcmF0aW9uOiBodHRwczovL2RvZG9uYS51Z2VudC5iZS9ubC9jb3Vyc2VzLzM0NS8KCgojIFNvZnR3YXJlIAoKLSBQYXJ0aWNpcGFudHMgYXJlIHJlcXVpcmVkIHRvIGJyaW5nIHRoZWlyIG93biBsYXB0b3Agd2l0aCBbUl0oaHR0cHM6Ly93d3cuci1wcm9qZWN0Lm9yZy8pIHZlcnNpb24gNC4xLjEgb3IgZ3JlYXRlci4gCgotIFdlIGFsc28gcmVjb21tZW5kIHRvIGFsc28gaW5zdGFsbCB0aGUgbGF0ZXN0IHZlcnNpb24gb2YgW1JTdHVkaW9dKGh0dHBzOi8vd3d3LnJzdHVkaW8uY29tL3Byb2R1Y3RzL3JzdHVkaW8vZG93bmxvYWQvKS4KCi0gUGFydGljaXBhbnRzIHdobyBoYXZlIGlzc3VlcyB3aXRoIHRoZSBpbnN0YWxsYXRpb24gb2YgdGhlIFIvUnN0dWRpbyBjYW4gdXNlIGFuIFJzdHVkaW8gaW5zdGFuY2UgaW4gdGhlIGNsb3VkIHdpdGggYWxsIHBhY2thZ2VzIGluc3RhbGxlZCBmb3IgdGhlIGNvdXJzZSBpbiB0aGUgbWVhbiB0aW1lLiBOb3RlLCB0aGF0IHRoaXMgaXMgaW5zdGFuY2UgaXMgbm90IGZvciByb3V0aW5lIHVzZS4gCgpbIVtCaW5kZXJdKGh0dHA6Ly9teWJpbmRlci5vcmcvYmFkZ2Uuc3ZnKV0oaHR0cHM6Ly9teWJpbmRlci5vcmcvdjIvZ2gvc3RhdE9taWNzL1NHQTIxL2JpbmRlcj91cmxwYXRoPXJzdHVkaW8pCgojIERldGFpbGVkIFByb2dyYW0KCgoxLiBBIGJyaWVmIGludHJvZHVjdGlvbiB0byBzZXF1ZW5jaW5nIHRlY2hub2xvZ3kuCgoKIyBJbnN0cnVjdG9ycwoKIC0gW0tvZW4gVmFuIGRlbiBCZXJnZV0oaHR0cHM6Ly9rb2VudmFuZGVuYmVyZ2UuZ2l0aHViLmlvLykKIC0gW0plcm9lbiBHaWxpc10oaHR0cHM6Ly9zdGF0b21pY3MuZ2l0aHViLmlvL3BhZ2VzL2plcm9lbi5odG1sKQoKCiMgTGljZW5zZQoKPGEgcmVsPSJsaWNlbnNlIiBocmVmPSJodHRwczovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnktbmMtc2EvNC4wIj48aW1nIGFsdD0iQ3JlYXRpdmUgQ29tbW9ucyBMaWNlbnNlIiBzdHlsZT0iYm9yZGVyLXdpZHRoOjAiIHNyYz0iaHR0cHM6Ly9pLmNyZWF0aXZlY29tbW9ucy5vcmcvbC9ieS1uYy1zYS80LjAvODh4MzEucG5nIiAvPjwvYT4KClRoaXMgcHJvamVjdCBpcyBsaWNlbnNlZCB1bmRlciB0aGUgW0NyZWF0aXZlIENvbW1vbnMgQXR0cmlidXRpb24tTm9uQ29tbWVyY2lhbC1TaGFyZUFsaWtlIDQuMCBJbnRlcm5hdGlvbmFsIChDQyBCWS1OQy1TQSA0LjApXShodHRwczovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnktbmMtc2EvNC4wKQoK</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("index.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
