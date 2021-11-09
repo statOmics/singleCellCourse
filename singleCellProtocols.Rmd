@@ -1,0 +1,58 @@
+---
+title: "Introduction to sequencing: Sequencing technology and preprocessing of sequencing data"
+author: "Koen Van den Berge"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+---
+
+```{r functions, include=FALSE}
+# A function for captioning and referencing images
+fig <- local({
+    i <- 0
+    ref <- list()
+    list(
+        cap=function(refName, text) {
+            i <<- i + 1
+            ref[[refName]] <<- i
+            paste("Figure ", i, ": ", text, sep="")
+        },
+        ref=function(refName) {
+            ref[[refName]]
+        })
+})
+``` 
+
+```{r, echo=FALSE, eval=TRUE}
+suppressPackageStartupMessages({
+  library(knitr)
+  library(rmarkdown)
+  library(ggplot2)
+})
+```
+
+# The Smart-seq2 protocol
+
+1. First, the biological **sample of interest are collected**, and cells should be disaggregated into a single-cell suspension.
+2. Cells are picked from the suspension and embedded in a **lysis** buffer containing a ribonuclease inhibitor that blocks RNA degradation, and primers for the reverse transcription step. 
+3. **Reverse transcription**. Single-stranded RNA molecules are converted into more stable double-stranded cDNA molecules. 
+4. The cDNA molecules are amplified using **PCR amplification**.
+5. Construction of sequencing libraries using **tagmentation**. A transposase is used to **fragment** the cDNA molecules and simultaneously **ligate adapter sequences**.
+6. Another cycle of PCR occurs (the enrichment PCR step). Sample barcodes may be added to allow multiplexing; a a dual-index strategy is often used, indices referred to as index 1 (i7) and index 2 (i5) in the Figure below.
+
+```{r, echo=FALSE, fig.cap=paste("Figure: The SMART-Seq2 library prep workflow. Image from [Picelli *et al.* (2014)](https://www.nature.com/articles/nprot.2014.006).")}
+include_graphics("./figures/smartseq2.png")
+```
+
+### The 10X Genomics protocol
+
+
+
+
+
