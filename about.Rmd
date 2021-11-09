@@ -1,5 +1,5 @@
 ---
-title: "About This Website"
+title: "About The course"
 output:
     html_document:
         code_download: false
@@ -8,4 +8,6 @@ output:
         code_folding: "none"
 ---
 
-More about this website.
+This course is taught as part of the Academy for [LifeLong Learning of the faculty of Sciences (ICES / IPVW)](https://www.ugent.be/we/en/services/ICES), in the academic year 2021-2022.
+
+For an overview of other courses, please see the [online schedule](https://www.ugent.be/we/en/services/ICES/courses/dataanalysis2021-2022).

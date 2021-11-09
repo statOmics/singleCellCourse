@@ -1,6 +1,6 @@
 name: "my-website"
 navbar:
-  title: "My Website"
+  title: "Single-cell course"
   left:
     - icon: fa-home
       href: index.html
@@ -9,8 +9,8 @@ navbar:
     - text: "Lectures"
       icon: fa-chalkboard-teacher
       menu:
-        - text: "Example"
-          href: example.html
+        - text: "A brief introduction to sequencing technology"
+          href: introSequencingBulk.html
     - text: "Labs"
       icon: fa-laptop
       menu:
