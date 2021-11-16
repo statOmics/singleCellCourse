@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.11.12)  15 NOV 2021 22:31
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.11.12)  16 NOV 2021 14:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -675,37 +675,47 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: ./figures/smartseq2.png Graphic file (type bmp)
 <./figures/smartseq2.png>
 
-LaTeX Warning: Float too large for page by 24.48076pt on input line 109.
-
-File: ./figures/10xv3Workflow.png Graphic file (type bmp)
-<./figures/10xv3Workflow.png>
-File: ./figures/10xv3Beads.png Graphic file (type bmp)
-<./figures/10xv3Beads.png>
-File: ./figures/10xv3Read.png Graphic file (type bmp)
-<./figures/10xv3Read.png>
-
-Underfull \hbox (badness 10000) in paragraph at lines 143--146
-[][]
+Underfull \hbox (badness 3514) in paragraph at lines 104--104
+[]\TU/lmr/m/n/10 Figure 1: []Figure: The SMART-Seq2 library prep workflow. Image from [Picelli *et al.*
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 143--146
-[]
+LaTeX Warning: Float too large for page by 36.48076pt on input line 105.
+
+File: ./figures/10xv3Workflow.png Graphic file (type bmp)
+<./figures/10xv3Workflow.png>
+
+Overfull \hbox (1585.76308pt too wide) in paragraph at lines 140--140
+[][] 
+ []
+
+File: ./figures/10xv3Beads.png Graphic file (type bmp)
+<./figures/10xv3Beads.png>
+
+Overfull \hbox (573.27184pt too wide) in paragraph at lines 143--143
+[][] 
+ []
+
+File: ./figures/10xv3Read.png Graphic file (type bmp)
+<./figures/10xv3Read.png>
+
+Overfull \hbox (324.26224pt too wide) in paragraph at lines 146--146
+[][] 
  []
 
 [1
 
-] [2] [3] (./singleCellProtocols.aux)
+] [2] [3] [4] [5] (./singleCellProtocols.aux)
 Package rerunfilecheck Info: File `singleCellProtocols.out' has not changed.
 (rerunfilecheck)             Checksum: 3C400578F3807319C92CB2F05CBF2421;389.
  ) 
 Here is how much of TeX's memory you used:
- 15799 strings out of 478472
- 283476 string characters out of 5860372
- 752878 words of memory out of 5000000
- 35920 multiletter control sequences out of 15000+600000
- 406996 words of font info for 57 fonts, out of 8000000 for 9000
+ 15843 strings out of 478472
+ 284652 string characters out of 5860372
+ 754300 words of memory out of 5000000
+ 35963 multiletter control sequences out of 15000+600000
+ 406988 words of font info for 56 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 87i,6n,120p,313b,329s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 87i,6n,120p,313b,331s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on singleCellProtocols.pdf (3 pages).
+Output written on singleCellProtocols.pdf (5 pages).

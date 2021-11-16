@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Koen Van den Berge" />
+
+
+<title>Post-selection inference</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Single-cell course</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="introSequencingBulk.html">A brief introduction to sequencing technology</a>
+    </li>
+    <li>
+      <a href="singleCellProtocols.html">Two popular single-cell protocols</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li class="dropdown-header">Lab 1</li>
+    <li class="dropdown-header">Lab 2</li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Post-selection inference</h1>
+<h4 class="author">Koen Van den Berge</h4>
+<h4 class="date">Last compiled on 16 November, 2021</h4>
+
+</div>
+
+
+<pre><code>## Retrieving &#39;https://cran.rstudio.com/bin/macosx/contrib/4.1/BiocManager_1.30.16.tgz&#39; ...
+##  OK [downloaded 315.4 Kb in 0.4 secs]
+## Installing BiocManager [1.30.16] ...
+##  OK [installed binary]
+## Moving BiocManager [1.30.16] into the cache ...
+##  OK [moved to cache in 0.96 milliseconds]</code></pre>
+<pre><code>## &#39;getOption(&quot;repos&quot;)&#39; replaces Bioconductor standard repositories, see
+## &#39;?repositories&#39; for details
+## 
+## replacement repositories:
+##     CRAN: https://cran.rstudio.com</code></pre>
+<pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
+<pre><code>## Installing package(s) &#39;BiocVersion&#39;, &#39;DESeq2&#39;</code></pre>
+<pre><code>## also installing the dependencies &#39;sys&#39;, &#39;bit&#39;, &#39;cachem&#39;, &#39;askpass&#39;, &#39;bitops&#39;, &#39;formatR&#39;, &#39;bit64&#39;, &#39;blob&#39;, &#39;memoise&#39;, &#39;plogr&#39;, &#39;png&#39;, &#39;Biostrings&#39;, &#39;curl&#39;, &#39;openssl&#39;, &#39;RCurl&#39;, &#39;GenomeInfoDbData&#39;, &#39;zlibbioc&#39;, &#39;matrixStats&#39;, &#39;lambda.r&#39;, &#39;futile.options&#39;, &#39;DBI&#39;, &#39;RSQLite&#39;, &#39;KEGGREST&#39;, &#39;XML&#39;, &#39;xtable&#39;, &#39;httr&#39;, &#39;GenomeInfoDb&#39;, &#39;XVector&#39;, &#39;MatrixGenerics&#39;, &#39;DelayedArray&#39;, &#39;futile.logger&#39;, &#39;snow&#39;, &#39;BH&#39;, &#39;AnnotationDbi&#39;, &#39;annotate&#39;, &#39;S4Vectors&#39;, &#39;IRanges&#39;, &#39;GenomicRanges&#39;, &#39;SummarizedExperiment&#39;, &#39;BiocGenerics&#39;, &#39;Biobase&#39;, &#39;BiocParallel&#39;, &#39;genefilter&#39;, &#39;locfit&#39;, &#39;geneplotter&#39;, &#39;Rcpp&#39;, &#39;RcppArmadillo&#39;</code></pre>
+<pre><code>## 
+## The downloaded binary packages are in
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpfxQ8js/downloaded_packages</code></pre>
+<pre><code>## installing the source package &#39;GenomeInfoDbData&#39;</code></pre>
+<pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
+##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
+##   &#39;tinytex&#39;, &#39;xfun&#39;</code></pre>
+<pre><code>## &#39;getOption(&quot;repos&quot;)&#39; replaces Bioconductor standard repositories, see
+## &#39;?repositories&#39; for details
+## 
+## replacement repositories:
+##     CRAN: https://cran.rstudio.com</code></pre>
+<pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
+<pre><code>## Installing package(s) &#39;Rtsne&#39;</code></pre>
+<pre><code>## 
+## The downloaded binary packages are in
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpfxQ8js/downloaded_packages</code></pre>
+<pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
+##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
+##   &#39;tinytex&#39;, &#39;xfun&#39;</code></pre>
+<pre><code>## &#39;getOption(&quot;repos&quot;)&#39; replaces Bioconductor standard repositories, see
+## &#39;?repositories&#39; for details
+## 
+## replacement repositories:
+##     CRAN: https://cran.rstudio.com</code></pre>
+<pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
+<pre><code>## Installing package(s) &#39;edgeR&#39;</code></pre>
+<pre><code>## also installing the dependency &#39;limma&#39;</code></pre>
+<pre><code>## 
+## The downloaded binary packages are in
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpfxQ8js/downloaded_packages</code></pre>
+<pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
+##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
+##   &#39;tinytex&#39;, &#39;xfun&#39;</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>runEdgeR &lt;-<span class="st"> </span><span class="cf">function</span>(counts, design){</span>
+<span id="cb20-2"><a href="#cb20-2"></a>  d &lt;-<span class="st"> </span><span class="kw">DGEList</span>(counts)</span>
+<span id="cb20-3"><a href="#cb20-3"></a>  d &lt;-<span class="st"> </span><span class="kw">calcNormFactors</span>(d)</span>
+<span id="cb20-4"><a href="#cb20-4"></a>  d &lt;-<span class="st"> </span><span class="kw">estimateDisp</span>(d, design)</span>
+<span id="cb20-5"><a href="#cb20-5"></a>  fit &lt;-<span class="st"> </span><span class="kw">glmFit</span>(d, design)</span>
+<span id="cb20-6"><a href="#cb20-6"></a>  lrt &lt;-<span class="st"> </span><span class="kw">glmLRT</span>(fit, <span class="dt">coef=</span><span class="dv">2</span>)</span>
+<span id="cb20-7"><a href="#cb20-7"></a>  <span class="kw">return</span>(lrt)</span>
+<span id="cb20-8"><a href="#cb20-8"></a>}</span>
+<span id="cb20-9"><a href="#cb20-9"></a></span>
+<span id="cb20-10"><a href="#cb20-10"></a><span class="co"># simulate data according to a negative binomial distribution</span></span>
+<span id="cb20-11"><a href="#cb20-11"></a><span class="kw">set.seed</span>(<span class="dv">99</span>)</span>
+<span id="cb20-12"><a href="#cb20-12"></a>n &lt;-<span class="st"> </span><span class="fl">1e4</span> <span class="co">#number of genes</span></span>
+<span id="cb20-13"><a href="#cb20-13"></a>m &lt;-<span class="st"> </span><span class="dv">100</span> <span class="co">#number of cells</span></span>
+<span id="cb20-14"><a href="#cb20-14"></a>fprCluster &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
+<span id="cb20-15"><a href="#cb20-15"></a>fprMock &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
+<span id="cb20-16"><a href="#cb20-16"></a><span class="kw">par</span>(<span class="dt">mfrow=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">3</span>))</span>
+<span id="cb20-17"><a href="#cb20-17"></a><span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>){</span>
+<span id="cb20-18"><a href="#cb20-18"></a>  dss &lt;-<span class="st"> </span>DESeq2<span class="op">::</span><span class="kw">makeExampleDESeqDataSet</span>(<span class="dt">n=</span>n, <span class="dt">m=</span>m)</span>
+<span id="cb20-19"><a href="#cb20-19"></a>  counts &lt;-<span class="st"> </span><span class="kw">assays</span>(dss)<span class="op">$</span>counts</span>
+<span id="cb20-20"><a href="#cb20-20"></a>  </span>
+<span id="cb20-21"><a href="#cb20-21"></a>  <span class="co"># t-SNE on top PCs</span></span>
+<span id="cb20-22"><a href="#cb20-22"></a>  tsneDR &lt;-<span class="st"> </span><span class="kw">Rtsne</span>(<span class="kw">log1p</span>(<span class="kw">t</span>(counts)))</span>
+<span id="cb20-23"><a href="#cb20-23"></a>  </span>
+<span id="cb20-24"><a href="#cb20-24"></a>  <span class="co"># cluster in t-SNE space</span></span>
+<span id="cb20-25"><a href="#cb20-25"></a>  km &lt;-<span class="st"> </span><span class="kw">kmeans</span>(tsneDR<span class="op">$</span>Y, <span class="dt">centers=</span><span class="dv">2</span>)</span>
+<span id="cb20-26"><a href="#cb20-26"></a>  group &lt;-<span class="st"> </span><span class="kw">as.factor</span>(km<span class="op">$</span>cluster)</span>
+<span id="cb20-27"><a href="#cb20-27"></a>  <span class="kw">plot</span>(tsneDR<span class="op">$</span>Y, <span class="dt">col=</span>group, <span class="dt">pch=</span><span class="dv">16</span>, <span class="dt">cex=</span><span class="dv">1</span><span class="op">/</span><span class="dv">2</span>, <span class="dt">main=</span><span class="st">&quot;t-SNE on top PCs&quot;</span>, <span class="dt">xlab=</span><span class="st">&quot;t-SNE1&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;t-SNE2&quot;</span>)</span>
+<span id="cb20-28"><a href="#cb20-28"></a>  </span>
+<span id="cb20-29"><a href="#cb20-29"></a>  <span class="co"># DE based on clustering</span></span>
+<span id="cb20-30"><a href="#cb20-30"></a>  design &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>group)</span>
+<span id="cb20-31"><a href="#cb20-31"></a>  lrt &lt;-<span class="st"> </span><span class="kw">runEdgeR</span>(counts, design)</span>
+<span id="cb20-32"><a href="#cb20-32"></a>  <span class="kw">hist</span>(lrt<span class="op">$</span>table<span class="op">$</span>PValue, <span class="dt">main=</span><span class="kw">paste</span>(<span class="st">&quot;iteration&quot;</span>,ii,<span class="st">&quot;cluster comparison&quot;</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">600</span>), <span class="dt">xlab=</span><span class="st">&quot;p-value&quot;</span>)</span>
+<span id="cb20-33"><a href="#cb20-33"></a>  fprCluster[ii] &lt;-<span class="st"> </span><span class="kw">sum</span>(lrt<span class="op">$</span>table<span class="op">$</span>PValue <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.05</span>)</span>
+<span id="cb20-34"><a href="#cb20-34"></a>  </span>
+<span id="cb20-35"><a href="#cb20-35"></a>  <span class="co"># mock DE</span></span>
+<span id="cb20-36"><a href="#cb20-36"></a>  mock &lt;-<span class="st"> </span><span class="kw">as.factor</span>(<span class="kw">rep</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>,<span class="dt">each=</span>m<span class="op">/</span><span class="dv">2</span>))</span>
+<span id="cb20-37"><a href="#cb20-37"></a>  designMock &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span>mock)</span>
+<span id="cb20-38"><a href="#cb20-38"></a>  lrtMock &lt;-<span class="st"> </span><span class="kw">runEdgeR</span>(counts, designMock)</span>
+<span id="cb20-39"><a href="#cb20-39"></a>  <span class="kw">hist</span>(lrtMock<span class="op">$</span>table<span class="op">$</span>PValue, <span class="dt">main=</span><span class="kw">paste</span>(<span class="st">&quot;iteration&quot;</span>,ii,<span class="st">&quot;mock comparison&quot;</span>), <span class="dt">ylim=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">600</span>), <span class="dt">xlab=</span><span class="st">&quot;p-value&quot;</span>)</span>
+<span id="cb20-40"><a href="#cb20-40"></a>  <span class="kw">Sys.sleep</span>(<span class="dv">1</span>)</span>
+<span id="cb20-41"><a href="#cb20-41"></a>  fprMock[ii] &lt;-<span class="st"> </span><span class="kw">sum</span>(lrtMock<span class="op">$</span>table<span class="op">$</span>PValue <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.05</span>)</span>
+<span id="cb20-42"><a href="#cb20-42"></a>}</span></code></pre></div>
+<p><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-1.png" width="672" /><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-2.png" width="672" /><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-3.png" width="672" /><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-4.png" width="672" /><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-5.png" width="672" /></p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">par</span>(<span class="dt">mfrow=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="kw">boxplot</span>(<span class="kw">cbind</span>(fprCluster, fprMock)<span class="op">/</span>n, <span class="dt">names=</span><span class="kw">c</span>(<span class="st">&quot;cluster-based&quot;</span>, <span class="st">&quot;random&quot;</span>), <span class="dt">ylab=</span><span class="st">&quot;False positive rate&quot;</span>)</span></code></pre></div>
+<p><img src="postSelectionInference_files/figure-html/unnamed-chunk-2-6.png" width="672" /></p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="kw">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.1.2 (2021-11-01)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats4    stats     graphics  grDevices datasets  utils     methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] edgeR_3.36.0                limma_3.50.0               
+##  [3] Rtsne_0.15                  DESeq2_1.34.0              
+##  [5] SummarizedExperiment_1.24.0 Biobase_2.54.0             
+##  [7] MatrixGenerics_1.6.0        matrixStats_0.61.0         
+##  [9] GenomicRanges_1.46.0        GenomeInfoDb_1.30.0        
+## [11] IRanges_2.28.0              S4Vectors_0.32.2           
+## [13] BiocGenerics_0.40.0         rmarkdown_2.10             
+## [15] knitr_1.33                 
+## 
+## loaded via a namespace (and not attached):
+##  [1] httr_1.4.2             bit64_4.0.5            splines_4.1.2         
+##  [4] highr_0.9              BiocManager_1.30.16    blob_1.2.2            
+##  [7] renv_0.14.0            GenomeInfoDbData_1.2.7 yaml_2.2.1            
+## [10] pillar_1.6.2           RSQLite_2.2.8          lattice_0.20-44       
+## [13] glue_1.4.2             digest_0.6.27          RColorBrewer_1.1-2    
+## [16] XVector_0.34.0         colorspace_2.0-2       htmltools_0.5.2       
+## [19] Matrix_1.3-4           XML_3.99-0.8           pkgconfig_2.0.3       
+## [22] genefilter_1.76.0      zlibbioc_1.40.0        xtable_1.8-4          
+## [25] scales_1.1.1           BiocParallel_1.28.0    tibble_3.1.4          
+## [28] annotate_1.72.0        KEGGREST_1.34.0        ggplot2_3.3.5         
+## [31] ellipsis_0.3.2         cachem_1.0.6           survival_3.2-13       
+## [34] magrittr_2.0.1         crayon_1.4.1           memoise_2.0.0         
+## [37] evaluate_0.14          fansi_0.5.0            tools_4.1.2           
+## [40] lifecycle_1.0.0        stringr_1.4.0          munsell_0.5.0         
+## [43] locfit_1.5-9.4         DelayedArray_0.20.0    AnnotationDbi_1.56.2  
+## [46] Biostrings_2.62.0      compiler_4.1.2         rlang_0.4.11          
+## [49] grid_4.1.2             RCurl_1.98-1.5         bitops_1.0-7          
+## [52] gtable_0.3.0           DBI_1.1.1              R6_2.5.1              
+## [55] fastmap_1.1.0          bit_4.0.4              utf8_1.2.2            
+## [58] stringi_1.7.4          parallel_4.1.2         Rcpp_1.0.7            
+## [61] vctrs_0.3.8            geneplotter_1.72.0     png_0.1-7             
+## [64] xfun_0.25</code></pre>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUG9zdC1zZWxlY3Rpb24gaW5mZXJlbmNlIgphdXRob3I6ICJLb2VuIFZhbiBkZW4gQmVyZ2UiCmRhdGU6ICJMYXN0IGNvbXBpbGVkIG9uIGByIGZvcm1hdChTeXMudGltZSgpLCAnJWQgJUIsICVZJylgIgpvdXRwdXQ6IAogIGh0bWxfZG9jdW1lbnQ6CiAgICB0b2M6IHRydWUKICAgIHRvY19mbG9hdDogdHJ1ZQogIHBkZl9kb2N1bWVudDoKICAgIHRvYzogdHJ1ZQogICAgbnVtYmVyX3NlY3Rpb25zOiB0cnVlCiAgICBsYXRleF9lbmdpbmU6IHhlbGF0ZXgKLS0tCgpgYGB7ciBmdW5jdGlvbnMsIGluY2x1ZGU9RkFMU0V9CiMgQSBmdW5jdGlvbiBmb3IgY2FwdGlvbmluZyBhbmQgcmVmZXJlbmNpbmcgaW1hZ2VzCmZpZyA8LSBsb2NhbCh7CiAgICBpIDwtIDAKICAgIHJlZiA8LSBsaXN0KCkKICAgIGxpc3QoCiAgICAgICAgY2FwPWZ1bmN0aW9uKHJlZk5hbWUsIHRleHQpIHsKICAgICAgICAgICAgaSA8PC0gaSArIDEKICAgICAgICAgICAgcmVmW1tyZWZOYW1lXV0gPDwtIGkKICAgICAgICAgICAgcGFzdGUoIkZpZ3VyZSAiLCBpLCAiOiAiLCB0ZXh0LCBzZXA9IiIpCiAgICAgICAgfSwKICAgICAgICByZWY9ZnVuY3Rpb24ocmVmTmFtZSkgewogICAgICAgICAgICByZWZbW3JlZk5hbWVdXQogICAgICAgIH0pCn0pCmBgYCAKCmBgYHtyLCBlY2hvPUZBTFNFLCBldmFsPVRSVUV9CmlmKCEiQmlvY01hbmFnZXIiICVpbiUgaW5zdGFsbGVkLnBhY2thZ2VzKClbLDFdKXsKICBpbnN0YWxsLnBhY2thZ2VzKCJCaW9jTWFuYWdlciIpCn0KaWYoISJERVNlcTIiICVpbiUgaW5zdGFsbGVkLnBhY2thZ2VzKClbLDFdKXsKICBCaW9jTWFuYWdlcjo6aW5zdGFsbCgiREVTZXEyIikKfQppZighIlJ0c25lIiAlaW4lIGluc3RhbGxlZC5wYWNrYWdlcygpWywxXSl7CiAgQmlvY01hbmFnZXI6Omluc3RhbGwoIlJ0c25lIikKfQppZighImVkZ2VSIiAlaW4lIGluc3RhbGxlZC5wYWNrYWdlcygpWywxXSl7CiAgQmlvY01hbmFnZXI6Omluc3RhbGwoImVkZ2VSIikKfQoKc3VwcHJlc3NQYWNrYWdlU3RhcnR1cE1lc3NhZ2VzKHsKICBsaWJyYXJ5KGtuaXRyKQogIGxpYnJhcnkocm1hcmtkb3duKQogIGxpYnJhcnkoREVTZXEyKQogIGxpYnJhcnkoUnRzbmUpCiAgbGlicmFyeShlZGdlUikKfSkKYGBgCgpgYGB7cn0KCgpydW5FZGdlUiA8LSBmdW5jdGlvbihjb3VudHMsIGRlc2lnbil7CiAgZCA8LSBER0VMaXN0KGNvdW50cykKICBkIDwtIGNhbGNOb3JtRmFjdG9ycyhkKQogIGQgPC0gZXN0aW1hdGVEaXNwKGQsIGRlc2lnbikKICBmaXQgPC0gZ2xtRml0KGQsIGRlc2lnbikKICBscnQgPC0gZ2xtTFJUKGZpdCwgY29lZj0yKQogIHJldHVybihscnQpCn0KCiMgc2ltdWxhdGUgZGF0YSBhY2NvcmRpbmcgdG8gYSBuZWdhdGl2ZSBiaW5vbWlhbCBkaXN0cmlidXRpb24Kc2V0LnNlZWQoOTkpCm4gPC0gMWU0ICNudW1iZXIgb2YgZ2VuZXMKbSA8LSAxMDAgI251bWJlciBvZiBjZWxscwpmcHJDbHVzdGVyIDwtIGMoKQpmcHJNb2NrIDwtIGMoKQpwYXIobWZyb3c9YygxLDMpKQpmb3IoaWkgaW4gMTo1KXsKICBkc3MgPC0gREVTZXEyOjptYWtlRXhhbXBsZURFU2VxRGF0YVNldChuPW4sIG09bSkKICBjb3VudHMgPC0gYXNzYXlzKGRzcykkY291bnRzCiAgCiAgIyB0LVNORSBvbiB0b3AgUENzCiAgdHNuZURSIDwtIFJ0c25lKGxvZzFwKHQoY291bnRzKSkpCiAgCiAgIyBjbHVzdGVyIGluIHQtU05FIHNwYWNlCiAga20gPC0ga21lYW5zKHRzbmVEUiRZLCBjZW50ZXJzPTIpCiAgZ3JvdXAgPC0gYXMuZmFjdG9yKGttJGNsdXN0ZXIpCiAgcGxvdCh0c25lRFIkWSwgY29sPWdyb3VwLCBwY2g9MTYsIGNleD0xLzIsIG1haW49InQtU05FIG9uIHRvcCBQQ3MiLCB4bGFiPSJ0LVNORTEiLCB5bGFiPSJ0LVNORTIiKQogIAogICMgREUgYmFzZWQgb24gY2x1c3RlcmluZwogIGRlc2lnbiA8LSBtb2RlbC5tYXRyaXgofmdyb3VwKQogIGxydCA8LSBydW5FZGdlUihjb3VudHMsIGRlc2lnbikKICBoaXN0KGxydCR0YWJsZSRQVmFsdWUsIG1haW49cGFzdGUoIml0ZXJhdGlvbiIsaWksImNsdXN0ZXIgY29tcGFyaXNvbiIpLCB5bGltPWMoMCw2MDApLCB4bGFiPSJwLXZhbHVlIikKICBmcHJDbHVzdGVyW2lpXSA8LSBzdW0obHJ0JHRhYmxlJFBWYWx1ZSA8PSAwLjA1KQogIAogICMgbW9jayBERQogIG1vY2sgPC0gYXMuZmFjdG9yKHJlcCgxOjIsZWFjaD1tLzIpKQogIGRlc2lnbk1vY2sgPC0gbW9kZWwubWF0cml4KH5tb2NrKQogIGxydE1vY2sgPC0gcnVuRWRnZVIoY291bnRzLCBkZXNpZ25Nb2NrKQogIGhpc3QobHJ0TW9jayR0YWJsZSRQVmFsdWUsIG1haW49cGFzdGUoIml0ZXJhdGlvbiIsaWksIm1vY2sgY29tcGFyaXNvbiIpLCB5bGltPWMoMCw2MDApLCB4bGFiPSJwLXZhbHVlIikKICBTeXMuc2xlZXAoMSkKICBmcHJNb2NrW2lpXSA8LSBzdW0obHJ0TW9jayR0YWJsZSRQVmFsdWUgPD0gMC4wNSkKfQpwYXIobWZyb3c9YygxLDEpKQpib3hwbG90KGNiaW5kKGZwckNsdXN0ZXIsIGZwck1vY2spL24sIG5hbWVzPWMoImNsdXN0ZXItYmFzZWQiLCAicmFuZG9tIiksIHlsYWI9IkZhbHNlIHBvc2l0aXZlIHJhdGUiKQpgYGAKCgpgYGB7cn0Kc2Vzc2lvbkluZm8oKQpgYGAKCg==</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("postSelectionInference.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
