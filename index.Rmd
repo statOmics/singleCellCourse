@@ -34,10 +34,11 @@ In addition, knowledge of programming in `R` is preferred. A primer to `R` and D
 
 # Detailed Program
 
-
+## Theory Session I (Nov. 17, 2021)
 
 1. Lecture: A brief introduction to sequencing technology: [HTML](./introSequencingBulk.html), [[PDF](./introSequencingBulk.pdf)].
 2. Lecture: The two most popular single-cell RNA-seq protocols: [HTML](./singleCellProtocols.html), [[PDF](./singleCellProtocols.pdf)].
+3. Lecture: single-cell RNA-seq analysis: general concepts and workflow: [slides](https://docs.google.com/presentation/d/1sfbtw52qWgA7TcDIrGB3fWksLM0Mu9O7gBqYgGrt9fM/edit?usp=sharing).
 
 
 # Instructors
