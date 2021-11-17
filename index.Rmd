@@ -34,6 +34,8 @@ In addition, knowledge of programming in `R` is preferred. A primer to `R` and D
 
 # Detailed Program
 
+0. Positioning of the course: [slides](https://docs.google.com/presentation/d/1ZZe6g3eZFkJz9Ph6bMT3-rAU8dBKQOu9N7SDzSOBtfI/edit?usp=sharing).
+
 ## Theory Session I (Nov. 17, 2021)
 
 1. Lecture: A brief introduction to sequencing technology: [HTML](./introSequencingBulk.html), [[PDF](./introSequencingBulk.pdf)].
