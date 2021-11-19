@@ -40,7 +40,7 @@ suppressPackageStartupMessages({
 # The Smart-seq2 protocol
 
 1. First, the biological **samples of interest are collected**, and cells should be disaggregated into a single-cell suspension.
-2. Cells are picked from the suspension and embedded in a **lysis** buffer containing a ribonuclease inhibitor that blocks RNA degradation, and primers for the reverse transcription step. 
+2. Cells are picked from the suspension and embedded individually in a well containing **lysis** buffer containing a ribonuclease inhibitor that blocks RNA degradation, and primers for the reverse transcription step. 
 3. **Reverse transcription**. Single-stranded RNA molecules are converted into more stable double-stranded cDNA molecules. 
 4. The cDNA molecules are amplified using **PCR amplification**.
 5. Construction of sequencing libraries using **tagmentation**. A transposase is used to **fragment** the cDNA molecules and simultaneously **ligate adapter sequences**.

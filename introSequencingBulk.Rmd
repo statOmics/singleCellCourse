@@ -49,7 +49,7 @@ suppressPackageStartupMessages({
 include_graphics("./figures/seqTechnology_throughput.png")
 ```
 
-## The sequencing workflow
+## The bulk RNA-seq workflow
 
 Library preparation steps:
 
