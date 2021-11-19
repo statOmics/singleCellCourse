@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.11.12)  17 NOV 2021 15:43
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.11.12)  19 NOV 2021 08:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -675,31 +675,31 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: ./figures/smartseq2.png Graphic file (type bmp)
 <./figures/smartseq2.png>
 
-Underfull \hbox (badness 3514) in paragraph at lines 104--104
+Underfull \hbox (badness 3514) in paragraph at lines 105--105
 []\TU/lmr/m/n/10 Figure 1: []Figure: The SMART-Seq2 library prep workflow. Image from [Picelli *et al.*
  []
 
 
-LaTeX Warning: Float too large for page by 36.48076pt on input line 105.
+LaTeX Warning: Float too large for page by 36.48076pt on input line 106.
 
 File: ./figures/10xv3Workflow.png Graphic file (type bmp)
 <./figures/10xv3Workflow.png>
 
-Overfull \hbox (1585.76308pt too wide) in paragraph at lines 140--140
+Overfull \hbox (1585.76308pt too wide) in paragraph at lines 141--141
 [][] 
  []
 
 File: ./figures/10xv3Beads.png Graphic file (type bmp)
 <./figures/10xv3Beads.png>
 
-Overfull \hbox (573.27184pt too wide) in paragraph at lines 143--143
+Overfull \hbox (573.27184pt too wide) in paragraph at lines 144--144
 [][] 
  []
 
 File: ./figures/10xv3Read.png Graphic file (type bmp)
 <./figures/10xv3Read.png>
 
-Overfull \hbox (324.26224pt too wide) in paragraph at lines 146--146
+Overfull \hbox (324.26224pt too wide) in paragraph at lines 147--147
 [][] 
  []
 
