@@ -4,11 +4,15 @@
 wget https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1853178/SRR1853178
 /Applications/sratoolkit.2.11.1-mac64/bin/fasterq-dump SRR1853178
 
-### index transcriptome self
+### index transcriptome
+
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.transcripts.fa.gz
+
 ## specify dyld path (may only be needed for my computer)
 # export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Applications/salmon/lib
+
 /Applications/salmon/bin/salmon index -t gencode.vM27.transcripts.fa.gz -i gencode.vM27.transcripts_index -k 31 --gencode
+
 ### create tx2gene using GTF
 bioawk -c gff '$feature=="transcript" {print $group}' <(gunzip -c gencode.vM27.annotation.gtf.gz) | awk -F ' ' '{print substr($4,2,length($4)-3) "\t" substr($2,2,length($2)-3)}' - > txp2gene.tsv
 
@@ -23,26 +27,6 @@ bioawk -c gff '$feature=="transcript" {print $group}' <(gunzip -c gencode.vM27.a
  -o SRR1853178_out \
  --tgMap txp2gene.tsv
 
-
-## subsample for lab
-## use seqtk which is reasonably fast: https://www.biostars.org/p/69348/
-/Applications/seqtk/seqtk sample -s100 SRR1853178_1.fastq 10000 > SRR1853178_1_subsampled.fastq
-/Applications/seqtk/seqtk sample -s100 SRR1853178_2.fastq 10000 > SRR1853178_2_subsampled.fastq
-
-/Applications/seqtk/seqtk sample -s100 SRR1853178_1.fastq 40000 > SRR1853178_1_subsampled40k.fastq
-/Applications/seqtk/seqtk sample -s100 SRR1853178_2.fastq 40000 > SRR1853178_2_subsampled40k.fastq
-
-
-
-## quantify subsample
-/Applications/salmon/bin/salmon alevin -l ISR \
- -1 SRR1853178_1_subsampled40k.fastq \
- -2 SRR1853178_2_subsampled40k.fastq \
- --dropseq \
- -i gencode.vM27.transcripts_index \
- -p 1 \
- -o SRR1853178_out_40k \
- --tgMap txp2gene.tsv
 
 #  preprocessDropseq.sh
 #  
