@@ -27,3 +27,11 @@ while read s; do
   counter=$((counter+1))
 
 done <fastq_ids_subset.tsv
+
+
+#while read s; do   
+  #echo "$s"
+  #kingfisher get -r $s -m aws-http prefetch
+  #salmon quant -i salmonIndex_Hs38_75 --gcBias --seqBias --dumpEq -l A -1 ${s}_1.fastq -2 ${s}_2.fastq -o ${s}
+  #rm ${s}_1.fastq;   rm ${s}_2.fastq
+#done <ERR_joxm_all.txt
