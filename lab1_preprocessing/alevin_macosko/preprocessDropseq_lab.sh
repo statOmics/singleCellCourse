@@ -3,14 +3,15 @@
 ## get fasta
 ### Too large to download from net in this session; we work with reduced dataset
 
-### index transcriptome self
+### download transcriptome
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.transcripts.fa.gz
 
-## build salmon index
+## build salmon index from transcriptome
 salmon index -t gencode.vM27.transcripts.fa.gz -i gencode.vM27.transcripts_index -k 31 --gencode
 
-### create tx2gene using GTF
+## download GTF
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.annotation.gtf.gz
+### create tx2gene using GTF
 bioawk -c gff '$feature=="transcript" {print $group}' <(gunzip -c gencode.vM27.annotation.gtf.gz) | awk -F ' ' '{print substr($4,2,length($4)-3) "\t" substr($2,2,length($2)-3)}' - > txp2gene.tsv
 
 ## quantify subsample

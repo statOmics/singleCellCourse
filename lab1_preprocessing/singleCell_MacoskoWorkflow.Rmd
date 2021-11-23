@@ -37,37 +37,36 @@ if(length(notInstalled) > 0){
 
 In this workshop session, we will preprocess the single-cell RNA-seq dataset
 from the publication by Macosko *et al.*, Cell 161, 1202–1214 from 2015
-[link](https://doi.org/10.1016/j.cell.2015.05.002). This is the manuscript in
-which the droplet scRNA-seq technology **drop-seq** was introduced.
+[(link)](https://doi.org/10.1016/j.cell.2015.05.002). This is the manuscript in
+which the droplet scRNA-seq technology **Drop-seq** was introduced.
 Six years after the original publication, drop-seq is still one of the most 
 commonly adopted scRNA-seq protocols, as evidenced by the
 large number of citations for Macosko *et al.* 
 (4.303 citations at November 3, 2021).
 
-The basic idea behind the drop-seq protocol can be taken from the graphical
+The basic idea behind the Drop-seq protocol can be taken from the graphical
 abstract of the publication.
 
 ```{r, echo=FALSE}
 knitr::include_graphics("macosko_graphicalAbstract.jpeg")
 ```
 
-The success of drop-seq can be explained by the following distinguishing 
+The success of Drop-seq can be explained by the following advantageous 
 features:
 
-- Unique molecular identifier (UMI) technology. By working with UMIs, one count
+- The use of unique molecular identifiers (UMIs). By working with UMIs, one count
 corresponds to one observed mRNA molecule present in the cell. Thanks to the use
 of UMI barcodes, PCR artifacts are reduced.
 
-- Scalability: microfluidics technology allows for performing the scRNA-seq
-reaction inside droplet that each contain a single cell, for ±10.000 droplets
-simultaneously.
+- Scalability: microfluidics technology allows for performing the library prep
+reactions inside nanodroplets, in which single cells may be contained. Library prep occurs across all droplets simultaneously.
 
 - Cost: the experiment costs around 6.5 cents (USD) per cell.
 
 - Speed: The very large dataset that we will be working with today was 
 generated in an experiment that took only 4 days.
 
-In this particular experiment, Macosko *et al.* sequenced 49.300 cells from the
+In this particular experiment, Macosko *et al.* sequenced 49,300 cells from the
 mouse retina, identifying 39 transcriptionally distinct cell populations. The
 experiment was performed in 7 batches.
 
@@ -75,8 +74,8 @@ experiment was performed in 7 batches.
 
 ## SRA
 
-The sequencing read archive ([SRA](https://www.ncbi.nlm.nih.gov/sra)) is the 
-largest publicly available repository of high throughput sequencing data.
+The [Sequence Read Archive (SRA)](https://www.ncbi.nlm.nih.gov/sra) is the 
+largest publicly available repository of high-throughput sequencing data.
 The data are stored by the National Center for Biotechnology Information (NCBI) 
 services and multiple cloud storage providers. From this website "raw" 
 sequencing data can be retrieved. In practice, these are usually `.sra` files,
@@ -89,19 +88,18 @@ The data are stored as one file per sequencing batch, with each file
 approximately 20Gb. As such, it will be unfeasible to download and process these
 FASTQ files in this practical session.
 
-In stead, for demonstrative purposes, we have taken a subsample of the FASTQ
+Instead, for demonstrative purposes, we have taken a subsample of the FASTQ
 file for the first sequencing batch for you to work with. On this subsample, 
 we may perform all the tasks that we would have performed on the full dataset.
 The steps that are required for downloading and quantifying drop-seq data
-can be found on our companion github
-[page](https://github.com/statOmics/singleCellCourse/blob/master/lab1_preprocessing/preprocessDropseq.sh)
+can be found in [a Shell script on our companion GitHub repository](https://github.com/statOmics/singleCellCourse/blob/master/lab1_preprocessing/preprocessDropseq.sh).
 
 ## GEO
 
 The dataset from Macosko *et al.* was also uploaded by the authors on the 
 Gene Expression Omnibus (GEO) platform under accession number 
 [GSE63472](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63472), 
-from which the following information can be retrieved:
+from which raw and readily-processed data files may be retrieved, including:
 
 1. *GSE63472_RAW.tar*, a 90.6Gb object that contains the "raw data" for the
 experiment. In the scRNA-seq context, FASTQ files are often considered the raw
@@ -325,10 +323,18 @@ table(keep)
 sce <- sce[keep,]
 ```
 
+**TO DO**: Discuss edgeR's `filterByExpr` function here more extensively. It doesn't seem clear from current text what min.prop argument does. Also mention that we typically don't know the cell types used in that filtering procedure.
+
 # Quality control
 
-Distinguishing features of low-quality cells (from the
-[OSCA](http://bioconductor.org/books/3.14/OSCA.basic/quality-control.html) 
+In quality control (QC), we check the quality of our dataset. In particular, 
+we investigate undesirable oddities, such as low-quality cells, empty droplets
+or doublets.
+
+## Identifying and removing low-quality cells
+
+There are several distinguishing features of low-quality cells that can be used
+in order to identify them. [As described in the OSCA book](http://bioconductor.org/books/3.14/OSCA.basic/quality-control.html) 
 book):
 
 1. The library size is defined as the total sum of counts across all 
@@ -361,6 +367,8 @@ not been successfully stripped.
 
 ## Calculate QC variables
 
+**TO DO**: Explain what `perCellQCMetrics` does.
+
 ```{r, message=FALSE, warning=FALSE}
 library(scater)
 
@@ -372,9 +380,9 @@ sum(rowData(sce)$chromosome_name=="MT",na.rm = TRUE) # 28 mitochondrial genes
 sum(grepl("^MT-", rownames(sce))) # alternatively
 is.mito <- grepl("^MT-", rownames(sce))
 
+## calculate QC metrics
 df <- perCellQCMetrics(sce, subsets=list(Mito=is.mito)) 
 # add QC variables to sce object
-
 colData(sce) <- cbind(colData(sce), df)
 
 # the QC variables have now been added to the colData of our SCE object.
@@ -495,6 +503,8 @@ We will use
 [scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
 to detect doublet cells.
 
+**TO DO**: Briefly explain how this works.
+
 ```{r, message=FALSE, warning=FALSE}
 ## perform doublet detection
 library(scDblFinder)
@@ -532,6 +542,8 @@ sce <- sce[,!sce$scDblFinder.class == "doublet"]
 ```
 
 # Normalization
+
+**TO DO**: Briefly explain why we need normalization and what we normalize for.
 
 For normalization, the size factors $s_i$ computed here are simply scaled 
 library sizes:
