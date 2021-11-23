@@ -218,7 +218,7 @@ We remove a total of $2238$ cells, mainly due to low sequencing depth and
 low number of genes detected.
 
 ```{r}
-lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
+lowLib <- isOutlier(df$sum, type="lower", log=TRUE, nmads=4)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
 
