@@ -31,27 +31,24 @@ process of endoderm differentiation.
 
 # Download data
 
-The data can be downloaded from [Zenodo](https://zenodo.org/record/3625024#.YWfahtlBxB1).
-At the bottom of this web-page, we can download the files `raw_counts.csv.zip` 
-and `cell_metadata_cols.tsv` and store these files locally.
+For this lab session, we will work with a subset of the data, i.e., the data
+for the first (alphabetically) 15 patients in the experiment. These can be
+downloaded through the *belnet filesender* link provided through email,
+https://filesender.belnet.be/?s=download&token=eb8136df-67d3-4869-b2a9-f65767054e81.
+
+The data original (125 patient) could be downloaded from 
+[Zenodo](https://zenodo.org/record/3625024#.YWfahtlBxB1). At the bottom of this
+web-page, we can download the files `raw_counts.csv.zip` and 
+`cell_metadata_cols.tsv` and store these files locally. We do not recommend 
+doing this during the lab session, to avoid overloading the system.
 
 # Import data
 
 First we read in the count matrix:
 
 ```{r, message=FALSE, warning=FALSE}
-#install.packages("data.table")
-library(data.table)
-data <- fread(cmd = "unzip -p /Users/jg/Desktop/PhD/DTU_trajectory/Data/iPSC/iPSC_gene/raw_counts.csv.zip")
-data[1:5,1:5] # data table with first column the gene names
-```
-
-Then we read the metadata of the experiment:
-
-```{r}
-metadata <- read.csv("/Users/jg/Desktop/PhD/DTU_trajectory/Data/iPSC/cell_metadata_cols.tsv",
-                     sep="\t")
-head(metadata,n=3)
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+sce
 ```
 
 # Explore metadata
@@ -60,8 +57,8 @@ Exploration of the metadata is essential to get a better idea of what the
 experiment was about and how it was organized.
 
 ```{r}
-metadata[1:5,1:10]
-colnames(metadata)
+colData(sce)[1:5,1:10]
+colnames(colData(sce))
 ```
 
 As stated in the paper, cells were sampled on 4 time points. Each of these 
@@ -69,46 +66,35 @@ time points is expected to correspond with different cell types (day0 = iPSC,
 day1 = mesendoderm, day2 = intermediate and day3 = endoderm).
 
 ```{r}
-table(metadata$day)
+table(colData(sce)$day)
 ```
 
-As stated in the paper, cells were harvested from 125 patients. The number of 
-cells harvested per patient (over all time points) ranges from 4 to 1415. We
-see that for most patients the number of harvested cells ranges between 100 and
-500. 
+As stated in the paper, cells were harvested from 125 patients. Here, we are
+working on a subset with 15 patients. The number of cells harvested per patient 
+(over all time points) ranges from 31 to 637.
 
 ```{r}
-length(table(metadata$donor)) # number of donors
-range(table(metadata$donor)) # cells per donor
-hist(table(metadata$donor),breaks=100) # cells per donor
+length(table(colData(sce)$donor)) # number of donors
+range(table(colData(sce)$donor)) # cells per donor
+hist(table(colData(sce)$donor),breaks=100) # cells per donor
 ```
 
-Below, we look how many cells are harvest per patent and per time point (for
-the first 25 patients).
+Below, we look how many cells are harvest per patent and per time point.
 
 ```{r}
-head(table(metadata$donor,metadata$day),n=25)
+table(colData(sce)$donor,colData(sce)$day)
 ```
 
 We see that for many patients the data is complete, i.e. cells were sampled
 on all time points.
 
-Practically, the cells were prepared in 28 batches;
+Practically, the cells were prepared in 28 batches. Since we here only look
+at a subset of the data, we see that only 14 of these batches are represented 
+here.
 
 ```{r}
-length(table(metadata$experiment))
-table(metadata$experiment, metadata$day)
-```
-
-# Generate a SingleCellExperiment object
-
-Construct the `SingleCellExperiment` object.
-
-```{r, message=FALSE, warning=FALSE}
-library(SingleCellExperiment)
-(sce <- SingleCellExperiment(assays = list(counts = as.matrix(data[,2:ncol(data)])),
-                             colData = metadata,
-                             rowData = data[,1]))
+length(table(colData(sce)$experiment))
+table(colData(sce)$experiment, colData(sce)$day)
 ```
 
 # Obtaining and including rowData

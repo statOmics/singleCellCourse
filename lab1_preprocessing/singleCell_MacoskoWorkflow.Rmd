@@ -305,12 +305,36 @@ library(edgeR)
 keep <- rowSums(assays(sce)$counts > 0) > 10
 table(keep)
 
-# Dedicated functions for filtering out lowly expressed genes exist.
-# For instance, edgeR allows to retain genes that have an expression of at 
-# least 1 in at least 10 cells (min.prop = 20% of the cells from the smallest 
-# group). The sum of the counts over all cells must be higher than 
-# min.total.count = 15.
+sce <- sce[keep,]
+```
 
+Note that dedicated functions for filtering out lowly expressed genes exist.
+One such function is the `filterByExpr` function of the edgeR R package.
+In brief, the strategy keeps genes that have at least "min.count" reads in a 
+worthwhile number samples. 
+
+More precisely, the filtering keeps genes that have count-per-million (CPM) 
+above k in n samples. 
+
+k is determined by the min.count argument to the function, and by the sample 
+library sizes.
+
+n is determined by the design matrix. n can be seen as the smallest group sample
+size. A `group` of samples/cells can be defined as cells that are more similar
+to one another, e.g., from the same sequencing batch, the same patient....
+Here we could also use the cluster assignment (cell type) for each cell as the
+grouping variable; *note however, that this usually is not available until a*
+*later stage in the analysis pipeline* (i.e., after dimension reduction and 
+clustering, topics we will cover next session.)
+
+If all the group sizes are larger than the `large.n` argument of the 
+filterByExpr function, which defaults to 10, then n will be taken as
+`min.prop`* the the number of samples/cells in the smallest group.
+
+Note that all the group sizes will often be larger than the `large.n` in case
+of single-cell data.
+
+```{r}
 # Slow (more than 1min) -> do not run
 # keep2 <- filterByExpr(sce,
 #                       group = sce$cluster,
@@ -318,12 +342,8 @@ table(keep)
 #                       min.total.count = 15,
 #                       min.prop = 0.2)
 # table(keep2)
-
-# continue with filtering 1
-sce <- sce[keep,]
 ```
 
-**TO DO**: Discuss edgeR's `filterByExpr` function here more extensively. It doesn't seem clear from current text what min.prop argument does. Also mention that we typically don't know the cell types used in that filtering procedure.
 
 # Quality control
 
@@ -367,7 +387,14 @@ not been successfully stripped.
 
 ## Calculate QC variables
 
-**TO DO**: Explain what `perCellQCMetrics` does.
+This function calculates useful QC metrics for identification and removal of 
+potentially problematic cells. Default per-cell metrics are the sum of counts 
+(i.e., the library size) and the number of detected features. The percentage of 
+counts in the top features also provides a measure of library complexity.
+
+If subsets is specified, these statistics are also computed for each subset of 
+features. This is useful for investigating gene sets of interest, e.g., 
+mitochondrial genes.
 
 ```{r, message=FALSE, warning=FALSE}
 library(scater)
@@ -381,7 +408,9 @@ sum(grepl("^MT-", rownames(sce))) # alternatively
 is.mito <- grepl("^MT-", rownames(sce))
 
 ## calculate QC metrics
-df <- perCellQCMetrics(sce, subsets=list(Mito=is.mito)) 
+df <- perCellQCMetrics(sce, subsets=list(Mito=is.mito))
+head(df)
+
 # add QC variables to sce object
 colData(sce) <- cbind(colData(sce), df)
 
@@ -462,6 +491,23 @@ number of UMIs, below which all cells are considered to correspond to empty
 droplets. This lower bound may not be trivial to derive, but the `barcodeRanks`
 function can be useful to identify an elbow/knee point.
 
+In brief, the steps taken by the `emtpyDrops` function can be summarized as 
+follows:
+
+1.	Define threshold T of total UMI counts (e.g. with the help of the 
+`barcodeRanks` function), below which cells may be considered to be from empty 
+droplets. Call this set of cells E.
+
+2.	Define $A_g$ as the total gene expression across all cells in E.
+
+3.	Define $pi_g$ as the relative contribution of gene g to the ambient profile.
+
+4.	Calculate p-value for each cell to have a transcriptional profile similar to
+the ambient solution. Intuitively, a p-value below the requested alpha level 
+would correspond to a cell for which the observed count profile strongly 
+deviates from the count profile observed in the cells with a library size 
+below threshold T, i.e., a non-empty droplet.
+
 ```{r, message=FALSE, warning=FALSE}
 library(DropletUtils)
 bcrank <- barcodeRanks(counts(sce))
@@ -490,7 +536,7 @@ hist(all.out$PValue[all.out$Total <= limit & all.out$Total > 0],
     xlab="P-value", main="", col="grey80", breaks=20)
 
 # but note that it would remove a very high number of cells
-length(which(all.out$FDR <= 0.001))
+length(which(all.out$FDR <= 0.01)) # retained
 
 # so we stick to the more lenient adaptive filtering strategy
 # remove cells identified using adaptive thresholds
@@ -503,7 +549,29 @@ We will use
 [scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
 to detect doublet cells.
 
-**TO DO**: Briefly explain how this works.
+As discussed in the theory session of last week, the steps taken by 
+`scDblFinder` can be summarized as follows:
+
+1. Perform principal components analysis (PCA) on log-normalized expression 
+counts. This allows for projecting each cell in the dataset into a 2D space
+(for more details on PCA, see next weeks session).
+
+2. Randomly select two cells, sum their counts and normalize, and project 
+into PCA space from step 1. In other words, artificially generate doublets and
+see where they are located in the 2D space.
+
+3. Repeat step 2 many times (generate many artificial doublets).
+
+4. Generate neighbor network in the 2D space. The network is then used to 
+estimate a number of characteristics for each cell, in particular the proportion 
+f artificial doublets among the nearest neighbors.
+
+5. Use this information, along with other predictors, to train a classifier
+(gradient boosted tree) that allows for distinguishing doublets from singlets.
+
+Note: only classifies for identifying doublets for which the two cells
+are from different cell type clusters.
+
 
 ```{r, message=FALSE, warning=FALSE}
 ## perform doublet detection
@@ -543,7 +611,21 @@ sce <- sce[,!sce$scDblFinder.class == "doublet"]
 
 # Normalization
 
-**TO DO**: Briefly explain why we need normalization and what we normalize for.
+Normalization aims to remove technical effects such as sequencing depth so that 
+comparisons between cells are not confounded by them. The most commonly used 
+normalization methods methods use scaling, where a scaling factor (also called 
+size factor, normalization factor) is estimated for each cell. These scaling 
+factors (e.g., the effective library size) can be included as an offset
+to downstream modeling procedures. This effectively allows for performing
+inference on the relative abundance of a gene in a cell, after accounting for 
+library size and RNA composition differences between cells, which is much more
+relevant than comparing raw counts
+
+Note that we always prefer the use of offsets over transformation of the data.
+In brief, such transformation would distort the mean-variance relationship
+in the data. For more details, we refer to the document that was discussed
+in theory session of last week
+([link](https://statomics.github.io/SGA21/sequencing_scalingNormalization.html))
 
 For normalization, the size factors $s_i$ computed here are simply scaled 
 library sizes:
