@@ -1,0 +1,121 @@
+---
+title: 'Data import, quality control and normalization for the Cuomo dataset'
+author: "Koen Van den Berge and Jeroen Gilis"
+date: "24/11/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Introduction
+
+We here make use of the publication of Anna Cuomo et al.
+(last author Oliver Stegle), which we will refer to as the `iPSC dataset`. The 
+paper that describes this dataset can be found using this 
+[link](https://www.nature.com/articles/s41467-020-14457-z).
+
+In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
+from 125 healthy human donors. These cells were used to study the endoderm 
+differentiation process. In this process, iPSCs differentiate to endoderm cells,
+a process which takes approximately three days. As such, the authors 
+cultered the iPSCs cell lines and allowed for differentiation for three days. 
+During the experiment, cells were harvested at four different time points: 
+day0 (directly at to incubation), day1, day2 and day3. Knowing the process of 
+endoderm differentiation, these time points should correspond with different 
+cell types: day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
+are "intermediate" cells and day3 are fully differentiated endoderm cells.
+
+This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
+
+The final goal of the experiment was to characterize population variation in the
+process of endoderm differentiation.
+
+# Download data
+
+For this lab session, we will work with a subset of the data, i.e., the data
+for the first (alphabetically) 15 patients in the experiment. These can be
+downloaded through the *belnet filesender* link provided through email,
+https://filesender.belnet.be/?s=download&token=eb8136df-67d3-4869-b2a9-f65767054e81.
+
+The data original (125 patient) could be downloaded from 
+[Zenodo](https://zenodo.org/record/3625024#.YWfahtlBxB1). At the bottom of this
+web-page, we can download the files `raw_counts.csv.zip` and 
+`cell_metadata_cols.tsv` and store these files locally. We do not recommend 
+doing this during the lab session, to avoid overloading the system.
+
+# Import data
+
+First we read in the count matrix:
+
+```{r, message=FALSE, warning=FALSE}
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+sce
+```
+
+# Explore metadata
+
+Exploration of the metadata is essential to get a better idea of what the
+experiment was about and how it was organized. In contrast with the previous
+dataset by Macosko et al., we here have a large amount of metadata that we can
+work with; and that we need to explore.
+
+When we think of the experiment, the key aspects are;
+
+- At which day of the developmental process the cells were sequenced (which
+should be a proxy for the cell type)
+
+- Cells come from 125 (15 in this reduced dataset) donors
+
+In addition, to reduce technical artefacts and to allow for batch correction, 
+each batch ("experiment" variable) may contain cells of multiple patients/days.
+
+Explore he metadata. The `table()` function will come in handy for this (see
+the Macosko analysis).
+
+# Obtaining and including rowData
+
+- Assess what is currently stored in the `rowData` of the SingelCellExperiment
+object.
+
+- Retrieve relevant information form `bioMart`. Make sure to select the right
+values for the `dataset` and `version` arguments for the `useEnsembl` function
+(these can be retrieved from the Cuomo et al. paper).
+
+# Filtering non-informative genes
+
+Filter the genes using relavant criteria. Compare your results with what we
+obtained with the Macosko analysis. Can you explain what you observe?
+
+# Quality control
+
+## Calculate QC variables
+
+Use `perCellQCMetrics` to compute QC metrics.
+
+## Exploratory data analysis
+
+## QC using adaptive thresholds
+
+Visualize the cells that are going to be removed. Are you happy with the
+selection criterion, i.e., does it appear that we are only removing
+technical artefacts or could we be removing biological signal as well?
+
+To do this, try coloring the "detected" versus "subsets_Mito_percent" plot and
+"sum" versus "detected" plots based on biologically significant metadata.
+
+## Remove empty droplets
+
+What do you think of this step for the analysis of this dataset?
+
+## Identifying and removing doublets
+
+What do you think of this step for the analysis of this dataset?
+
+# Normalization
+
+
+
+
+
+
