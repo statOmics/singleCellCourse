@@ -2,6 +2,9 @@
 
 ## get fasta
 ### Too large to download from net in this session; we work with reduced dataset
+wget https://raw.githubusercontent.com/statOmics/singleCellCourse/practical1/lab1_preprocessing/alevin_macosko/SRR1853178_1_subsampled40k.fastq
+
+wget https://raw.githubusercontent.com/statOmics/singleCellCourse/practical1/lab1_preprocessing/alevin_macosko/SRR1853178_2_subsampled40k.fastq
 
 ### download transcriptome
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.transcripts.fa.gz

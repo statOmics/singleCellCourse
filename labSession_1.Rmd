@@ -47,7 +47,7 @@ simulataneously providing some quality control for the sequenced reads.
 
 These steps are implemented in a small .shell script, which can be obtained
 using the following link
-[Macosko_sh](/lab1_preprocessing/alevin_macosko/preprocessDropseq_lab.sh).
+[Macosko_sh](./lab1_preprocessing/alevin_macosko/preprocessDropseq_lab.sh).
 
 ## Data exploration and preprocessing in R
 
@@ -89,7 +89,7 @@ data such as drop-seq and 10X data.
 
 The salmon quantification isimplemented in a small .shell script, which can 
 be obtained using the following link
-[Cuomo_sh](/lab1_preprocessing/salmon_cuomo/quantify_cuomo_lab.sh).
+[Cuomo_sh](./lab1_preprocessing/salmon_cuomo/quantify_cuomo_lab.sh).
 
 ## Data exploration and preprocessing in R
 
