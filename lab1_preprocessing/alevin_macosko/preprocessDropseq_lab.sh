@@ -6,6 +6,10 @@ wget https://raw.githubusercontent.com/statOmics/singleCellCourse/practical1/lab
 
 wget https://raw.githubusercontent.com/statOmics/singleCellCourse/practical1/lab1_preprocessing/alevin_macosko/SRR1853178_2_subsampled40k.fastq
 
+## For the full data, we would do
+## wget https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1853178/SRR1853178
+## /Applications/sratoolkit.2.11.1-mac64/bin/fasterq-dump SRR1853178
+
 ### download transcriptome
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M27/gencode.vM27.transcripts.fa.gz
 
