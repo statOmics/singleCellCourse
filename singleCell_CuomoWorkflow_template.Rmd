@@ -48,8 +48,8 @@ doing this during the lab session, to avoid overloading the system.
 
 First we read in the count matrix:
 
-```{r, message=FALSE, warning=FALSE}
-sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds") #change to your data path
 sce
 ```
 
