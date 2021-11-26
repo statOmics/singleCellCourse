@@ -1,0 +1,123 @@
+---
+title: "Batch correction and data integration"
+author: "Koen Van den Berge"
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+---
+
+```{r functions, include=FALSE}
+library(knitr)
+library(rmarkdown)
+# A function for captioning and referencing images
+fig <- local({
+    i <- 0
+    ref <- list()
+    list(
+        cap=function(refName, text) {
+            i <<- i + 1
+            ref[[refName]] <<- i
+            paste("Figure ", i, ": ", text, sep="")
+        },
+        ref=function(refName) {
+            ref[[refName]]
+        })
+})
+``` 
+
+
+# Batch correction
+
+## What is a batch effect?
+
+ - A batch effect is a **systematic technical effect** that may confound the biological variation of interest. Batch effects occur by samples being processed in different batches, be it different laboratory personnel, reagent lots/concentrations, processing times, sequencing runs, etc. All these may have an effect on the resulting data.
+ - Batch effects are not of interest and a failure to account for or even to acknowledge them is almost guaranteed to lead to either spurious results or a loss in statistical power, in particular when batch effects are correlated with the biological variation of interest, i.e., when confounding occurs between batch effects and the biological covariate of interest.
+ - Identifying batch effects is an essential skill when working with public datasets. **Exploratory data analysis is key** to their identification.
+ - Batch effects are not unique to high-throughput data and also occur in low-dimensional biological measurements such as quantitative PCR or western blots. However, the many variables measured in high-throughput datasets allow us to identify and even correct for them!
+
+```{r, echo=FALSE, fig.cap=paste("")}
+# All defaults
+include_graphics("./figures/batchEffectsPaper.png")
+```
+ ---
+ 
+## Exploring processing batch in the Drop-seq data from Macosko
+
+**TODO** after finishing lab on dimensionality reduction and using corresponding object.
+
+## Accounting for known batch effects
+
+We will discuss two approaches to handle known batch effects.
+
+### Incorporating batch covariates in statistical model (conditioning on the batch effect)
+
+A natural approach in dealing with batch effects is to incorporate them as covariates in our statistical model. In practice, this may happen in multiple ways. We provide a few examples:
+
+ - **Feature selection**: If we are confronted with batch effects, we could incorporate the batch variable(s) as covariates in a GLM, which we may then use to calculate deviance or Pearson residuals for feature selection purposes. Since the batch effect is included in the covariate, we effectively condition on it in the calculation of our residuals.
+ - **Dimensionality reduction**: When using a latent-variable model for dimensionality reduction, such as `zinbwave` or `scVI`, one can incorporate covariates and effectively calculate reduced dimensions conditional on the batch effect.
+ - **Differential expression**: In differential expression analysis, we typically fit a single GLM to each gene. Also here, we can add the batch variable(s) as covariates in the GLM.
+ 
+It is crucial, however, that the batch variable(s) is (are) not confounded with the biological variable(s) of interest. If these variables are correlated, accounting for the batch effect will also remove biological signal. In such scenarios, it is very hard, if not impossible, to separate biological from technical variation.
+
+### Estimating batch-corrected counts
+
+Sometimes it is not straight forward to simply incorporate a covariate in the analysis framework, e.g., when performing PCA dimensionality reduction. In these cases, it can be useful to estimate batch-corrected counts. Depending on the statistical model, this may be implemented differently, but the idea is always similar: we estimate the batch effect using a regression model, and substract it from our observed data.
+
+#### Plain residuals of GLM
+
+For example, say we are working with a (Poisson or negative binomial) count GLM. Let $Y_{gi}$ denote a measure of the gene expression from gene $g$ in cell $i$. Let $\mathbf{B}$ denote a $n \times 2$ matrix denoting the batch effect we want to correct for. Since $\mathbf{B}$ has only two columns, there is only a single batch effect (i.e., there are two batches in total). Let $\mathbf{X}$ denote the $n \times p$ design matrix containing the covariates of interest (cell type, treatment condition, etc.). Finally, let $O_i$ correspond to known cell-specific offsets. 
+
+The mean model would correspond to
+
+\[ \log E(Y_{gi} | B_i, X_i, O_i) = \mathbf{X}_i\beta_g + \mathbf{B}_i \gamma_g + O_i. \]
+
+with $\beta_g$ a $\p \times 1$ vector of parameters of interest, and $\gamma_g$ a $2 \times 1$ vector of parameters modeling the effect of batch on average gene expression. We can then obtain batch- and offset-corrected counts via
+
+\[ \log(\tilde{Y}_{gi}) = \log E(Y_{gi}) - \mathbf{B}_i \gamma_g - O_i, \]
+
+i.e., these are obtained as residuals of the GLM, correcting for technical variation, but keeping biological variation (i.e., we do not substract the $\mathbf{X}_i\beta_g$ effects).
+
+In `RUVSeq`, developed by [Risso *et al.* (2014)](https://www.nature.com/articles/nbt.2931), for example, the authors approximate this by regressing $Z_{gi} = \log (Y_{gi}) - O_i$ onto $\mathbf{B}$, and calculating the residuals from this linear model, i.e., $\log(\tilde{Y}_{gi}) = \log (Y_{gi}) - O_i - \mathbf{B}_i \gamma_g$.
+
+#### Pearson residuals
+
+Similarly, we may calculate Pearson residuals as batch-corrected counts
+
+\[  R_{gi} = \frac{Y_{gi} - \mu_{gi}}{\sqrt{\mu_{gi} + \phi_g \mu_{gi}^2}} ,\]
+
+assuming a negative binomial model, where
+
+\[ \log E(Y_{gi} | B_i, X_i, O_i) = \log( \mu_{gi} | B_i, X_i, O_i) = \mathbf{X}_i\beta_g + \mathbf{B}_i \gamma_g + O_i. \]
+
+This approach is adopted in the recent [`RUV-III-NB` paper by Salim *et al.* (2021)](https://www.biorxiv.org/content/10.1101/2021.11.06.467575v1).
+
+## Estimating unknown unwanted variation
+
+In all of the above, we have assumed we know the major sources of technical variation, and that are able to represent these using the batch effects encoded in $\mathbf{B}$ and offsets $\mathbf{O}$.
+In some cases, we may want to account for unknown (latent) unwanted variation. These may consist of complex technical effects that typical normalization procedures do not account for, or batch effects for which we do not observe the batch variable, e.g., using public data when we do not have access to the full metadata.
+In such a setting, we typically try to summarize these complex effects by assuming that the unknown unwanted variation (UUV) is of low-rank, e.g., of rank $K \le 10$, and we attempt to estimate this low-rank matrix, using approaches such as factor analysis or principal component analysis.
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Individuals can also be considered batch effects if doing dimensitonality reduction.
+
+
+
+ 
+

@@ -50,9 +50,7 @@ First we read in the count matrix:
 
 ```{r, message=FALSE, warning=FALSE}
 sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
-```
 
-```{r}
 sce
 ```
 
@@ -81,6 +79,7 @@ working on a subset with 15 patients. The number of cells harvested per patient
 ```{r}
 length(table(colData(sce)$donor)) # number of donors
 range(table(colData(sce)$donor)) # cells per donor
+hist(table(colData(sce)$donor),breaks=100) # cells per donor
 ```
 
 Below, we look how many cells are harvest per patent and per time point.
@@ -225,7 +224,7 @@ We remove a total of $301$ cells, mainly due to low sequencing depth and
 low number of genes detected.
 
 ```{r}
-lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
+lowLib <- isOutlier(df$sum, type="lower", log=TRUE, nmads=4)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
 
