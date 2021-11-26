@@ -1,0 +1,107 @@
+---
+title: "Preprocessing and quality control of scRNA-seq data"
+author: "Koen van den Berge and Jeroen Gilis"
+date: "24/11/2021"
+output:
+    html_document:
+      code_download: true    
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
+---
+
+In this first lab session, we will perform quality control, gene-level 
+quantification and data pre-processing on two different scRNA-seq dataset.
+
+# Macosko dataset
+
+In this workshop session, we will preprocess the single-cell RNA-seq dataset
+from the publication by Macosko *et al.*, Cell 161, 1202–1214 from 2015
+[(link)](https://doi.org/10.1016/j.cell.2015.05.002). This is the manuscript in
+which the droplet scRNA-seq technology **Drop-seq** was introduced.
+Six years after the original publication, drop-seq is still one of the most 
+commonly adopted scRNA-seq protocols, as evidenced by the
+large number of citations for Macosko *et al.* 
+(4.303 citations at November 3, 2021).
+
+In this particular experiment, Macosko *et al.* sequenced 49,300 cells from the
+mouse retina, identifying 39 transcriptionally distinct cell populations. The
+experiment was performed in 7 batches.
+
+The raw data (FASTQ files) of the experiment can be retrieved from the 
+sequencing read archive (SRA) under the accession 
+[SRR1853178](https://trace.ncbi.nlm.nih.gov/Traces/sra/?run=SRR1853178). 
+However, given the size of the data, we have provided a more amenable subset
+of the data on our lab GitHub page.
+
+## Data quantification with QC
+
+We will make use of 
+[alevin](https://salmon.readthedocs.io/en/latest/alevin.html) software, which 
+is integrated with the 
+[salmon](https://salmon.readthedocs.io/en/latest/salmon.html) quantification 
+software to quantify a subset of reads form the Macosko experiment, while 
+simulataneously providing some quality control for the sequenced reads.
+
+These steps are implemented in a small .shell script, which can be obtained
+using the following link
+[Macosko_sh](./lab1_preprocessing/alevin_macosko/preprocessDropseq_lab.sh).
+
+## Data exploration and preprocessing in R
+
+Here, we provide an example of a script for performing data exploration
+and preprocessing in R for the Macosko dataset
+
+[Macosko_rmd](./singleCell_MacoskoWorkflow.html)
+
+# Cuomo dataset
+
+We here make use of the publication of Anna Cuomo et al.
+(last author Oliver Stegle), which we will refer to as the `iPSC dataset`. The 
+paper that describes this dataset can be found using this 
+[link](https://www.nature.com/articles/s41467-020-14457-z).
+
+In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
+from 125 healthy human donors. These cells were used to study the endoderm 
+differentiation process. In this process, iPSCs differentiate to endoderm cells,
+a process which takes approximately three days. As such, the authors 
+cultered the iPSCs cell lines and allowed for differentiation for three days. 
+During the experiment, cells were harvested at four different time points: 
+day0 (directly at to incubation), day1, day2 and day3. Knowing the process of 
+endoderm differentiation, these time points should correspond with different 
+cell types: day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
+are "intermediate" cells and day3 are fully differentiated endoderm cells.
+
+This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
+
+The final goal of the experiment was to characterize population variation in the
+process of endoderm differentiation.
+
+## Data quantification
+
+We will make use of the 
+[salmon](https://salmon.readthedocs.io/en/latest/salmon.html) quantification 
+software to quantify a subset of the cells form the Cuomo experiment. Note that
+here we do not make use of Alevin, as Alevin is only used for drople-based
+data such as drop-seq and 10X data.
+
+The salmon quantification isimplemented in a small .shell script, which can 
+be obtained using the following link
+[Cuomo_sh](./lab1_preprocessing/salmon_cuomo/quantify_cuomo_lab.sh).
+
+## Data exploration and preprocessing in R
+
+Here, we provide a template for a script for performing data exploration
+and preprocessing in R for the Cuomo dataset. It is up to you to fill out
+this script, based on the concepts discussed in the theory session and the
+fucntions explained for the Macosko analysis!
+
+[Cuomo_rmd](./singleCell_CuomoWorkflow_template.html)
+
+
+
+
+
+
