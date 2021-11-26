@@ -41,9 +41,9 @@ fig <- local({
  - Identifying batch effects is an essential skill when working with public datasets. **Exploratory data analysis is key** to their identification.
  - Batch effects are not unique to high-throughput data and also occur in low-dimensional biological measurements such as quantitative PCR or western blots. However, the many variables measured in high-throughput datasets allow us to identify and even correct for them!
 
-```{r, echo=FALSE, fig.cap=paste("")}
+```{r, echo=FALSE, fig.cap=paste("Paper by Leek and colleagues.")}
 # All defaults
-include_graphics("./figures/batchEffectsPaper.png")
+knitr::include_graphics("./figures/batchEffectsPaper.png")
 ```
  ---
  
