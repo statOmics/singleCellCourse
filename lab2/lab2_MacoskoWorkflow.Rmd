@@ -683,9 +683,12 @@ informative gene?
 The simplest approach to quantifying per-gene variation is to compute the 
 variance of the log-normalized expression values (i.e., "log-counts") for 
 each gene across all cells. While calculation of the per-gene variance
-is simple, feature selection requires modelling of the mean-variance relationship. The log-transformation is not a variance stabilizing
+is simple, feature selection requires modelling of the mean-variance relationship. 
+The log-transformation is not a variance stabilizing
 transformation in most cases, which means that the total variance of a gene is
 driven more by its abundance than its underlying biological heterogeneity.
+
+## Highly variable genes
 
 A (rightly so) popular approach is to select genes that have a high variance
 with respect to their mean. Often, first an empirical mean-variance trend is
@@ -741,6 +744,73 @@ legend("topleft",
        bty='n')
 ```
 
+## High deviance genes
+
+Genes with high deviance. See 
+[Townes et al.](https://doi.org/10.1186/s13059-019-1861-6) (2019) for feature 
+selection based on Binomial deviance. Genes with a high deviance will most 
+poorly fit a null model where the relative abundance is equal for all cells, 
+which therefore are informative.
+
+```{r}
+#BiocManager::install("scry")
+library(scry)
+sce <- devianceFeatureSelection(object = sce, 
+                                assay = "counts", 
+                                sorted = FALSE)
+
+plot(sort(rowData(sce)$binomial_deviance, decreasing = TRUE), 
+     type="l", 
+     xlab="ranked genes", 
+     ylab="binomial deviance", 
+     main="Feature Selection with Deviance")
+abline(v=2000, lty=2, col="red")
+```
+
+Our plot looks similar to one displayed in the 
+[vignette of the scry package](https://www.bioconductor.org/packages/release/bioc/vignettes/scry/inst/doc/scry.html). 
+Based on that plot, the authors suggest retaining 2.000 genes (the top 2000 
+based on the deviance residuals) for downstream dimensionality reduction and 
+clustering.
+
+## Seurat VST
+
+Another very common feature selection strategy is the variance-stabilizing
+transformation from the Seurat R package.
+
+**Intermezzo: interoperability between SingleCellExperiment and Seurat objects**
+
+In this lecture series, we always make use of the SingleCellExperiment object
+and the packages available from Bioconductor. Another very popular toolbox
+for performing scRNA-seq data analysis is Seurat. However, functions from
+Seurat cannot be used directly to manipulate SingleCellExperiment objects,
+and vice versa. Fortunately, efforts have been made to increase the
+interoperability between the two toolboxes.
+
+```{r}
+library(Seurat)
+seurat_obj <- as.Seurat(sce)
+seurat_obj # notice the "0 variable features"
+```
+
+On this object, we may use functions from the seurat toolbox.
+For instance, we may search for highly variable features using Seurat's VST
+implementation:
+
+```{r}
+seurat_obj <- Seurat::NormalizeData(seurat_obj, 
+                                    normalization.method = "LogNormalize", 
+                                    scale.factor = 10000)
+
+seurat_obj <-  FindVariableFeatures(object = seurat_obj,
+                                    selection.method = "vst")
+```
+
+```{r}
+seurat_obj  # notice the "2000 variable features" (default)
+head(VariableFeatures(seurat_obj)) # here they are
+```
+
 # Dimensionality reduction
 
 Note that, below, we color the cells using the known, true cell type label as 
@@ -783,6 +853,8 @@ number of PCs.
 There are several R functions that allow you to perform PCA. Here, we make use
 of the `runPCA` function of the `scater` package, which has been specifically
 developed for performing PCA on SingleCellExperiment objects.
+
+### PCA with feature selection
 
 ```{r}
 set.seed(1234)
@@ -842,7 +914,6 @@ chosen.elbow <- findElbowPoint(percent.var)
 chosen.elbow
 ```
 
-
 ### PCA without feature selection
 
 Note: more features -> computationally more intensive!
@@ -860,6 +931,16 @@ While we use more information to make this PCA plot (17.887 genes) as compared
 to the feature selected PCA plot (642 genes), we seem to retrieve less structure
 in the data. This is the power of feature selection, an increase in the
 signal-to-noise ratio!
+
+### Remarks on PCA
+
+Visualizations of reduced dimensions from linear dimensionality reduction
+methods are often "overcrowded", and it is hard to see structure (e.g., the PCA
+plot we just saw). Non-linear dimensionality reduction methods can overcome this
+problem. As the name suggests, the reduced dimensions are a non-linear function
+of the observed data. We will not go into detail as to how these work under the
+hood, but provide a few guidelines for the most popular methods. Often, the top
+(~10-50) PCs are provided as input.
 
 ## A generalization of PCA for exponential family distributions.
 
@@ -892,13 +973,57 @@ plotReducedDim(sce,
                colour_by = "cluster")
 ```
 
-Visualizations of reduced dimensions from linear dimensionality reduction
-methods are often "overcrowded", and it is hard to see structure (e.g., the PCA
-plot we just saw). Non-linear dimensionality reduction methods can overcome this
-problem. As the name suggests, the reduced dimensions are a non-linear function
-of the observed data. We will not go into detail as to how these work under the
-hood, but provide a few guidelines for the most popular methods. Often, the top
-(~10-50) PCs are provided as input.
+Alternatively, we could adopt the GLM-PCA strategy on the genes with high 
+deviance.
+
+```{r}
+# Based on the diagnostic plot from the feature selection, we would select the 
+# top 2000 genes with highest deviance. However, to reduce the running time of
+# the function, I here select the top 500 (which still is quite slow).
+hdg <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:500]
+
+set.seed(471681)
+poipca_dev <- glmpca(Y = assays(sce)$counts[hdg,],
+                 L = 2, 
+                 fam = "poi",
+                 minibatch = "stochastic")
+reducedDim(sce, "PoiPCA_dev") <- poipca_dev$factors
+plotReducedDim(sce, 
+               dimred="PoiPCA_dev",
+               colour_by = "cluster")
+```
+
+The authors of the `glmpca` package note that GLM-PCA can be slow for large 
+datasets. Therefore, they have implemented a fast approximation of the 
+algorithm, which first fits a null model of constant expression for each gene 
+across all cells, and subsequently fits standard PCA to either the Pearson or 
+deviance residuals from the null model.
+
+However, at least for me the `nullResiduals` function was **extremely slow**
+even slower than the `glmpca` code above. Therefore, **I suggest not running**
+this code, but I leave it in for reference.
+
+```
+sce <- nullResiduals(sce, assay="counts", type="deviance")
+sce <- nullResiduals(sce, assay="counts", type="pearson")
+
+pca<-function(Y, L=2, center=TRUE, scale=TRUE){
+    #assumes features=rows, observations=cols
+    res<-prcomp(as.matrix(t(Y)), center=center, scale.=scale, rank.=L)
+    factors<-as.data.frame(res$x)
+    colnames(factors)<-paste0("dim", 1:L)
+    factors
+}
+pca_d<-pca(assay(sce[hdg,], "binomial_deviance_residuals"))
+pca_d$resid_type<-"deviance_residuals"
+pca_p<-pca(assay(sce[hdg,], "binomial_pearson_residuals"))
+pca_p$resid_type<-"pearson_residuals"
+cm<-as.data.frame(colData(sce[hdg,]))
+pd<-rbind(cbind(cm, pca_d), cbind(cm, pca_p))
+ggplot(pd, aes(x=dim1, y=dim2, colour=phenoid)) + geom_point() +
+  facet_wrap(~resid_type, scales="free", nrow=2) +
+  ggtitle("PCA applied to null residuals of high deviance genes")
+```
 
 ## Non-linear dimensionality reduction: T-SNE
 
@@ -925,7 +1050,6 @@ may consider not running this code, or running it on a subset of the data
 (e.g., for 5 patients in stead of 15, or randomly subsampling cells...) for
 demonstrational purposes. One final option is to reduce the input space for
 the T-SNE algorithm, e.g. by setting `n_dimred = 5`.
-
 
 ```{r}
 # Do not run with slow PC/laptop
@@ -956,17 +1080,439 @@ plotUMAP(sce,
 
 # Clustering
 
+## Graph-based clustering
+
+First, we discuss graph-based clustering methods for scRNA-Seq data. This
+is very well explained in the
+[OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html).
+
+OSCA book:
+"Popularized by its use in Seurat, graph-based clustering is a flexible and 
+scalable technique for clustering large scRNA-seq datasets. We first build a 
+graph where each node is a cell that is connected to its nearest neighbors in 
+the high-dimensional space. Edges are weighted based on the similarity between 
+the cells involved, with higher weight given to cells that are more closely 
+related. We then apply algorithms to identify “communities” of cells that are 
+more connected to cells in the same community than they are to cells of 
+different communities. Each community represents a cluster that we can use for 
+downstream interpretation.
+
+The major advantage of graph-based clustering lies in its scalability. It only 
+requires a k-nearest neighbor search that can be done in log-linear time on 
+average, in contrast to hierachical clustering methods with runtimes that are 
+quadratic with respect to the number of cells. Graph construction avoids making 
+strong assumptions about the shape of the clusters or the distribution of cells 
+within each cluster, compared to other methods like k-means (that favor 
+spherical clusters) or Gaussian mixture models (that require normality)."
+
+Several graph-based clustering algorithms are implemented in the `scran` 
+library. The most global wrapper-function in this package is the 
+`clusterCells` function. Typically, the input for this function is a 
+SingleCellExperiment object with pre-computed principal components; these
+are used to take advantage of data compression and denoising. If the default 
+settings are adopted, `clusterCells` will perform two steps under the hood:
+
+1. Build a shared neighbors (SNN) graph of observations for downstream community
+detection. The SNN graph is closely related to the more common KNN graph.
+For each observation, its k-nearest neighbors are identified (k=10 by default), 
+based on distances between their expression profiles (Euclidean by default). 
+An edge is drawn between all pairs of observations that share at least one 
+neighbor, weighted by the characteristics of the shared nearest neighbors.
+
+2. The `clusterCells` function next internally calls the `cluster_walktrap`
+function from the `igraph` library. Based on the SNN graph from step 1, this 
+function tries to find densely connected subgraphs, also called communities in 
+a graph via random walks. The idea is that short random walks tend to stay in 
+the same community.
+
+```
+# Do not run; clusterCells function with default settings, i.e., building an
+# SNN graph and finding clusters with the walktrap algorithm.
+library(scran)
+nn.clusters <- clusterCells(sce, 
+                            use.dimred="PCA")
+table(nn.clusters)
+```
+
+**The disadvantage of using `clusterCells` is that the default setting of the**
+**second step, the `cluster_walktrap` function, is slow for large data.** 
+Therefore, we here will not use `clusterCells` here, but break up the process in 
+two steps: building a graph and detect clusters in that graph. For this second 
+step, we may then adopt a faster algorithm.
+
+### build graph (SNN graph)
+
 ```{r}
 # Build a shared nearest-neighbor graph from PCA space
-g <- buildSNNGraph(sce, 
-                   use.dimred = 'PCA')
+graph <- buildSNNGraph(sce, 
+                       use.dimred = 'PCA')
+# alternative: buildKNNGraph()
+```
 
-# Louvain clustering on the SNN graph, and add to sce
-colData(sce)$label <- factor(igraph::cluster_louvain(g)$membership)
-# Visualization.
+```{r}
+library(igraph)
+igraph::plot.igraph(
+  graph, layout = layout_with_fr(graph),
+  vertex.size = 5, vertex.label = NA
+)
+```
 
+### detect clusters on the graph
+
+```{r}
+# Walktrap community finding algorithmon the SNN graph
+# DO NOT RUN -> takes 20 minutes
+# cluster_walktrap <- factor(igraph::cluster_walktrap(g)$membership) #20min
+
+# The `cluster_fast_greedy` function tries to find dense subgraph, also called 
+# communities in graphs via directly optimizing a modularity score
+# DO NOT RUN -> takes 4 minutes
+# cluster_fastGreedy <- factor(igraph::cluster_fast_greedy(graph)$membership) #4min
+
+# Louvain clustering on the SNN graph
+cluster_louvain <- factor(igraph::cluster_louvain(graph)$membership) #8sec
+nlevels(cluster_louvain)
+
+# Leiden clustering on the SNN graph
+cluster_leiden <- factor(igraph::cluster_leiden(graph)$membership) #10sec
+nlevels(cluster_leiden) #1329 different clusters!
+
+cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
+                                                 resolution_parameter = 0.01)$membership) #10sec
+nlevels(cluster_leiden2) #14 different clusters
+```
+
+
+```{r}
+# Add to sce and visualize
+colData(sce)$cluster_louvain <- cluster_louvain
+colData(sce)$cluster_leiden2 <- cluster_leiden2
+
+# Visualization. Add the cluster labels to the previously generated UMAP
+# coordinates
 plotUMAP(sce, 
-         colour_by="label")
+         colour_by="cluster_louvain")
+plotUMAP(sce, 
+         colour_by="cluster_leiden2")
+plotUMAP(sce, 
+         colour_by ="cluster") # original labels provided by the authors
+```
+
+### Comparing clustering strategies
+
+```{r}
+table(cluster_louvain, cluster_leiden2)
+```
+
+```{r}
+library(pheatmap)
+pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
+```
+
+```{r}
+library(mclust)
+mclust::adjustedRandIndex(cluster_louvain, cluster_leiden2)
+```
+
+Comparison with original cluster labels:
+
+```{r}
+table(sce$cluster, cluster_louvain)
+pheatmap::pheatmap(table(sce$cluster, cluster_louvain))
+mclust::adjustedRandIndex(sce$cluster, cluster_louvain)
+```
+
+```{r}
+table(sce$cluster, cluster_leiden2)
+pheatmap::pheatmap(table(sce$cluster, cluster_leiden2))
+mclust::adjustedRandIndex(sce$cluster, cluster_leiden2)
+```
+
+## K-means clustering
+
+K-means is a generic clustering algorithm that has been used in many application
+areas. In R, it can be applied via the kmeans function. Typically, it is applied
+to a reduced dimension representation of the expression data (most often PCA, 
+because of the interpretability of the low-dimensional distances). We need to 
+define the number of clusters in advance. Since the results depend on the 
+initialization of the cluster centers, it is typically recommended to run 
+K-means with multiple starting configurations (via the *nstart* argument).
+
+```
+set.seed(123)
+clust_kmeans_k10 <- kmeans(reducedDim(sce, "PCA"), centers = 10, nstart = 5)
+table(clust_kmeans_k10$cluster)
+
+clust_kmeans_k39 <- kmeans(reducedDim(sce, "PCA"), centers = 39, nstart = 5)
+table(clust_kmeans_k39$cluster)
+```
+
+We here arbitrarily performed two k-means clustering analyses, once with k=10
+and once with k=39 (the number of clusters communicated by the authors). The
+choice of k is arbitrary, however, there are statistics that guide us towards a
+reasonable choice of k. The code below
+
+However, evaluating this code is again too slow to be feasible in this lab 
+session.
+
+```
+set.seed(123)
+gaps <- cluster::clusGap(
+  reducedDim(sce, "PCA", n_dimred=10), kmeans, 
+  K.max = 20, nstart = 5, B = 25
+)
+
+## Find the "best" k
+best.k <- cluster::maxSE(gaps$Tab[, "gap"], gaps$Tab[, "SE.sim"])
+best.k
+```
+
+
+```
+sce$cluster_kmeans_k10 <- factor(clust_kmeans_k10$cluster)
+sce$cluster_kmeans_k39 <- factor(clust_kmeans_k39$cluster)
+plotReducedDim(sce, "UMAP", colour_by = "cluster_kmeans_k10")
+plotReducedDim(sce, "UMAP", colour_by = "cluster_kmeans_k39")
+```
+
+```
+pheatmap::pheatmap(table(sce$cluster, sce$cluster_kmeans_k39))
+mclust::adjustedRandIndex(sce$cluster, sce$cluster_kmeans_k39)
+```
+
+## Hierarchical clustering
+
+From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html).
+
+"Hierarchical clustering is an old technique that arranges samples into a 
+hierarchy based on their relative similarity to each other. Most implementations 
+do so by joining the most similar samples into a new cluster, then joining 
+similar clusters into larger clusters, and so on, until all samples belong to 
+a single cluster. This process yields obtain a dendrogram that defines clusters 
+with progressively increasing granularity. Variants of hierarchical clustering 
+methods primarily differ in how they choose to perform the agglomerations. 
+For example, complete linkage aims to merge clusters with the smallest maximum 
+distance between their elements, while Ward’s method aims to minimize the 
+increase in within-cluster variance."
+
+"In the context of scRNA-seq, the main advantage of hierarchical clustering 
+lies in the production of the dendrogram. This is a rich summary that 
+quantitatively captures the relationships between subpopulations at various 
+resolutions. Cutting the dendrogram at high resolution is also guaranteed to 
+yield clusters that are nested within those obtained at a low-resolution cut; 
+this can be helpful for interpretation." 
+
+Indeed, low-resolution clusters can typically be interpreted as super-level 
+cell types, like immune cells, neuron cells or endothelial cells. Higher 
+resolution clusters correspond with a higher biological resolution:
+immune cell -> lymphocyte -> T-cell -> Th1 cell.
+
+However, note that we can also overcluster the data (splitting a homogenous
+set of cells in multiple clusters), resulting in spurious cell type
+identification.
+
+The `clusterCells` function of the `scran` library also allows for performing
+hierarchical clustering. This can be implemented as follows:
+
+```
+# takes 4 minutes
+library(bluster)
+hclust.sce <- clusterCells(x = sce, 
+                            use.dimred = "PCA",
+                            BLUSPARAM = HclustParam(method="ward.D2"), 
+                            full = TRUE)
+```
+
+Equivalently, we may again split the process in two more intuitive steps:
+
+1. Compute the pairwise distances between all cells. These are by default
+euclidean distances and, in order to reduce data complexity and increase signal
+to noise, we may perform this on the top (30) PC's. Implemented in the `dist`
+function.
+
+2. This function performs a hierarchical cluster analysis the distances from 
+step1. Initially, each cell is assigned to its own cluster and then the 
+algorithm proceeds iteratively, at each stage joining the two most similar 
+clusters, continuing until there is just a single cluster. Implemented in the
+`hclust` function.
+
+Note that the `hclust` function allows for specifying a "method" argument.
+The differences between the different methods goes beyond the scope of this
+session, but a brief description is provided in the function help file.
+In the context of scRNA-seq, I have mostly seen the use of the "ward.D2"
+method.
+
+```{r}
+distsce <- dist(reducedDim(sce, "PCA")) #1min
+hcl <- hclust(distsce, method = "ward.D2") #3min
+plot(hcl, labels = FALSE)
+```
+
+Next, we need to "cut the tree", i.e., choose at which resolution we want to
+report the (cell-type) clusters. This can be achieved with the `cutree` 
+function. As an input, `cutree` takes the dendrogram from the `hclust` function
+and a threshold value for cutting the tree. This is either `k`, the number of
+clusters we want to report, or `h`, the height in the dendrogram at which
+we wan to cut the tree.
+
+```{r}
+clust_hcl_k10 <- cutree(hcl, k = 10)
+table(clust_hcl_k10)
+```
+
+```{r}
+clust_hcl_h200 <- cutree(hcl, h = 200)
+table(clust_hcl_h200)
+```
+
+## Clustering in the original paper
+
+I will here mimic the strategy for clustering the cells that was adopted by
+the authors of the original Macosko publication. 
+
+**However, I will do this approximatively!** I will take similar steps/
+algorithms conceptually, but will remain within the current bioconductor 
+framework and the range of functions that we have seen in this session.
+
+### Downsampling
+
+To increase the power of unsupervised dimensionality reduction techniques for 
+discovering these types we first downsampled the 49,300-cell dataset to extract
+single-cell libraries where 900 or more genes were detected, resulting in a 
+13,155-cell "training set". 
+
+```{r}
+sce_900 <- sce[,sce$detected > 900]
+sce_900
+```
+
+### Feature selection
+
+We first identified the set of genes that was most variable across our training 
+set, after controlling for the relationship between mean expression and
+variability. We calculated the mean and a dispersion measure (variance/mean) 
+for each gene across all 13,155 single cells, and placed genes into 20 bins
+based on their average expression. Within each bin, we then z-normalized the 
+dispersion measure of all genes within the bin, in order to identify outlier 
+genes whose expression values were highly variable even when compared to genes 
+with similar average expression. We used a z-score cutoff of 1.7 to identify 
+384 highly variable genes.
+
+-> I will not use the exact same strategy, but the `modelGeneVar-getTopHVGs`
+strategy, which is conceptually similar in addressing the mean-variance 
+realtionship during feature selection.
+
+```{r}
+sce_900 <- logNormCounts(sce_900)
+dec_900 <- modelGeneVar(sce_900)
+# get top 374 highly variable genes
+hvg_900 <- getTopHVGs(dec_900,
+                      n = 374)
+```
+
+### PCA
+
+We ran Principal Components Analysis (PCA) on our training set as previously 
+described (Shalek et al.,2013), using the prcomp function in R, after scaling 
+and centering the data along each gene. We used only the previously 
+identified “highly variable” genes as input to the PCA in order to ensure robust
+identification of the primary structures in the data.
+
+-> I will use `runPCA` and store the first 32 PC's, like Macosko et al.
+
+```{r}
+set.seed(1234)
+sce_900 <- runPCA(sce_900, 
+                  ncomponents = 32, 
+                  subset_row = hvg_900)
+```
+
+### T-SNE
+
+We used these PC loadings as input for t-Distributed Stochastic Neighbor 
+Embedding (tSNE) (van der Maaten and Hinton, 2008), as implemented in the 
+tsne package in R with the “perplexity” parameter set to 30. The t-SNE procedure 
+returns a two-dimensional embedding of single cells.
+
+-> We do the same, but using the `runTSNE` bioconductor function.
+
+```{r}
+# runs <1min
+sce_900 <- runTSNE(sce_900, 
+               dimred = 'PCA',
+               n_dimred = 32,
+               perplexity = 30)
+plotTSNE(sce_900,
+         colour_by = "cluster")
+```
+
+```{r}
+library(ggplot2)
+gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
+                          y = reducedDim(sce_900, type = "TSNE")[,2],
+                          cluster = sce_900$cluster)
+gg_base <- ggplot(data = gg_hlp_data,
+                  aes(x = x, y = y)) +
+    geom_point(size=0.4) +
+    theme_bw() +
+    xlab("TSNE 1") +
+    ylab("TSNE 2")
+gg_base
+
+par(mfrow=c(4,10))
+for (clus in levels(sce_900$cluster)) {
+    select <- which(sce_900$cluster == clus)
+    gg_orig_clust <- gg_base + geom_point(data = gg_hlp_data[select, ],
+                                          aes(x = x, y = y), 
+                                          colour = "red", size=2)
+    print(gg_orig_clust)
+}
+```
+
+When we project the cluster labels defined by the authors on the T-SNE plot
+that we constructed ourselves with the current bioconductor tools, we see
+that the vast majority of the results seems to correspond between the original
+and the new analysis. Obviously a perfect correspondence is not expected, as
+we did not aim to reproduce the original analysis exactly (which would be very
+challenging, given that it was performed 5 years ago with different R and
+R package versions).
+
+Next the authors continue with two additional steps, whcih go beyond the scope
+of this session:
+
+1. Projecting the other cells (#detected genes <= 900) onto the T-SNE map. They
+adopted a manually implemented technique that I am not familiar with, based
+on PC loadings.
+
+2. Use a clustering algorithm on the T-SNE map to define cell type clusters.
+The authors adopted a density clustering approach implemented in the DBSCAN R 
+package (Ester et al., 1996), which was not discussed in the course.
+
+Alternatively, we may perform a clustering strategy that we have seen in the
+course and compare to the original clustering.
+
+```{r}
+# Build a shared nearest-neighbor graph from PCA space
+graph_900_PCA <- buildSNNGraph(sce_900, 
+                       use.dimred = 'PCA')
+cluster_PCA_louvain <- factor(igraph::cluster_louvain(graph_900_PCA)$membership) #8sec
+nlevels(cluster_PCA_louvain)
+
+# Build a shared nearest-neighbor graph from T-SNE space
+graph_900_TSNE <- buildSNNGraph(sce_900, 
+                       use.dimred = 'TSNE')
+cluster_TSNE_louvain <- factor(igraph::cluster_louvain(graph_900_TSNE)$membership) #8sec
+nlevels(cluster_TSNE_louvain)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster, cluster_PCA_louvain))
+mclust::adjustedRandIndex(sce_900$cluster, cluster_PCA_louvain)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster, cluster_TSNE_louvain))
+mclust::adjustedRandIndex(sce_900$cluster, cluster_TSNE_louvain)
 ```
 
 
