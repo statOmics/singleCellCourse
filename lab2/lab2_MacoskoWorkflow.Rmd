@@ -35,7 +35,7 @@ if(length(notInstalled) > 0){
 
 # The Macosko dataset
 
-In this workshop session, we will preprocess the single-cell RNA-seq dataset
+In this workshop session, we will analyze the single-cell RNA-seq dataset
 from the publication by Macosko *et al.*, Cell 161, 1202–1214 from 2015
 [(link)](https://doi.org/10.1016/j.cell.2015.05.002). This is the manuscript in
 which the droplet scRNA-seq technology **Drop-seq** was introduced.
@@ -674,21 +674,32 @@ As dimensions increase, shortest and farthest distances between points become
 nearly inseparable. In high-dimensional space, it is therefore extremely 
 difficult to separate signal from noise.
 
-In order to recover structure (e.g. setting up a dimensionality reduced
-space to help us find cell-type clusters in the data), we want to move to an
+In order to recover structure (e.g. setting up a dimension-reduced
+space to help us find cell type clusters in the data), we want to move to an
 informative, lower-dimensional space. We will select genes which we hope are
 informative for recovering the biological structure. But what defines an 
 informative gene?
 
 The simplest approach to quantifying per-gene variation is to compute the 
 variance of the log-normalized expression values (i.e., "log-counts") for 
-each gene across all cells. While calculation of the per-gene variance
-is simple, feature selection requires modelling of the mean-variance relationship. 
-The log-transformation is not a variance stabilizing
-transformation in most cases, which means that the total variance of a gene is
-driven more by its abundance than its underlying biological heterogeneity.
+each gene across all cells. 
 
-## Highly variable genes
+```{r}
+# calculate variance of log-normalized counts for each gene
+geneVars <- genefilter::rowVars(assays(sce)$logcounts)
+# select top 1000 highly variable genes
+highVarGenes <- names(geneVars)[order(geneVars, decreasing=TRUE)[1:1e3]]
+head(highVarGenes)
+```
+
+
+## Selecting genes with high variation with respect to mean
+
+While calculation of the per-gene variance
+is simple, feature selection requires modelling of the mean-variance relationship. Indeed, not accounting for the mean-variance structure while selecting highly variable genes will oftentimes boil down to selecting the most highly expressed genes.
+The log-transformation is a helpful variance stabilizing
+transformation, however, it is not perfect, meaning that the variance of a gene is not completely independent of its mean.
+Therefore, feature selection may still be driven by average expression rather than underlying biological heterogeneity.
 
 A (rightly so) popular approach is to select genes that have a high variance
 with respect to their mean. Often, first an empirical mean-variance trend is
@@ -746,10 +757,9 @@ legend("topleft",
 
 ## High deviance genes
 
-Genes with high deviance. See 
-[Townes et al.](https://doi.org/10.1186/s13059-019-1861-6) (2019) for feature 
-selection based on Binomial deviance. Genes with a high deviance will most 
-poorly fit a null model where the relative abundance is equal for all cells, 
+
+Here, we will select genes with a high residual deviance. The idea is that we assume a null model of constant expression fraction (i.e., RNA concentration) across all cells. We subsequently calculate a goodness-of-fit statistic for each gene, assessing whether the model is a good approximation to the gene expression of the corresponding gene.
+If the model fits poorly, i.e., the gene has a high deviance, the expression fraction varies significantly across the cells in our datasets.Genes with a high deviance will thus most poorly fit a null model where the relative abundance is equal for all cells, 
 which therefore are informative.
 
 ```{r}
@@ -776,14 +786,14 @@ clustering.
 ## Seurat VST
 
 Another very common feature selection strategy is the variance-stabilizing
-transformation from the Seurat R package.
+transformation from the `Seurat` R package, which amounts to calculating Pearson residuals from a regularized negative binomial regression model, with sequencing depth as a covariate.
 
 **Intermezzo: interoperability between SingleCellExperiment and Seurat objects**
 
 In this lecture series, we always make use of the SingleCellExperiment object
 and the packages available from Bioconductor. Another very popular toolbox
-for performing scRNA-seq data analysis is Seurat. However, functions from
-Seurat cannot be used directly to manipulate SingleCellExperiment objects,
+for performing scRNA-seq data analysis is `Seurat`. However, functions from
+`Seurat` cannot be used directly to manipulate `SingleCellExperiment` objects,
 and vice versa. Fortunately, efforts have been made to increase the
 interoperability between the two toolboxes.
 
@@ -793,8 +803,8 @@ seurat_obj <- as.Seurat(sce)
 seurat_obj # notice the "0 variable features"
 ```
 
-On this object, we may use functions from the seurat toolbox.
-For instance, we may search for highly variable features using Seurat's VST
+On this object, we may use functions from the `Seurat` toolbox.
+For instance, we may search for highly variable features using `Seurat`'s VST
 implementation:
 
 ```{r}
@@ -852,7 +862,8 @@ number of PCs.
 
 There are several R functions that allow you to perform PCA. Here, we make use
 of the `runPCA` function of the `scater` package, which has been specifically
-developed for performing PCA on SingleCellExperiment objects.
+developed for performing PCA on `SingleCellExperiment` objects.
+We calculate the top 30 principal components.
 
 ### PCA with feature selection
 
@@ -883,9 +894,9 @@ plotPCA(sce,
         colour_by = "cluster")
 ```
 
-While the large number of clusters in this dataset makes it impossible to 
+While the large number of clusters in this dataset makes it hard to 
 distinguish between all the different colors, we can already see that PCA
-retrieves some, but not all of the structure in the data that was discovered
+retrieves some, but not all, of the structure in the data that was discovered
 by the original authors.
 
 How many of the top PCs should we retain for downstream analyses? The choice of
@@ -903,10 +914,11 @@ explain so little variance that their inclusion or omission has no major effect.
 ```{r}
 percent.var <- attr(reducedDim(sce), "percentVar")
 plot(percent.var, log="y", xlab="PC", ylab="Variance explained (%)")
+plot(cumsum(percent.var), xlab="PC", ylab="Cumulative variance explained (%)")
 ```
 
 Here, retaining ±15PCs seems reasonable. If you really prefer a more data-driven
-way for determining this, 
+way for determining this, there are procedures available that aim to computationally identify the elbow/knee point in the variance explained per PC plot.
 
 ```{r, eval = FALSE}
 library(PCAtools)
@@ -954,11 +966,8 @@ data can be considered to be multinomial.
 The GLM-PCA strategy is implemented in the `glmpca` function of the `glmpca`
 package.
 
-Note; this function is quite computationally intensive. For regular PCA,
-the underlying computations can be strongly simplified given the assumption
-of Gaussian data (of the log-transformed normalized counts). Here, we work
-with the raw counts, which we assume to be *Poisson* distributed, allowing
-for less simplification.
+Note that this function is quite computationally intensive. For regular PCA on log-transformed normalized counts, the underlying computations can be strongly simplified Here, we work with the raw counts, which we assume to be *Poisson* distributed, requiring
+an iterative optimization scheme.
 
 ```{r, eval=TRUE}
 library(glmpca)
@@ -973,7 +982,7 @@ plotReducedDim(sce,
                colour_by = "cluster")
 ```
 
-Alternatively, we could adopt the GLM-PCA strategy on the genes with high 
+Alternatively, we could adopt the GLM-PCA strategy using only the genes with high 
 deviance.
 
 ```{r}
@@ -1003,7 +1012,7 @@ However, at least for me the `nullResiduals` function was **extremely slow**
 even slower than the `glmpca` code above. Therefore, **I suggest not running**
 this code, but I leave it in for reference.
 
-```
+```{r, eval=FALSE}
 sce <- nullResiduals(sce, assay="counts", type="deviance")
 sce <- nullResiduals(sce, assay="counts", type="pearson")
 
@@ -1014,42 +1023,40 @@ pca<-function(Y, L=2, center=TRUE, scale=TRUE){
     colnames(factors)<-paste0("dim", 1:L)
     factors
 }
-pca_d<-pca(assay(sce[hdg,], "binomial_deviance_residuals"))
-pca_d$resid_type<-"deviance_residuals"
-pca_p<-pca(assay(sce[hdg,], "binomial_pearson_residuals"))
-pca_p$resid_type<-"pearson_residuals"
-cm<-as.data.frame(colData(sce[hdg,]))
-pd<-rbind(cbind(cm, pca_d), cbind(cm, pca_p))
+pca_d <- pca(assay(sce[hdg,], "binomial_deviance_residuals"))
+pca_d$resid_type <- "deviance_residuals"
+pca_p <- pca(assay(sce[hdg,], "binomial_pearson_residuals"))
+pca_p$resid_type <- "pearson_residuals"
+cm <- as.data.frame(colData(sce[hdg,]))
+pd <- rbind(cbind(cm, pca_d), cbind(cm, pca_p))
 ggplot(pd, aes(x=dim1, y=dim2, colour=phenoid)) + geom_point() +
   facet_wrap(~resid_type, scales="free", nrow=2) +
   ggtitle("PCA applied to null residuals of high deviance genes")
 ```
 
-## Non-linear dimensionality reduction: T-SNE
+## Non-linear dimensionality reduction: t-SNE
 
-T-SNE focusses on preserving local rather than global distances. Therefore,
+t-SNE focusses on preserving local rather than global distances. Therefore,
 distances on a t-SNE reduced dimension plot can only be interpreted locally,
 i.e., cells that are close together in reduced dimension will have a similar
 transcriptome, but cells that are far away may not necessarily have a very distinct transcriptome.
 
-Running a T-SNE on a SingleCellExperiment object can be achieved with the
+Running t-SNE on a `SingleCellExperiment` object can be achieved with the
 `runTSNE` function of the `scater` package. By default, this function will first
-perform PCA, and use the first 50 PCs as an input to the actual T-SNE
+perform PCA, and use the top 50 PCs as an input to the actual t-SNE
 algorithm. Since we already performed PCA, we may set `dimred = "PCA"` as
 argument to the function. As such we will be performing a T-SNE on the 30 PCs
-we compute before. I we would like to run T-SNE only on the 10 most informative
+we computed before. If we would like to run t-SNE only using the top 10
 PCs, we could set `n_dimred = 10`.
 
-In addition, we may wish to set `external_neighbors=TRUE`, which (without going
-into details how) increases the speed of the algorithm for large dataset by
-applying a heuristic.
+In addition, we may wish to set `external_neighbors=TRUE`, which increases the speed of the algorithm for large dataset by applying a heuristic.
 
 **Note:** for me this was the slowest function of the analysis (so far). If you
-feel like your PC/laptop had a lot of trouble with the previous step, you
+feel like your PC/laptop had a lot of trouble with the previous step(s), you
 may consider not running this code, or running it on a subset of the data
-(e.g., for 5 patients in stead of 15, or randomly subsampling cells...) for
-demonstrational purposes. One final option is to reduce the input space for
-the T-SNE algorithm, e.g. by setting `n_dimred = 5`.
+(e.g., randomly subsampling cells) for
+demonstrational purposes. Alternatively, you may consider reducing the input space for
+the t-SNE algorithm, e.g. by setting `n_dimred = 5`.
 
 ```{r}
 # Do not run with slow PC/laptop
@@ -1063,11 +1070,9 @@ plotTSNE(sce,
 
 ## Non-linear dimensionality reduction: UMAP
 
-Claimed to be better than t-SNE on preserving global differences. Therefore,
-UMAP is also often used in analyses such as trajectory inference, where this is
-important.
+It is oftne suggested that UMAP is better than t-SNE in preserving global differences. Therefore, UMAP is also often used in analyses such as trajectory inference, where this is important.
 
-Running a UMAP on a SingleCellExperiment object can be achieved with the
+Running UMAP on a `SingleCellExperiment` object can be achieved with the
 `runUMAP` function of the `scater` package.
 
 ```{r}
@@ -1086,7 +1091,7 @@ First, we discuss graph-based clustering methods for scRNA-Seq data. This
 is very well explained in the
 [OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html).
 
-OSCA book:
+As written in the OSCA book:
 "Popularized by its use in Seurat, graph-based clustering is a flexible and 
 scalable technique for clustering large scRNA-seq datasets. We first build a 
 graph where each node is a cell that is connected to its nearest neighbors in 
@@ -1107,26 +1112,26 @@ spherical clusters) or Gaussian mixture models (that require normality)."
 
 Several graph-based clustering algorithms are implemented in the `scran` 
 library. The most global wrapper-function in this package is the 
-`clusterCells` function. Typically, the input for this function is a 
-SingleCellExperiment object with pre-computed principal components; these
+`clusterCells` function. Typically, the input to this function is a 
+`SingleCellExperiment` object with pre-computed principal components; these
 are used to take advantage of data compression and denoising. If the default 
 settings are adopted, `clusterCells` will perform two steps under the hood:
 
-1. Build a shared neighbors (SNN) graph of observations for downstream community
+  1. Build a shared neighbors (SNN) graph of observations for downstream community
 detection. The SNN graph is closely related to the more common KNN graph.
 For each observation, its k-nearest neighbors are identified (k=10 by default), 
-based on distances between their expression profiles (Euclidean by default). 
-An edge is drawn between all pairs of observations that share at least one 
+based on distances between their expression profiles (Euclidean distnaces are used by default). An edge is drawn between all pairs of observations that share at least one 
 neighbor, weighted by the characteristics of the shared nearest neighbors.
 
-2. The `clusterCells` function next internally calls the `cluster_walktrap`
+  2. The `clusterCells` function next internally calls the `cluster_walktrap`
 function from the `igraph` library. Based on the SNN graph from step 1, this 
 function tries to find densely connected subgraphs, also called communities in 
 a graph via random walks. The idea is that short random walks tend to stay in 
 the same community.
 
-```
-# Do not run; clusterCells function with default settings, i.e., building an
+
+```{r, eval=FALSE}
+# DO NOT RUN; clusterCells function with default settings, i.e., building an
 # SNN graph and finding clusters with the walktrap algorithm.
 library(scran)
 nn.clusters <- clusterCells(sce, 
@@ -1134,13 +1139,12 @@ nn.clusters <- clusterCells(sce,
 table(nn.clusters)
 ```
 
-**The disadvantage of using `clusterCells` is that the default setting of the**
-**second step, the `cluster_walktrap` function, is slow for large data.** 
+**The disadvantage of using `clusterCells` is that the default setting of the second step, the `cluster_walktrap` function, is slow for large datasets.** 
 Therefore, we here will not use `clusterCells` here, but break up the process in 
 two steps: building a graph and detect clusters in that graph. For this second 
 step, we may then adopt a faster algorithm.
 
-### build graph (SNN graph)
+### Build graph (SNN graph)
 
 ```{r}
 # Build a shared nearest-neighbor graph from PCA space
@@ -1157,7 +1161,7 @@ igraph::plot.igraph(
 )
 ```
 
-### detect clusters on the graph
+### Detect clusters on the graph
 
 ```{r}
 # Walktrap community finding algorithmon the SNN graph
@@ -1230,72 +1234,47 @@ mclust::adjustedRandIndex(sce$cluster, cluster_leiden2)
 
 ## K-means clustering
 
-K-means is a generic clustering algorithm that has been used in many application
-areas. In R, it can be applied via the kmeans function. Typically, it is applied
-to a reduced dimension representation of the expression data (most often PCA, 
+K-means is a clustering algorithm that has been used in many application
+areas. In `R`, it can be applied via the `kmeans` function. Typically, it is applied
+to a reduced dimensional representation of the expression data (most often PCA, 
 because of the interpretability of the low-dimensional distances). We need to 
 define the number of clusters in advance. Since the results depend on the 
 initialization of the cluster centers, it is typically recommended to run 
-K-means with multiple starting configurations (via the *nstart* argument).
+k-means with multiple starting configurations (via the *nstart* argument).
 
-```
+```{r}
 set.seed(123)
 clust_kmeans_k10 <- kmeans(reducedDim(sce, "PCA"), centers = 10, nstart = 5)
 table(clust_kmeans_k10$cluster)
+colData(sce)$kmeans10 <- factor(clust_kmeans_k10$cluster)
+plotUMAP(sce, colour_by="kmeans10")
 
 clust_kmeans_k39 <- kmeans(reducedDim(sce, "PCA"), centers = 39, nstart = 5)
 table(clust_kmeans_k39$cluster)
+colData(sce)$kmeans39 <- factor(clust_kmeans_k39$cluster)
+plotUMAP(sce, colour_by="kmeans39")
 ```
 
 We here arbitrarily performed two k-means clustering analyses, once with k=10
 and once with k=39 (the number of clusters communicated by the authors). The
-choice of k is arbitrary, however, there are statistics that guide us towards a
-reasonable choice of k. The code below
-
-However, evaluating this code is again too slow to be feasible in this lab 
-session.
-
-```
-set.seed(123)
-gaps <- cluster::clusGap(
-  reducedDim(sce, "PCA", n_dimred=10), kmeans, 
-  K.max = 20, nstart = 5, B = 25
-)
-
-## Find the "best" k
-best.k <- cluster::maxSE(gaps$Tab[, "gap"], gaps$Tab[, "SE.sim"])
-best.k
-```
-
-
-```
-sce$cluster_kmeans_k10 <- factor(clust_kmeans_k10$cluster)
-sce$cluster_kmeans_k39 <- factor(clust_kmeans_k39$cluster)
-plotReducedDim(sce, "UMAP", colour_by = "cluster_kmeans_k10")
-plotReducedDim(sce, "UMAP", colour_by = "cluster_kmeans_k39")
-```
-
-```
-pheatmap::pheatmap(table(sce$cluster, sce$cluster_kmeans_k39))
-mclust::adjustedRandIndex(sce$cluster, sce$cluster_kmeans_k39)
-```
+choice of the number of clusters `k` can be guided by known biology, however, it is arbitrary at least to some interval.
 
 ## Hierarchical clustering
 
-From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html).
+From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html):
 
 "Hierarchical clustering is an old technique that arranges samples into a 
 hierarchy based on their relative similarity to each other. Most implementations 
 do so by joining the most similar samples into a new cluster, then joining 
 similar clusters into larger clusters, and so on, until all samples belong to 
-a single cluster. This process yields obtain a dendrogram that defines clusters 
+a single cluster. This process yields a dendrogram that defines clusters 
 with progressively increasing granularity. Variants of hierarchical clustering 
 methods primarily differ in how they choose to perform the agglomerations. 
 For example, complete linkage aims to merge clusters with the smallest maximum 
 distance between their elements, while Ward’s method aims to minimize the 
-increase in within-cluster variance."
+increase in within-cluster variance.
 
-"In the context of scRNA-seq, the main advantage of hierarchical clustering 
+In the context of scRNA-seq, the main advantage of hierarchical clustering 
 lies in the production of the dendrogram. This is a rich summary that 
 quantitatively captures the relationships between subpopulations at various 
 resolutions. Cutting the dendrogram at high resolution is also guaranteed to 
@@ -1323,15 +1302,14 @@ hclust.sce <- clusterCells(x = sce,
                             full = TRUE)
 ```
 
-Equivalently, we may again split the process in two more intuitive steps:
+Equivalently, we may again split the process in two steps:
 
 1. Compute the pairwise distances between all cells. These are by default
-euclidean distances and, in order to reduce data complexity and increase signal
-to noise, we may perform this on the top (30) PC's. Implemented in the `dist`
-function.
+Euclidean distances and, in order to reduce data complexity and increase signal
+to noise, we may perform this on the top (30) PC's. Calculating a dissimilarity matrix is mplemented in the `dist` function.
 
-2. This function performs a hierarchical cluster analysis the distances from 
-step1. Initially, each cell is assigned to its own cluster and then the 
+2. Performs a hierarchical cluster analysis on the distances from 
+step 1. In an agglomerative procedure, each cell is first assigned to its own cluster and then the 
 algorithm proceeds iteratively, at each stage joining the two most similar 
 clusters, continuing until there is just a single cluster. Implemented in the
 `hclust` function.
@@ -1339,7 +1317,7 @@ clusters, continuing until there is just a single cluster. Implemented in the
 Note that the `hclust` function allows for specifying a "method" argument.
 The differences between the different methods goes beyond the scope of this
 session, but a brief description is provided in the function help file.
-In the context of scRNA-seq, I have mostly seen the use of the "ward.D2"
+In the context of scRNA-seq, we recommend the use of the "ward.D2"
 method.
 
 ```{r}
