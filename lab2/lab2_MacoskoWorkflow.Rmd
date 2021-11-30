@@ -690,39 +690,32 @@ variation:
  - **Other technical variation** such as sample-specific GC-content or 
  transcript length effects may also be accounted for.
  
-**I think we best do this on technical repeats, no? So maybe we can "remove"**
 
 ```{r}
 table(sce$cluster)
 ```
 
+Below, we will visualize the normalization occurring between two cells of the same cell type. 
 
 ```{r}
 select <- sce$cluster == "1"
 select[is.na(select)] <- FALSE
 cs <- colSums(assays(sce)$counts[,select])
-cs[order(cs, decreasing = TRUE)][c(1,10,50,100,200)]
+cs[order(cs, decreasing = TRUE)][c(1,10)]
 ```
 
 ```{r}
-targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,10,50,100,200)])
+targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,10)])
 
-curCells_list <- list(c(targetCells[1], targetCells[2]),
-                      c(targetCells[1], targetCells[3]),
-                      c(targetCells[1], targetCells[4]),
-                      c(targetCells[1], targetCells[5]))
+M <- rowMeans(assays(sce)$counts[,targetCells])
+D <- assays(sce)$counts[,targetCells[2]] / assays(sce)$counts[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
 
-for (i in seq_along(curCells_list)) {
-  curCells <- curCells_list[[i]]
-  M <- rowMeans(assays(sce)$counts[,curCells])
-  D <- assays(sce)$counts[,curCells[2]] / assays(sce)$counts[,curCells[1]]
-  plot(x = log(M), y = log2(D),
-       pch = 16, cex=1/3,
-       main = paste0("Cell ", curCells[2], " vs cell ", curCells[1]),
-       xlab = "Log mean", ylab = "Log2 fold-change",
-       bty = 'l')
-  abline(h = 0, col="orange", lwd=2)
-}
 ```
 
 ```{r}
@@ -731,20 +724,16 @@ assay(sce, "normed") <- normalizeCounts(sce,
                                         size.factors=sf, 
                                         pseudo.count=0)
 
-for (i in seq_along(curCells_list)) {
-  curCells <- curCells_list[[i]]
-  M <- rowMeans(assays(sce)$normed[,curCells])
-  D <- assays(sce)$normed[,curCells[2]] / assays(sce)$normed[,curCells[1]]
-  plot(x = log(M), y = log2(D),
-       pch = 16, cex=1/3,
-       main = paste0("Cell ", curCells[2], " vs cell ", curCells[1]),
-       xlab = "Log mean", ylab = "Log2 fold-change",
-       bty = 'l')
-  abline(h = 0, col="orange", lwd=2)
-}
+M <- rowMeans(assays(sce)$normed[,targetCells])
+D <- assays(sce)$normed[,targetCells[2]] / assays(sce)$normed[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
 ```
 
-**Comparison 1 looks good to me, but the rest looks like overcorrection, no?**
 
 
 # Feature selection
@@ -1053,23 +1042,27 @@ vst1000 <- VariableFeatures(seurat_obj)[1:1000]
 # HVG strategy
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg1000), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Highly variable genes")
 
 # HDG strategy
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hdg1000), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("High-deviance genes")
 
 # VST strategy
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = vst1000), 
-    colour_by = "cluster")
+    colour_by = "cluster",
+    ) +
+  ggtitle("Seurat VST")
 ```
 
 Next, we assess the sensitivity on the number of top features for the highly
@@ -1086,38 +1079,44 @@ hvg5 <- hvg_all[1:5]
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30), 
-    colour_by = "cluster")
+           ncomponents = 2), 
+    colour_by = "cluster") +
+  ggtitle("All genes")
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg2000), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Top 2000 genes")
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg1000), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Top 1000 genes")
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg100), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Top 100 genes")
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg10), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Top 10 genes")
 
 plotPCA(
     runPCA(sce,
-           ncomponents = 30, 
+           ncomponents = 2, 
            subset_row = hvg5), 
-    colour_by = "cluster")
+    colour_by = "cluster") +
+  ggtitle("Top 5 genes")
 ```
 
 ### Remarks on PCA
@@ -1259,11 +1258,18 @@ Running UMAP on a `SingleCellExperiment` object can be achieved with the
 `runUMAP` function of the `scater` package.
 
 ```{r}
-# fast!
+# Using top 10% highly variable genes and top 30 PCs
 sce <- runUMAP(sce, 
                dimred = 'PCA', 
                external_neighbors = TRUE)
 plotUMAP(sce,
          colour_by = "cluster")
+
+# Using top 10% highly variable genes and top 10 PCs
+plotUMAP(runUMAP(sce, 
+               dimred = 'PCA', 
+               external_neighbors = TRUE,
+               n_dimred = 10),
+  colour_by = "cluster")
 ```
 

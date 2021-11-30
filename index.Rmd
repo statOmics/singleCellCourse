@@ -32,6 +32,10 @@ In addition, knowledge of programming in `R` is preferred. A primer to `R` and D
 
 [![Binder](http://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/statOmics/SGA21/binder?urlpath=rstudio)
 
+# DropBox link 
+
+We have created a [DropBox folder](https://www.dropbox.com/sh/3yc9065ri76b2e7/AAAr0z9ZGp3APZ-reH6I0DGQa?dl=0) containing convenience files, e.g., a preprocessed `SingleCellExperiment` that is the end result of lab session 1.
+
 # Detailed Program
 
 0. Positioning of the course: [slides](https://docs.google.com/presentation/d/1ZZe6g3eZFkJz9Ph6bMT3-rAU8dBKQOu9N7SDzSOBtfI/edit?usp=sharing).
