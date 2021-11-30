@@ -11,7 +11,7 @@ output:
 
 # Preamble: installation of Bioconductor libraries
 
-```{r,eval=TRUE}
+```{r,eval=FALSE}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -1207,7 +1207,7 @@ on log-transformed normalized counts, the underlying computations can be
 strongly simplified. Here, we work with the raw counts, which we assume to 
 be *Poisson* distributed, requiring an iterative optimization scheme.
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 # runs 2min on my laptop
 library(glmpca)
 set.seed(211103)
