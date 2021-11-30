@@ -29,7 +29,10 @@ pkgs <- c("SingleCellExperiment",
           "scran",
           "scry",
           "BiocSingular", 
-          "scDblFinder")
+          "scDblFinder",
+          "glmpca",
+          "PCAtools",
+          "Seurat")
 notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
 if(length(notInstalled) > 0){
   BiocManager::install(notInstalled)
