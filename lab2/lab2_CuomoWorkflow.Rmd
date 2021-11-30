@@ -1,9 +1,10 @@
 ---
-title: 'Lab2: Cuomo dataset'
+title: 'Normalization, feature selection and dimension reduction for the Cuomo dataset'
 author: "Koen Van den Berge and Jeroen Gilis"
-date: "28/11/2021"
+date: "30/11/2021"
 output: 
   html_document:
+    code_download: true
     toc: true
     toc_float: true
 ---
@@ -49,6 +50,7 @@ doing this during the lab session, to avoid overloading the system.
 First we read in the count matrix:
 
 ```{r, message=FALSE, warning=FALSE}
+library(SingleCellExperiment)
 sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
 ```
 
@@ -315,45 +317,24 @@ sce <- sce[, !colData(sce)$discardCells]
 
 ## Identifying and removing empty droplets
 
-This does not make much sense for plate-based data!
+This does not make much sense for plate-based data! While we could imagine the
+presence of empty plate wells for the SMART-Seq2 experiment, these are typically
+detected and removed upstream of our analysis using laser technology.
 
 ## Identifying and removing doublets
 
-We will use [scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) to detect doublet cells.
+Again, this step typically does not make much sense for plate-based 
+data. While we could imagine the presence of plate wells in which more than two
+cells are present for the SMART-Seq2 experiment, these are again typically
+detected and removed upstream of our analysis using laser technology.
 
-```
-## perform doublet detection
-library(scDblFinder)
-```
-
-```
-set.seed(7498864)
-sce <- scDblFinder(sce, 
-                   samples = as.factor(sce$experiment), # 14 batches
-                   returnType="sce")
-## visualize these scores
-## explore doublet score wrt original day labels
-boxplot(log1p(sce$scDblFinder.score) ~ factor(colData(sce)$day, exclude=NULL))
-
-tab <- table(sce$scDblFinder.class, sce$day, 
-      exclude=NULL)
-tab
-t(t(tab) / colSums(tab))
-
-barplot(t(t(tab) / colSums(tab))[2,],
-        xlab = "Cluster", ylab = "Fraction of doublets")
-```
-
-Only a very small fraction of the cells are removed in this step. Indeed, this
-step is much more relevant for droplet-based protocols. For plate-based 
-protocols like smartseq2, the experimental procedure usually takes care of
-removing empty wells, and lasers are also used to detect wells with more than
-1 cell.
-
-```
-# remove doublets -> I will here not remove them
-sce <- sce[,!sce$scDblFinder.class == "doublet"]
-```
+If we would use
+[scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
+to detect doublet cells on this dataset, we would see that only a very small 
+fraction of the cells would be removed. These removed cells could correspond to 
+actual doublets that were missed by the upstream doublet detection technology,
+or more likely could correspond to false positive doublets of the `scDblFinder`
+doublet detection procedure.
 
 # Normalization
 
@@ -381,6 +362,98 @@ plot(x= log(colSums(assays(sce)$counts)),
 --- end lab session 1 ---
 
 ---
+
+Visualize the effect of normalization using MD-plots.
+
+In order to only work with cells that could be considered technical replicates,
+we should select cells coming from the same biological group. We can do this
+approximately by selecting cells from the same sampling day, the same 
+donor and the same sequencing experiment.
+
+```{r}
+table(sce$donor, sce$day)
+table(sce$experiment, sce$day)
+table(sce$experiment, sce$donor)
+```
+
+Below, we will visualize the normalization occurring between two cells of the 
+same cell type - donor/experiment combination (which could be considered 
+technical repeats): 
+
+```{r}
+cs <- colSums(assays(sce)$counts[,which(sce$day == "day2" &
+                                        sce$donor == "eipl")])
+cs[order(cs, decreasing = TRUE)][c(1,10,100)]
+```
+
+Let’s take a look at how comparable two cells (replicates) of this biological group
+are. We will compare the cell with the highest library size with the cell that 
+has the 10th and 100th highest library size using MD-plots (mean-difference 
+plots, as introduced by 
+[Dudoit et al. (2002)](https://www.jstor.org/stable/24307038?seq=1#metadata_info_tab_contents)), 
+also sometimes referred to as MA-plots.
+
+```{r}
+targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,10)])
+
+M <- rowMeans(assays(sce)$counts[,targetCells])
+D <- assays(sce)$counts[,targetCells[2]] / assays(sce)$counts[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
+
+targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,100)])
+
+M <- rowMeans(assays(sce)$counts[,targetCells])
+D <- assays(sce)$counts[,targetCells[2]] / assays(sce)$counts[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
+```
+
+We see clear bias in the comparison of the 1st and 10th/100th most deeply 
+sequenced cell from this day/patient combination. We see that the log f
+old-changes are biased downwards. This means that, on average, a gene is lower 
+expressed in cell 1 versus cell 10 (and cell 100). Looking at the library sizes, 
+we can indeed see that the library size for cell 1 is 1.200.691 counts, while it
+is only 701.550 counts for cell 10 and 468.762 counts for cell 100! This is a
+clear library size effect that we should take into account.
+
+```{r}
+# normalize the count data using the previously computed "size factors"
+assay(sce, "normed") <- normalizeCounts(sce, 
+                                        log=FALSE,
+                                        size.factors=sf, 
+                                        pseudo.count=0)
+
+targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,10)])
+
+M <- rowMeans(assays(sce)$normed[,targetCells])
+D <- assays(sce)$normed[,targetCells[2]] / assays(sce)$normed[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
+
+targetCells <- names(cs[order(cs, decreasing = TRUE)][c(1,100)])
+
+M <- rowMeans(assays(sce)$normed[,targetCells])
+D <- assays(sce)$normed[,targetCells[2]] / assays(sce)$normed[,targetCells[1]]
+plot(x = log(M), y = log2(D),
+     pch = 16, cex=1/3,
+     main = paste0("Cell ", targetCells[2], " vs cell ", targetCells[1]),
+     xlab = "Log mean", ylab = "Log2 fold-change",
+     bty = 'l')
+abline(h = 0, col="orange", lwd=2)
+```
 
 
 # Feature selection
@@ -479,6 +552,11 @@ plot(x = assays(sce)$counts[hvg[1],],
      main = "Cells colored acc to cell type")
 ```
 
+Just by looking at the top two genes based on our feature selection criterion, 
+we can already see some separation according to the cell type; the cells 
+colored red seem to have low expression values for both genes, and are those
+solely retireved in the bottom left of the x-y plane.
+
 ## Linear dimensionality reduction: PCA
 
 ### PCA with feature selection
@@ -510,7 +588,7 @@ plotPCA(sce,
         colour_by = "day")
 ```
 
-We observe a near-perfect clustering of the cells!
+We observe a clear-cut clustering of the cells!
 
 ```{r}
 percent.var <- attr(reducedDim(sce), "percentVar")
@@ -527,7 +605,6 @@ chosen.elbow
 ```
 
 ### PCA without feature selection
-
 
 ```{r}
 set.seed(1234)
@@ -559,33 +636,10 @@ plotReducedDim(sce,
                colour_by = "day")
 ```
 
-Alternatively, we could adopt the GLM-PCA strategy on the genes with high 
-deviance.
-
-```{r}
-# Based on the diagnostic plot from the feature selection, we would select the 
-# top 2000 genes with highest deviance. However, to reduce the running time of
-# the function, I here select the top 500 (which still is quite slow).
-binomial_deviance <- rowData(sce)$binomial_deviance
-names(binomial_deviance) <- rownames(sce)
-
-hdg <- names(sort(binomial_deviance, decreasing = TRUE))[1:500]
-
-
-set.seed(471681)
-poipca_dev <- glmpca(Y = assays(sce)$counts[hdg,],
-                 L = 2, 
-                 fam = "poi",
-                 minibatch = "stochastic")
-reducedDim(sce, "PoiPCA_dev") <- poipca_dev$factors
-plotReducedDim(sce, 
-               dimred="PoiPCA_dev",
-               colour_by = "day")
-```
-
 ## Non-linear dimensionality reduction: T-SNE
 
 ```{r}
+set.seed(564654)
 sce <- runTSNE(sce, 
                dimred = 'PCA',
                external_neighbors=TRUE)
@@ -602,6 +656,7 @@ plotTSNE(sce,
 ## Non-linear dimensionality reduction: UMAP
 
 ```{r}
+set.seed(65187)
 sce <- runUMAP(sce, 
                dimred = 'PCA', 
                external_neighbors = TRUE)
@@ -612,155 +667,4 @@ plotUMAP(sce,
 plotUMAP(sce,
          colour_by = "experiment")
 ```
-
-# Clustering
-
-## Graph-based clustering
-
-### build graph (SNN graph)
-
-```{r}
-# Build a shared nearest-neighbor graph from PCA space
-graph <- buildSNNGraph(sce, 
-                       use.dimred = 'PCA')
-# alternative: buildKNNGraph()
-```
-
-```{r}
-library(igraph)
-igraph::plot.igraph(
-  graph, layout = layout_with_fr(graph),
-  vertex.size = 5, vertex.label = NA
-)
-```
-
-### detect clusters on the graph
-
-For this dataset, all steps take only a few seconds!
-
-```{r}
-# Walktrap community finding algorithmon the SNN graph
-cluster_walktrap <- factor(igraph::cluster_walktrap(graph)$membership) #20min
-
-# The `cluster_fast_greedy` function tries to find dense subgraph, also called 
-# communities in graphs via directly optimizing a modularity score
-cluster_fastGreedy <- factor(igraph::cluster_fast_greedy(graph)$membership) #4min
-
-# Louvain clustering on the SNN graph
-cluster_louvain <- factor(igraph::cluster_louvain(graph)$membership) #8sec
-nlevels(cluster_louvain)
-
-# Leiden clustering on the SNN graph
-cluster_leiden <- factor(igraph::cluster_leiden(graph)$membership) #10sec
-nlevels(cluster_leiden) #1329 different clusters!
-
-cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
-                                                 resolution_parameter = 0.01)$membership) #10sec
-nlevels(cluster_leiden2) #14 different clusters
-```
-
-
-```{r}
-# Add to sce and visualize
-colData(sce)$cluster_louvain <- cluster_louvain
-colData(sce)$cluster_leiden2 <- cluster_leiden2
-
-# Visualization. Add the cluster labels to the previously generated UMAP
-# coordinates
-plotTSNE(sce, 
-         colour_by="cluster_louvain")
-plotTSNE(sce, 
-         colour_by="cluster_leiden2")
-plotTSNE(sce, 
-         colour_by ="day")
-plotTSNE(sce, 
-         colour_by ="donor")
-plotTSNE(sce, 
-         colour_by ="experiment")
-```
-
-## Hierarchical clustering
-
-We may again split the process in two more intuitive steps:
-
-1. Compute the pairwise distances between all cells. These are by default
-euclidean distances and, in order to reduce data complexity and increase signal
-to noise, we may perform this on the top (30) PC's. Implemented in the `dist`
-function.
-
-2. This function performs a hierarchical cluster analysis the distances from 
-step1. Initially, each cell is assigned to its own cluster and then the 
-algorithm proceeds iteratively, at each stage joining the two most similar 
-clusters, continuing until there is just a single cluster. Implemented in the
-`hclust` function.
-
-Note that the `hclust` function allows for specifying a "method" argument.
-The differences between the different methods goes beyond the scope of this
-session, but a brief description is provided in the function help file.
-In the context of scRNA-seq, I have mostly seen the use of the "ward.D2"
-method.
-
-```{r}
-distsce <- dist(reducedDim(sce, "PCA")) #1min
-hcl <- hclust(distsce, method = "ward.D2") #3min
-plot(hcl, labels = FALSE)
-```
-
-Next, we need to "cut the tree", i.e., choose at which resolution we want to
-report the (cell-type) clusters. This can be achieved with the `cutree` 
-function. As an input, `cutree` takes the dendrogram from the `hclust` function
-and a threshold value for cutting the tree. This is either `k`, the number of
-clusters we want to report, or `h`, the height in the dendrogram at which
-we wan to cut the tree.
-
-```{r}
-clust_hcl_k4 <- cutree(hcl, k = 4)
-table(clust_hcl_k4)
-
-clust_hcl_k10 <- cutree(hcl, k = 10)
-table(clust_hcl_k10)
-```
-
-```{r}
-clust_hcl_h200 <- cutree(hcl, h = 200)
-table(clust_hcl_h200)
-```
-
-```{r}
-sce$clust_hcl_k4 <- as.factor(clust_hcl_k4)
-sce$clust_hcl_k10 <- as.factor(clust_hcl_k10)
-sce$clust_hcl_h200 <- as.factor(clust_hcl_h200)
-
-plotTSNE(sce, 
-         colour_by="clust_hcl_k4")
-plotTSNE(sce, 
-         colour_by ="day")
-plotTSNE(sce, 
-         colour_by ="experiment")
-```
-
-```{r}
-plotTSNE(sce, 
-         colour_by="clust_hcl_k10")
-plotTSNE(sce, 
-         colour_by="clust_hcl_h200")
-plotTSNE(sce, 
-         colour_by ="day")
-plotTSNE(sce, 
-         colour_by ="donor")
-plotTSNE(sce, 
-         colour_by ="experiment")
-```
-
-
-
-
-
-
-
-
-
-
-
-
 

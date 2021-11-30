@@ -633,6 +633,12 @@ inference on the relative abundance of a gene in a cell, after accounting for
 library size and RNA composition differences between cells, which is much more
 relevant than comparing raw counts
 
+Note that we always prefer the use of offsets over transformation of the data.
+In brief, such transformation would distort the mean-variance relationship
+in the data. For more details, we refer to the document that was discussed
+in theory session of last week
+([link](https://statomics.github.io/SGA21/sequencing_scalingNormalization.html))
+
 For normalization, the size factors $s_i$ computed here are simply scaled 
 library sizes:
 \[ N_i = \sum_g Y_{gi} \]
@@ -674,6 +680,15 @@ downstream analyses.
 
 ---
 
+We have created a 
+[DropBox folder](https://www.dropbox.com/sh/3yc9065ri76b2e7/AAAr0z9ZGp3APZ-reH6I0DGQa?dl=0) 
+containing convenience files, e.g., a preprocessed `SingleCellExperiment` that 
+is the end result of lab session 1.
+
+```{r}
+sce <- readRDS("https://www.dropbox.com/sh/3yc9065ri76b2e7/AAAr0z9ZGp3APZ-reH6I0DGQa?dl=0&preview=sce_preprocessed.rds")
+```
+
 # Normalization (continued)
 
 Normalization is necessary to correct for several sources of technical 
@@ -695,7 +710,7 @@ variation:
  of the RNA population of the samples.
  - **Other technical variation** such as sample-specific GC-content or 
  transcript length effects may also be accounted for.
- 
+
 ```{r}
 table(sce$cluster)
 ```
@@ -782,9 +797,9 @@ The simplest approach to quantifying per-gene variation is to compute the
 variance of the log-normalized expression values (i.e., "log-counts") for 
 each gene across all cells. 
 
-```{r}
+```{r,eval=FALSE}
 # calculate variance of log-normalized counts for each gene
-geneVars <- genefilter::rowVars(assays(sce)$logcounts)
+geneVars <- genefilter::rowVars(...)
 # select top 1000 highly variable genes
 highVarGenes <- names(geneVars)[order(geneVars, decreasing=TRUE)[1:1e3]]
 head(highVarGenes)
@@ -811,9 +826,12 @@ To account for the mean-variance effect, we use the `modelGeneVar` function of
 the `scran` package to fit a trend to the variance with respect to abundance
 across all genes (on log-normalized expression values of the sce object).
 
-```{r}
+```{r,eval=FALSE}
 library(scran)
-dec <- modelGeneVar(sce)
+# `modelGeneVar` function description: Model the variance of the log-expression 
+# profiles for each gene, decomposing it into technical and biological 
+# components based on a fitted mean-variance trend.
+dec <- modelGeneVar(...) # input a sce object with precomputed logcounts assay
 head(dec)
 ```
 
@@ -825,25 +843,29 @@ trend. Ranking genes by the biological component enables identification of
 interesting genes for downstream analyses in a manner that accounts for the
 mean-variance relationship.
 
-```{r}
-fitRetina <- metadata(dec)
-plot(fitRetina$mean, fitRetina$var, 
+```{r,eval=FALSE}
+fitRetina <- metadata(...)
+plot(x = ..., # the fitted means on the x-axis 
+     y = ..., # the fitted variances on the y-axis
      xlab="Mean of log-expression",
     ylab="Variance of log-expression")
-curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2) # adds a trend line
 ```
 
 We are interested in those genes for which the variance in expression is higher
 than what we would expect for that gene based on its mean expression.
 
-```{r}
+```{r,eval=FALSE}
 # get 10% most variable genes
-hvg <- getTopHVGs(dec, 
-                  prop=0.1)
+# Based on the output statistics of modelGeneVar, select the 10% most variable genes
+hvg <- getTopHVGs(stats = ..., 
+                  prop = ...) # percentage of top variable genes. Alternatively,
+# n = ... could be used to select the top number of variable genes
 head(hvg)
 
 # plot these 
-plot(fitRetina$mean, fitRetina$var, 
+plot(x = ..., # the fitted means on the x-axis 
+     y = ..., # the fitted variances on the y-axis
      col = c("orange", "darkseagreen3")[(names(fitRetina$mean) %in% hvg)+1],
      xlab="Mean of log-expression",
     ylab="Variance of log-expression")
@@ -858,17 +880,8 @@ legend("topleft",
 As a comparison, we could color the genes on this figure according to the 
 selection that was made purely by looking at the raw variance of each gene.
 
-```{r}
-plot(fitRetina$mean, fitRetina$var, 
-     col = c("orange", "steelblue")[(names(fitRetina$mean) %in% highVarGenes)+1],
-     xlab="Mean of log-expression",
-    ylab="Variance of log-expression")
-curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
-legend("topleft", 
-       legend = c("Selected", "Not selected"), 
-       col = c("steelblue", "orange"),
-       pch = 16,
-       bty='n')
+```{r,eval=FALSE}
+...
 ```
 
 As expected, we here simply select genes with a high variance, without 
@@ -887,12 +900,14 @@ fraction varies significantly across the cells in our datasets.Genes with a
 high deviance will thus most poorly fit a null model where the relative
 abundance is equal for all cells, which therefore are informative.
 
-```{r}
+```{r, eval=FALSE}
 #BiocManager::install("scry")
 library(scry)
-sce <- devianceFeatureSelection(object = sce, 
-                                assay = "counts", 
-                                sorted = FALSE)
+# `devianceFeatureSelection` function description: Computes a deviance statistic 
+# for each row feature (such as a gene) for count data based on a multinomial 
+# null model [...]. 
+sce <- devianceFeatureSelection(object = ..., 
+                                assay = ...) # computed on raw counts
 
 plot(sort(rowData(sce)$binomial_deviance, decreasing = TRUE), 
      type="l", 
@@ -924,9 +939,9 @@ for performing scRNA-seq data analysis is `Seurat`. However, functions from
 and vice versa. Fortunately, efforts have been made to increase the
 interoperability between the two toolboxes.
 
-```{r}
+```{r, eval=FALSE}
 library(Seurat)
-seurat_obj <- as.Seurat(sce)
+seurat_obj <- as.Seurat(...) # sce object
 seurat_obj # notice the "0 variable features"
 ```
 
@@ -934,16 +949,20 @@ On this object, we may use functions from the `Seurat` toolbox.
 For instance, we may search for highly variable features using `Seurat`'s VST
 implementation:
 
-```{r}
-seurat_obj <- Seurat::NormalizeData(seurat_obj, 
-                                    normalization.method = "LogNormalize", 
-                                    scale.factor = 10000)
+```{r, eval=FALSE}
+# Prior to detecting variable features using VST, Seurat normalizes the data.
+# The `NormalizeData` function takes as input the Seurat object, and uses 
+# log normalization and a scale factor of 10000 as default (see help file).
+seurat_obj <- Seurat::NormalizeData(object = ..., 
+                                    normalization.method = ..., 
+                                    scale.factor = ...)
 
-seurat_obj <-  FindVariableFeatures(object = seurat_obj,
-                                    selection.method = "vst")
+# Next, perform feature selection based on VST
+seurat_obj <-  FindVariableFeatures(object = ...,
+                                    selection.method = ...)
 ```
 
-```{r}
+```{r,eval=FALSE}
 seurat_obj  # notice the "2000 variable features" (default)
 head(VariableFeatures(seurat_obj)) # here they are
 ```
@@ -959,12 +978,12 @@ In reality, we don't know this yet at this stage.
 Just by looking at the top two genes based on our feature selection criterion, 
 we can already see some separation according to the cell type!
 
-```{r}
+```{r,eval=FALSE}
 colData(sce)$cluster <- as.factor(colData(sce)$cluster)
 cl <- colData(sce)$cluster
 par(bty='l')
-plot(x = assays(sce)$counts[hvg[1],],
-     y = assays(sce)$counts[hvg[2],],
+plot(x = ..., # extract the counts for the most variable gene
+     y = ..., # extract the counts for the second most variable gene
      col = as.numeric(cl),
      pch = 16, cex = 1/3,
      xlab = "Most informative gene",
@@ -995,29 +1014,29 @@ We calculate the top 30 principal components.
 
 ### PCA with feature selection
 
-```{r}
+```{r,eval=FALSE}
+# Perform a PCA for our data. Compute the first 30 principal components, only
+# using the selected features with high variance with respect to the mean.
 set.seed(1234)
-sce <- runPCA(sce, 
-              ncomponents=30, 
-              subset_row=hvg)
+sce <- runPCA(...) # you need three arguments
 ```
 
 PCA has been performed. The PCA information has been automatically stored in the
 *reducedDim* slot of the SingleCellExperiment object.
 
-```{r}
+```{r,eval=FALSE}
 reducedDimNames(sce)
 ```
 
-```{r}
+```{r,eval=FALSE}
 head(reducedDim(sce,
-           type="PCA"))
+                type="PCA"))
 ```
 
 The `plotPCA` function of the `scater` package now allows us to visualize
 the cells in PCA space, based on the PCA information stored in our object:
 
-```{r}
+```{r,eval=FALSE}
 plotPCA(sce, 
         colour_by = "cluster")
 ```
@@ -1060,13 +1079,13 @@ chosen.elbow
 
 Note: more features -> computationally more intensive!
 
-```{r}
+```{r, eval = FALSE}
 set.seed(1234)
-sceNoFS <- runPCA(sce, 
-                  ncomponents=30, 
-                  subset_row=1:nrow(sce))
-plotPCA(sceNoFS, colour_by = "cluster")
-rm(sceNoFS)
+sceNoFS <- runPCA(x = ..., 
+                  ncomponents = ..., 
+                  subset_row = 1:nrow(sce))
+plotPCA(...)
+rm(sceNoFS) # remove the object, we don't need it anymore
 ```
 
 While we use more information to make this PCA plot (17.887 genes) as compared
@@ -1079,13 +1098,13 @@ signal-to-noise ratio!
 First, we compare the different feature selection criteria, using the top 1000
 highly variable genes for each method.
 
-```{r}
+```{r, eval = FALSE}
 # Get top 1000 highly variable features using the highly variable genes
 # (w.r.t. mean), high deviance genes and the VST strategy of Seurat
 
-hvg1000 <- getTopHVGs(dec, n = 1000)
-hdg1000 <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:1000]
-vst1000 <- VariableFeatures(seurat_obj)[1:1000]
+hvg1000 <- ... # extract top 1000 highly variable genes
+hdg1000 <- ... # extract top 1000 genes with high deviance
+vst1000 <- ... # extract top 1000 genes based on VST analysis
 
 # HVG strategy
 plotPCA(
@@ -1116,14 +1135,14 @@ plotPCA(
 Next, we assess the sensitivity on the number of top features for the highly
 variable genes method;
 
-```{r}
+```{r, eval = FALSE}
 hvg_all <- getTopHVGs(dec)
 
-hvg2000 <- hvg_all[1:2000]
-hvg1000 <- hvg_all[1:1000]
-hvg100 <- hvg_all[1:100]
-hvg10 <- hvg_all[1:10]
-hvg5 <- hvg_all[1:5]
+hvg2000 <- ... # extract top 2000 highly variable genes
+hvg1000 <- ... # extract top 1000 highly variable genes
+hvg100 <- ... # extract top 100 highly variable genes
+hvg10 <- ... # extract top 10 highly variable genes
+hvg5 <- ... # extract top 5 highly variable genes
 
 plotPCA(
     runPCA(sce,
@@ -1198,36 +1217,25 @@ be *Poisson* distributed, requiring an iterative optimization scheme.
 # runs 2min on my laptop
 library(glmpca)
 set.seed(211103)
-poipca <- glmpca(Y = assays(sce)$counts[hvg,],
-                 L = 2, 
-                 fam = "poi",
-                 minibatch = "stochastic")
+poipca <- glmpca(Y = ..., # counts for the higly variable genes
+                 L = ..., # two latent dimensions (components)
+                 fam = ..., # assume Poisson for droplet data
+                 minibatch = "stochastic") # used in the package vignette by 
+# the authors, but beyond the scope of this session.
 reducedDim(sce, "PoiPCA") <- poipca$factors
-plotReducedDim(sce, 
-               dimred="PoiPCA",
-               colour_by = "cluster")
+plotReducedDim(...) # make sure to specify the right value for the `dimred` argument
 ```
 
 Alternatively, we could adopt the GLM-PCA strategy using only the genes with 
 high deviance.
 
-```{r}
+```{r, eval = FALSE}
 # Based on the diagnostic plot from the feature selection, we would select the 
 # top 2000 genes with highest deviance. However, to reduce the running time of
 # the function, I here select the top 500 (which still is quite slow - 5min).
-Sys.time()
-hdg <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:500]
+hdg500 <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:500]
 
-set.seed(471681)
-poipca_dev <- glmpca(Y = assays(sce)$counts[hdg,],
-                 L = 2, 
-                 fam = "poi",
-                 minibatch = "stochastic")
-Sys.time()
-reducedDim(sce, "PoiPCA_dev") <- poipca_dev$factors
-plotReducedDim(sce, 
-               dimred="PoiPCA_dev",
-               colour_by = "cluster")
+...
 ```
 
 The authors of the `glmpca` package note that GLM-PCA can be slow for large 
@@ -1287,12 +1295,12 @@ may consider not running this code, or running it on a subset of the data
 Alternatively, you may consider reducing the input space for the t-SNE 
 algorithm, e.g. by setting `n_dimred = 5`.
 
-```{r}
+```{r, eval = FALSE}
 # (For me it takes 3min30 with n_dimred = 5)
-sce <- runTSNE(sce, 
-               dimred = 'PCA',
-               n_dimred = 5,
-               external_neighbors=TRUE)
+sce <- runTSNE(x = ..., 
+               dimred = ...,
+               n_dimred = ...,
+               external_neighbors = ...)
 plotTSNE(sce,
          colour_by = "cluster")
 ```
@@ -1306,19 +1314,13 @@ inference, where this is important.
 Running UMAP on a `SingleCellExperiment` object can be achieved with the
 `runUMAP` function of the `scater` package.
 
-```{r}
+```{r, eval = FALSE}
 # Using top 10% highly variable genes and top 30 PCs
-sce <- runUMAP(sce, 
-               dimred = 'PCA', 
-               external_neighbors = TRUE)
-plotUMAP(sce,
-         colour_by = "cluster")
+sce <- runUMAP(...)
+plotUMAP(...)
 
 # Using top 10% highly variable genes and top 10 PCs
-plotUMAP(runUMAP(sce, 
-               dimred = 'PCA', 
-               external_neighbors = TRUE,
-               n_dimred = 10),
+plotUMAP(runUMAP(...),
   colour_by = "cluster")
 ```
 
