@@ -179,6 +179,20 @@ table(keep2)
 sce <- sce[keep2,]
 ```
 
+```{r}
+xas <- rowSums(assay(sce) > 0)
+yas <- rowSums(assay(sce))
+
+
+plot(x = xas,
+     y = yas,
+     log = "y",
+     pch = 19,
+     cex=0.3,
+     col = as.factor(keep2))
+```
+
+
 # Quality control
 
 ## Calculate QC variables
