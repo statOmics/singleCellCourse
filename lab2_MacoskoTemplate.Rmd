@@ -1060,7 +1060,7 @@ Most analysts will simply aim to use a “reasonable” but arbitrary value,
 typically ranging from 10 to 50. This is often satisfactory as the later PCs
 explain so little variance that their inclusion or omission has no major effect.
 
-```{r}
+```{r, eval = FALSE}
 percent.var <- attr(reducedDim(sce), "percentVar")
 plot(percent.var, log="y", xlab="PC", ylab="Variance explained (%)")
 plot(cumsum(percent.var), xlab="PC", ylab="Cumulative variance explained (%)")
