@@ -1,0 +1,359 @@
+---
+title: 'Data import, quality control and normalization for the Cuomo dataset'
+author: "Koen Van den Berge and Jeroen Gilis"
+date: "30/11/2021"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Introduction
+
+We here make use of the publication of Anna Cuomo et al.
+(last author Oliver Stegle), which we will refer to as the `iPSC dataset`. The 
+paper that describes this dataset can be found using this 
+[link](https://www.nature.com/articles/s41467-020-14457-z).
+
+In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
+from 125 healthy human donors. These cells were used to study the endoderm 
+differentiation process. In this process, iPSCs differentiate to endoderm cells,
+a process which takes approximately three days. As such, the authors 
+cultered the iPSCs cell lines and allowed for differentiation for three days. 
+During the experiment, cells were harvested at four different time points: 
+day0 (directly at to incubation), day1, day2 and day3. Knowing the process of 
+endoderm differentiation, these time points should correspond with different 
+cell types: day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
+are "intermediate" cells and day3 are fully differentiated endoderm cells.
+
+This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
+
+The final goal of the experiment was to characterize population variation in the
+process of endoderm differentiation.
+
+# Download data
+
+For this lab session, we will work with a subset of the data, i.e., the data
+for the first (alphabetically) 15 patients in the experiment. These can be
+downloaded through the *belnet filesender* link provided through email,
+https://filesender.belnet.be/?s=download&token=eb8136df-67d3-4869-b2a9-f65767054e81.
+
+The data original (125 patient) could be downloaded from 
+[Zenodo](https://zenodo.org/record/3625024#.YWfahtlBxB1). At the bottom of this
+web-page, we can download the files `raw_counts.csv.zip` and 
+`cell_metadata_cols.tsv` and store these files locally. We do not recommend 
+doing this during the lab session, to avoid overloading the system.
+
+# Import data
+
+First we read in the count matrix (change the path to the location where you
+downloaded data from the Belnet Filesender link):
+
+```{r, message=FALSE, warning=FALSE}
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+
+sce
+```
+
+# Explore metadata
+
+Exploration of the metadata is essential to get a better idea of what the
+experiment was about and how it was organized.
+
+```{r}
+colData(sce)[1:5,1:10]
+colnames(colData(sce))
+```
+
+As stated in the paper, cells were sampled on 4 time points. Each of these 
+time points is expected to correspond with different cell types (day0 = iPSC,
+day1 = mesendoderm, day2 = intermediate and day3 = endoderm).
+
+```{r}
+table(colData(sce)$day)
+```
+
+As stated in the paper, cells were harvested from 125 patients. Here, we are
+working on a subset with 15 patients. The number of cells harvested per patient 
+(over all time points) ranges from 31 to 637.
+
+```{r}
+length(table(colData(sce)$donor)) # number of donors
+range(table(colData(sce)$donor)) # cells per donor
+hist(table(colData(sce)$donor),breaks=100) # cells per donor
+```
+
+Below, we look how many cells are harvest per patent and per time point.
+
+```{r}
+table(colData(sce)$donor,colData(sce)$day)
+```
+
+We see that for many patients the data is complete, i.e. cells were sampled
+on all time points.
+
+Practically, the cells were prepared in 28 batches. Since we here only look
+at a subset of the data, we see that only 14 of these batches are represented 
+here.
+
+```{r}
+length(table(colData(sce)$experiment))
+table(colData(sce)$experiment, colData(sce)$day)
+```
+
+# Obtaining and including rowData
+
+The `rowData` slot of a `SingleCellExperiment` object allows for storing 
+information on the features, i.e. the genes, in a dataset. In our object,
+the `rowData` slot currently contains the following:
+
+```{r}
+head(rowData(sce))
+```
+
+To improve our gene-level information, we may:
+
+1. Split `V1` into two columns, one with the ENSEMBL ID and the other with 
+the gene symbol.
+
+2. Display which chromosome the gene is located
+
+Many more options are possible, but are not necessary for us right now.
+
+```{r}
+rowData(sce) <- data.frame(Ensembl = gsub("_.*", "", rowData(sce)$V1),
+                           Symbol = gsub("^[^_]*_", "", rowData(sce)$V1))
+head(rowData(sce))
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+library("biomaRt")
+ensembl75 <- useEnsembl(biomart = 'genes', 
+                        dataset = 'hsapiens_gene_ensembl',
+                        version = 75)
+
+GeneInfo <- getBM(attributes = c("ensembl_gene_id", # To match with rownames SCE
+                                 "chromosome_name"), # Info on chromose
+                  mart = ensembl75)
+GeneInfo <- GeneInfo[match(rowData(sce)$Ensembl, GeneInfo$ensembl_gene_id),]
+
+rowData(sce) <- cbind(rowData(sce), GeneInfo)
+head(rowData(sce))
+all(rowData(sce)$Ensembl == rowData(sce)$ensembl_gene_id) 
+# identical, as desired, so we could optionally remove one of the two
+```
+
+# Filtering non-informative genes
+
+Let us first try the very simple and very lenient filtering criterion that we
+adopted for the Macosko dataset.
+
+```{r}
+keep <- rowSums(assays(sce)$counts > 0) > 10
+table(keep)
+
+sce <- sce[keep,]
+```
+
+We see that this filtering strategy does not remove any genes for this dataset.
+In general, datasets from plate-based scRNA-seq dataset have a far higher
+sequencing depth than data from droplet-based protocols. As requiring a minimum
+expression of 1 count in at least 10 cells is a very lenient criterion if we 
+consider that we have 36.000 cells, we should consider adopting a more stringent
+filtering criterium, like the `filterByExpr` from `edgeR`:
+
+```{r, message=FALSE, warning=FALSE}
+library(edgeR)
+
+table(colData(sce)$day)
+
+keep2 <- edgeR::filterByExpr(y=sce,
+                             group = colData(sce)$day,
+                             min.count = 5,
+                             min.prop = 0.4)
+table(keep2)
+
+sce <- sce[keep2,]
+```
+
+# Quality control
+
+## Calculate QC variables
+
+```{r}
+library(scater)
+
+# check ERCC spike-in transcripts
+sum(grepl("^ERCC-", rowData(sce)$Symbol)) # no spike-in transcripts available
+
+is.mito <- grepl("^MT", rowData(sce)$chromosome_name)
+sum(is.mito) # 13 mitochondrial genes
+
+df <- perCellQCMetrics(sce, subsets=list(Mito=is.mito))
+head(df)
+
+## add the QC variables to sce object
+colData(sce) <- cbind(colData(sce), df)
+```
+
+## Exploratory data analysis
+
+In the figure below, we see that several cells have a very low number of 
+expressed genes, and where most of the molecules are derived from 
+mitochondrial genes. This indicates likely damaged cells, presumably because 
+of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
+the downstream analysis.
+
+```{r}
+# Number of genes vs library size
+plotColData(sce, x = "sum", y="detected", colour_by="day") 
+
+# Mitochondrial genes
+plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by="day")
+```
+
+## QC using adaptive thresholds
+
+Below, we remove cells that are outlying with respect to
+
+ 1. A low sequencing depth (number of UMIs);
+ 2. A low number of genes detected;
+ 3. A high percentage of reads from mitochondrial genes.
+ 
+We remove a total of $301$ cells, mainly due to low sequencing depth and
+low number of genes detected.
+
+```{r}
+lowLib <- isOutlier(df$sum, type="lower", log=TRUE, nmads=4)
+lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
+highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
+
+table(lowLib)
+table(lowFeatures)
+table(highMito)
+
+discardCells <- (lowLib | lowFeatures | highMito)
+table(discardCells)
+colData(sce)$discardCells <- discardCells
+
+# visualize cells to be removed
+plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discardCells")
+plotColData(sce, x = "sum", y="detected", colour_by="discardCells")
+```
+
+```{r}
+# visualize cells to be removed
+plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "donor")
+plotColData(sce, x = "sum", y="detected", colour_by="donor")
+```
+
+```{r}
+# visualize cells to be removed
+plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "experiment")
+plotColData(sce, x = "sum", y="detected", colour_by="experiment")
+```
+
+```{r}
+table(sce$donor, sce$discardCells)
+table(sce$donor, sce$discardCells)/rowSums(table(sce$donor, sce$discardCells))
+#fractions of removed cells per donor
+```
+
+Most removed cells (fraction) are from patients `dixh` and `babz`.
+
+```{r}
+table(sce$experiment, sce$discardCells)
+table(sce$experiment, sce$donor)
+```
+
+Most removed cells (fraction) are from patients `dixh` and `babz`.
+Most low library sizes seem to come from patient `dixh`; for patient `babz`
+the effect is less pronounced.
+
+```{r}
+plotColData(sce[,sce$donor=="dixh"], x = "sum", y="detected")
+plotColData(sce[,sce$donor=="babz"], x = "sum", y="detected")
+```
+
+As such, we are mainly removing cells from specific patients and the respective
+batches in which they were sequenced. However, we want to be careful; we only
+want to remove technical artefacts, while retaining as much of the biology as
+possible. In our exploratory figure, we see that the cells we are removing based
+on the number of genes detected, are quite far apart from the bulk of the data
+cloud; as such, these cells are indeed suspicious. For the criterion of
+library size, we see that the cells removed there are still strongly connected
+to the data cloud. As such, we may want to relax the filtering criterion there a
+little bit. When we think of how the adaptive threshold strategy works, we
+may want to remove cells that are 4MADs away from the center, rather than
+the default 3 MADs.
+
+```{r}
+# previously
+lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
+table(lowLib)
+
+# after seeing appropriate exploratory figure
+lowLib <- isOutlier(df$sum, nmads=4, type="lower", log=TRUE)
+table(lowLib)
+
+discardCells <- (lowLib | lowFeatures | highMito)
+table(discardCells)
+colData(sce)$discardCells <- discardCells
+```
+
+Note that these steps are not exact; different analysts will come with different
+filtering criteria for many of the steps. The key ideas are that
+we let appropriate exploratory figures guide us to make reasonable choices;
+i.e., we look at the data rather than blindly following a standardized pipeline
+that may work well in many cases, but maybe not our particular dataset.
+
+```{r}
+# remove cells identified using adaptive thresholds
+sce <- sce[, !colData(sce)$discardCells]
+```
+
+## Identifying and removing empty droplets
+
+This does not make much sense for plate-based data! While we could imagine the
+presence of empty plate wells for the SMART-Seq2 experiment, these are typically
+detected and removed upstream of our analysis using laser technology.
+
+## Identifying and removing doublets
+
+Again, this step typically does not make much sense for plate-based 
+data. While we could imagine the presence of plate wells in which more than two
+cells are present for the SMART-Seq2 experiment, these are again typically
+detected and removed upstream of our analysis using laser technology.
+
+If we would use
+[scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
+to detect doublet cells on this dataset, we would see that only a very small 
+fraction of the cells would be removed. These removed cells could correspond to 
+actual doublets that were missed by the upstream doublet detection technology,
+or more likely could correspond to false positive doublets of the `scDblFinder`
+doublet detection procedure.
+
+# Normalization
+
+For normalization, the size factors $s_i$ computed here are simply scaled 
+library sizes:
+
+\[ N_i = \sum_g Y_{gi} \]
+\[ s_i = N_i / \bar{N}_i \]
+
+```{r}
+sce <- logNormCounts(sce)
+
+# note we also returned log counts: see the additional logcounts assay.
+sce
+
+# you can extract size factors using
+sf <- librarySizeFactors(sce)
+mean(sf) # equal to 1 due to scaling.
+plot(x= log(colSums(assays(sce)$counts)), 
+     y=sf)
+```
+
+--- end lab session 1 ---
+

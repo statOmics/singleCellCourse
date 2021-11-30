@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Koen Van den Berge and Jeroen Gilis" />
+
+
+<title>Data import, quality control and normalization for the Macosko dataset</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Single-cell course</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="introSequencingBulk.html">A brief introduction to sequencing technology</a>
+    </li>
+    <li>
+      <a href="singleCellProtocols.html">Two popular single-cell protocols</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="labSession_1.html">Lab 1</a>
+    </li>
+    <li>
+      <a href="labSession_2.html">Lab 2</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Data import, quality control and normalization for the Macosko dataset</h1>
+<h4 class="author">Koen Van den Berge and Jeroen Gilis</h4>
+<h4 class="date">20/11/2021</h4>
+
+</div>
+
+
+<div id="preamble-installation-of-bioconductor-libraries" class="section level1">
+<h1><span class="header-section-number">1</span> Preamble: installation of Bioconductor libraries</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># install BiocManager package if not installed yet.</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co"># BiocManager is the package installer for Bioconductor software.</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="cf">if</span> (<span class="op">!</span><span class="kw">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>))</span>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span></code></pre></div>
+<pre><code>## Retrieving &#39;https://cran.rstudio.com/bin/macosx/contrib/4.1/BiocManager_1.30.16.tgz&#39; ...
+##  OK [downloaded 315.4 Kb in 0.2 secs]
+## Installing BiocManager [1.30.16] ...
+##  OK [installed binary]
+## Moving BiocManager [1.30.16] into the cache ...
+##  OK [moved to cache in 1.1 milliseconds]</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># install packages if not yet installed.</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>pkgs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;SingleCellExperiment&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3"></a>          <span class="st">&quot;ExperimentHub&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4"></a>          <span class="st">&quot;edgeR&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5"></a>          <span class="st">&quot;DropletUtils&quot;</span>, </span>
+<span id="cb3-6"><a href="#cb3-6"></a>          <span class="st">&quot;scRNAseq&quot;</span>, </span>
+<span id="cb3-7"><a href="#cb3-7"></a>          <span class="st">&quot;scater&quot;</span>, </span>
+<span id="cb3-8"><a href="#cb3-8"></a>          <span class="st">&quot;scuttle&quot;</span>, </span>
+<span id="cb3-9"><a href="#cb3-9"></a>          <span class="st">&quot;scran&quot;</span>, </span>
+<span id="cb3-10"><a href="#cb3-10"></a>          <span class="st">&quot;BiocSingular&quot;</span>, </span>
+<span id="cb3-11"><a href="#cb3-11"></a>          <span class="st">&quot;scDblFinder&quot;</span>)</span>
+<span id="cb3-12"><a href="#cb3-12"></a>notInstalled &lt;-<span class="st"> </span>pkgs[<span class="op">!</span>pkgs <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="dv">1</span>]]</span>
+<span id="cb3-13"><a href="#cb3-13"></a><span class="cf">if</span>(<span class="kw">length</span>(notInstalled) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>){</span>
+<span id="cb3-14"><a href="#cb3-14"></a>  BiocManager<span class="op">::</span><span class="kw">install</span>(notInstalled)</span>
+<span id="cb3-15"><a href="#cb3-15"></a>}</span></code></pre></div>
+<pre><code>## &#39;getOption(&quot;repos&quot;)&#39; replaces Bioconductor standard repositories, see
+## &#39;?repositories&#39; for details
+## 
+## replacement repositories:
+##     CRAN: https://cran.rstudio.com</code></pre>
+<pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
+<pre><code>## Installing package(s) &#39;BiocVersion&#39;, &#39;SingleCellExperiment&#39;, &#39;ExperimentHub&#39;,
+##   &#39;edgeR&#39;, &#39;DropletUtils&#39;, &#39;scRNAseq&#39;, &#39;scater&#39;, &#39;scuttle&#39;, &#39;scran&#39;,
+##   &#39;BiocSingular&#39;, &#39;scDblFinder&#39;</code></pre>
+<pre><code>## also installing the dependencies &#39;fs&#39;, &#39;sass&#39;, &#39;sys&#39;, &#39;bit&#39;, &#39;cachem&#39;, &#39;httpuv&#39;, &#39;xtable&#39;, &#39;fontawesome&#39;, &#39;sourcetools&#39;, &#39;later&#39;, &#39;promises&#39;, &#39;commonmark&#39;, &#39;bslib&#39;, &#39;htmlwidgets&#39;, &#39;crosstalk&#39;, &#39;jquerylib&#39;, &#39;askpass&#39;, &#39;formatR&#39;, &#39;rjson&#39;, &#39;hms&#39;, &#39;prettyunits&#39;, &#39;GenomeInfoDbData&#39;, &#39;zlibbioc&#39;, &#39;bit64&#39;, &#39;blob&#39;, &#39;memoise&#39;, &#39;plogr&#39;, &#39;shiny&#39;, &#39;DT&#39;, &#39;openssl&#39;, &#39;generics&#39;, &#39;tidyselect&#39;, &#39;assertthat&#39;, &#39;purrr&#39;, &#39;lambda.r&#39;, &#39;futile.options&#39;, &#39;png&#39;, &#39;lazyeval&#39;, &#39;XML&#39;, &#39;GenomicAlignments&#39;, &#39;restfulr&#39;, &#39;bitops&#39;, &#39;Rhtslib&#39;, &#39;progress&#39;, &#39;xml2&#39;, &#39;MatrixGenerics&#39;, &#39;Biobase&#39;, &#39;GenomeInfoDb&#39;, &#39;XVector&#39;, &#39;RSQLite&#39;, &#39;interactiveDisplayBase&#39;, &#39;httr&#39;, &#39;dplyr&#39;, &#39;dbplyr&#39;, &#39;DBI&#39;, &#39;filelock&#39;, &#39;futile.logger&#39;, &#39;snow&#39;, &#39;matrixStats&#39;, &#39;sparseMatrixStats&#39;, &#39;rhdf5filters&#39;, &#39;R.oo&#39;, &#39;R.methodsS3&#39;, &#39;sitmo&#39;, &#39;KEGGREST&#39;, &#39;AnnotationFilter&#39;, &#39;rtracklayer&#39;, &#39;Rsamtools&#39;, &#39;ProtGenerics&#39;, &#39;Biostrings&#39;, &#39;RCurl&#39;, &#39;BiocIO&#39;, &#39;biomaRt&#39;, &#39;RcppHNSW&#39;, &#39;beeswarm&#39;, &#39;vipor&#39;, &#39;data.table&#39;, &#39;SummarizedExperiment&#39;, &#39;S4Vectors&#39;, &#39;BiocGenerics&#39;, &#39;GenomicRanges&#39;, &#39;DelayedArray&#39;, &#39;AnnotationHub&#39;, &#39;BiocFileCache&#39;, &#39;curl&#39;, &#39;rappdirs&#39;, &#39;limma&#39;, &#39;locfit&#39;, &#39;Rcpp&#39;, &#39;IRanges&#39;, &#39;BiocParallel&#39;, &#39;DelayedMatrixStats&#39;, &#39;HDF5Array&#39;, &#39;rhdf5&#39;, &#39;R.utils&#39;, &#39;dqrng&#39;, &#39;beachmat&#39;, &#39;Rhdf5lib&#39;, &#39;BH&#39;, &#39;AnnotationDbi&#39;, &#39;ensembldb&#39;, &#39;GenomicFeatures&#39;, &#39;gridExtra&#39;, &#39;BiocNeighbors&#39;, &#39;ggbeeswarm&#39;, &#39;viridis&#39;, &#39;Rtsne&#39;, &#39;ggrepel&#39;, &#39;igraph&#39;, &#39;statmod&#39;, &#39;bluster&#39;, &#39;metapod&#39;, &#39;ScaledMatrix&#39;, &#39;irlba&#39;, &#39;rsvd&#39;, &#39;xgboost&#39;</code></pre>
+<pre><code>## 
+##   There are binary versions available but the source versions are later:
+##      binary source needs_compilation
+## fs    1.5.0  1.5.1              TRUE
+## xml2  1.3.2  1.3.3              TRUE
+## 
+## 
+## The downloaded binary packages are in
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmphMYSLt/downloaded_packages</code></pre>
+<pre><code>## installing the source packages &#39;fs&#39;, &#39;GenomeInfoDbData&#39;, &#39;xml2&#39;, &#39;scRNAseq&#39;</code></pre>
+<pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
+##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
+##   &#39;tinytex&#39;, &#39;withr&#39;, &#39;xfun&#39;</code></pre>
+</div>
+<div id="the-macosko-dataset" class="section level1">
+<h1><span class="header-section-number">2</span> The Macosko dataset</h1>
+<p>In this workshop session, we will preprocess the single-cell RNA-seq dataset from the publication by Macosko <em>et al.</em>, Cell 161, 1202–1214 from 2015 <a href="https://doi.org/10.1016/j.cell.2015.05.002">(link)</a>. This is the manuscript in which the droplet scRNA-seq technology <strong>Drop-seq</strong> was introduced. Six years after the original publication, drop-seq is still one of the most commonly adopted scRNA-seq protocols, as evidenced by the large number of citations for Macosko <em>et al.</em> (4.303 citations at November 3, 2021).</p>
+<p>The basic idea behind the Drop-seq protocol can be taken from the graphical abstract of the publication.</p>
+<p><img src="macosko_graphicalAbstract.jpeg" /><!-- --></p>
+<p>The success of Drop-seq can be explained by the following advantageous features:</p>
+<ul>
+<li><p>The use of unique molecular identifiers (UMIs). By working with UMIs, one count corresponds to one observed mRNA molecule present in the cell. Thanks to the use of UMI barcodes, PCR artifacts are reduced.</p></li>
+<li><p>Scalability: microfluidics technology allows for performing the library prep reactions inside nanodroplets, in which single cells may be contained. Library prep occurs across all droplets simultaneously.</p></li>
+<li><p>Cost: the experiment costs around 6.5 cents (USD) per cell.</p></li>
+<li><p>Speed: The very large dataset that we will be working with today was generated in an experiment that took only 4 days.</p></li>
+</ul>
+<p>In this particular experiment, Macosko <em>et al.</em> sequenced 49,300 cells from the mouse retina, identifying 39 transcriptionally distinct cell populations. The experiment was performed in 7 batches.</p>
+</div>
+<div id="data-availability" class="section level1">
+<h1><span class="header-section-number">3</span> Data availability</h1>
+<div id="sra" class="section level2">
+<h2><span class="header-section-number">3.1</span> SRA</h2>
+<p>The <a href="https://www.ncbi.nlm.nih.gov/sra">Sequence Read Archive (SRA)</a> is the largest publicly available repository of high-throughput sequencing data. The data are stored by the National Center for Biotechnology Information (NCBI) services and multiple cloud storage providers. From this website “raw” sequencing data can be retrieved. In practice, these are usually <code>.sra</code> files, which can be downloaded and converted into FASTQ files using functions from the <code>sratoolkit</code> software.</p>
+<p>For our dataset, the FASTQ data can be retrieved from this <a href="https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA267857&amp;o=acc_s%3Aa">link</a>. The data are stored as one file per sequencing batch, with each file approximately 20Gb. As such, it will be unfeasible to download and process these FASTQ files in this practical session.</p>
+<p>Instead, for demonstrative purposes, we have taken a subsample of the FASTQ file for the first sequencing batch for you to work with. On this subsample, we may perform all the tasks that we would have performed on the full dataset. The steps that are required for downloading and quantifying drop-seq data can be found in <a href="https://github.com/statOmics/singleCellCourse/blob/master/lab1_preprocessing/preprocessDropseq.sh">a Shell script on our companion GitHub repository</a>.</p>
+</div>
+<div id="geo" class="section level2">
+<h2><span class="header-section-number">3.2</span> GEO</h2>
+<p>The dataset from Macosko <em>et al.</em> was also uploaded by the authors on the Gene Expression Omnibus (GEO) platform under accession number <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63472">GSE63472</a>, from which raw and readily-processed data files may be retrieved, including:</p>
+<ol style="list-style-type: decimal">
+<li><p><em>GSE63472_RAW.tar</em>, a 90.6Gb object that contains the “raw data” for the experiment. In the scRNA-seq context, FASTQ files are often considered the raw data format.</p></li>
+<li><p><em>GSE63472_P14Retina_merged_digital_expression.txt.gz</em>, a 50.7Mb matrix that stores the gene expression values for each cell. These values are integer counts, that did not undergo any type of preprocessing or normalization.</p></li>
+<li><p><em>GSE63472_mm10_reference_metadata.tar.gz</em>, a 862.9Mb compressed folder containing information on the reference genome to which the scRNA-seq reads were aligned (see theory slides).</p></li>
+<li><p><em>GSE63472_P14Retina_logDGE.txt.gz</em>, a 316.8Mb compressed text file, not clear what it contains (results from a differential gene expression analysis, but with log-transformation, so log-fold changes maybe?).</p></li>
+</ol>
+<p>As such, by downloading <em>GSE63472_P14Retina_merged_digital_expression.txt.gz</em>, we avoid re-quantifying the data, i.e., the translation from reads from the FASTQ files into a gene-level expression values for each cell.</p>
+<p>One issue that often arises from data downloaded from GEO, is that there is no strict requirements for which data should be included in the upload by the authors. As such, from my personal experience, it can often be the case that important information like metadata are missing, or the content of the submitted files is unclear. Even if all the required data are available, as is the case here, we would still need to piece all the information together from different files and file formats before we can use them.</p>
+</div>
+<div id="experimenthub" class="section level2">
+<h2><span class="header-section-number">3.3</span> ExperimentHub</h2>
+<p>The Bioconductor <em>ExperimentHub</em> web resource, which can be accessed using the <a href="https://bioconductor.org/packages/release/bioc/html/ExperimentHub.html">ExperimentHub</a> R package, provides a central location where curated data from experiments, publications or training courses can be accessed. While it contains far less datasets than the SRA or GEO (4965 records to date), these datasets all follow the tidy data format of Bioconductor. Note that the ExperimentHub contains several types of data, like bulk and single-cell transcriptomics data, microarrays and more.</p>
+<p>The Macosko dataset is available from ExperimentHub and can be accessed as follows:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw">library</span>(ExperimentHub)</span>
+<span id="cb11-2"><a href="#cb11-2"></a>edb &lt;-<span class="st"> </span><span class="kw">ExperimentHub</span>()</span>
+<span id="cb11-3"><a href="#cb11-3"></a></span>
+<span id="cb11-4"><a href="#cb11-4"></a>edb[<span class="kw">grep</span>(<span class="st">&quot;Macosko&quot;</span>, edb<span class="op">$</span>title)] <span class="co"># find accession number (can be inefficient)</span></span></code></pre></div>
+<pre><code>## ExperimentHub with 2 records
+## # snapshotDate(): 2021-10-19
+## # $dataprovider: Steve McCarroll, GEO
+## # $species: Mus musculus
+## # $rdataclass: dgCMatrix, DataFrame
+## # additional mcols(): taxonomyid, genome, description,
+## #   coordinate_1_based, maintainer, rdatadateadded, preparerclass, tags,
+## #   rdatapath, sourceurl, sourcetype 
+## # retrieve records with, e.g., &#39;object[[&quot;EH2690&quot;]]&#39; 
+## 
+##            title                 
+##   EH2690 | Macosko retina counts 
+##   EH2691 | Macosko retina colData</code></pre>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>edb_counts &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2690&quot;</span>]]</span>
+<span id="cb13-2"><a href="#cb13-2"></a>edb_counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>## 5 x 5 sparse Matrix of class &quot;dgCMatrix&quot;
+##               r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA r1_GCGCAACTGCTC r1_GATTGGGAGGCA
+## KITL                        .               .               1               .
+## TMTC3                       3               .               .               .
+## CEP290                      1               3               .               2
+## 4930430F08RIK               2               1               2               .
+## 1700017N19RIK               .               .               .               .
+##               r1_CCTCCTAGTTGG
+## KITL                        .
+## TMTC3                       2
+## CEP290                      1
+## 4930430F08RIK               1
+## 1700017N19RIK               .</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>edb_coldata &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2691&quot;</span>]]</span>
+<span id="cb15-2"><a href="#cb15-2"></a>edb_coldata[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,]</span></code></pre></div>
+<pre><code>## DataFrame with 5 rows and 2 columns
+##           cell.id   cluster
+##       &lt;character&gt; &lt;integer&gt;
+## 1 r1_GGCCGCAGTCCG         2
+## 2 r1_CTTGTGCGGGAA         2
+## 3 r1_GCGCAACTGCTC         2
+## 4 r1_GATTGGGAGGCA         2
+## 5 r1_CCTCCTAGTTGG        NA</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw">rm</span>(edb, edb_counts, edb_coldata)</span></code></pre></div>
+</div>
+<div id="scrnaseq" class="section level2">
+<h2><span class="header-section-number">3.4</span> scRNASeq</h2>
+<p>In addition to ExperimentHub, Bioconductor provides the package <a href="https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html">scRNAseq</a>. This package provides an even more user-friendly client to access (only) scRNA-seq datasets from the ExperimentHub web resource. Data retrieved using the scRNAseq package are stored as user-friendly <code>SingleCellExperiment</code> objects, with the expression data, gene-level information, cell-level information and experiment metadata all in place in one data object. The scRNA-seq package currently holds 61 datasets, including the data from <em>Macosko et al.</em>:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="kw">library</span>(scRNAseq)</span>
+<span id="cb18-2"><a href="#cb18-2"></a>scRNAseq<span class="op">::</span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
+<pre><code>## class: SingleCellExperiment 
+## dim: 24658 49300 
+## metadata(0):
+## assays(1): counts
+## rownames(24658): KITL TMTC3 ... 1110059M19RIK GM20861
+## rowData names(0):
+## colnames(49300): r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA ... p1_TAACGCGCTCCT
+##   p1_ATTCTTGTTCTT
+## colData names(2): cell.id cluster
+## reducedDimNames(0):
+## mainExpName: NULL
+## altExpNames(0):</code></pre>
+</div>
+</div>
+<div id="import-data" class="section level1">
+<h1><span class="header-section-number">4</span> Import data</h1>
+<p>The <code>scRNAseq</code> package provides convenient access to several datasets. See the <a href="http://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html">package Bioconductor page</a> for more information.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Code below might ask you to create an ExperimentHub directory. </span></span>
+<span id="cb20-2"><a href="#cb20-2"></a><span class="co"># Type &#39;yes&#39; and hit Enter, to allow this.</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(scRNAseq))</span>
+<span id="cb20-4"><a href="#cb20-4"></a>sce &lt;-<span class="st"> </span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
+<pre><code>## snapshotDate(): 2021-10-19</code></pre>
+<pre><code>## see ?scRNAseq and browseVignettes(&#39;scRNAseq&#39;) for documentation</code></pre>
+<pre><code>## loading from cache</code></pre>
+<pre><code>## see ?scRNAseq and browseVignettes(&#39;scRNAseq&#39;) for documentation</code></pre>
+<pre><code>## loading from cache</code></pre>
+</div>
+<div id="a-singlecellexperiment-object" class="section level1">
+<h1><span class="header-section-number">5</span> A <code>SingleCellExperiment</code> object</h1>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>sce</span></code></pre></div>
+<pre><code>## class: SingleCellExperiment 
+## dim: 24658 49300 
+## metadata(0):
+## assays(1): counts
+## rownames(24658): KITL TMTC3 ... 1110059M19RIK GM20861
+## rowData names(0):
+## colnames(49300): r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA ... p1_TAACGCGCTCCT
+##   p1_ATTCTTGTTCTT
+## colData names(2): cell.id cluster
+## reducedDimNames(0):
+## mainExpName: NULL
+## altExpNames(0):</code></pre>
+<div id="accessing-data-from-a-singlecellexperiment-object" class="section level2">
+<h2><span class="header-section-number">5.1</span> Accessing data from a <code>SingleCellExperiment</code> object</h2>
+<p>Please see <a href="http://bioconductor.org/books/release/OSCA/data-infrastructure.html">Figure 4.1 in OSCA</a> for an overview of a <code>SingleCellExperiment</code> object.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="co"># Data: assays</span></span>
+<span id="cb28-2"><a href="#cb28-2"></a><span class="kw">assays</span>(sce)</span></code></pre></div>
+<pre><code>## List of length 1
+## names(1): counts</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="kw">assays</span>(sce)<span class="op">$</span>counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>## 5 x 5 sparse Matrix of class &quot;dgCMatrix&quot;
+##               r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA r1_GCGCAACTGCTC r1_GATTGGGAGGCA
+## KITL                        .               .               1               .
+## TMTC3                       3               .               .               .
+## CEP290                      1               3               .               2
+## 4930430F08RIK               2               1               2               .
+## 1700017N19RIK               .               .               .               .
+##               r1_CCTCCTAGTTGG
+## KITL                        .
+## TMTC3                       2
+## CEP290                      1
+## 4930430F08RIK               1
+## 1700017N19RIK               .</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="co"># Feature metadata: rowData</span></span>
+<span id="cb32-2"><a href="#cb32-2"></a><span class="kw">rowData</span>(sce) <span class="co"># empty for now</span></span></code></pre></div>
+<pre><code>## DataFrame with 24658 rows and 0 columns</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="co"># Cell metadata: colData</span></span>
+<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">colData</span>(sce)</span></code></pre></div>
+<pre><code>## DataFrame with 49300 rows and 2 columns
+##                         cell.id   cluster
+##                     &lt;character&gt; &lt;integer&gt;
+## r1_GGCCGCAGTCCG r1_GGCCGCAGTCCG         2
+## r1_CTTGTGCGGGAA r1_CTTGTGCGGGAA         2
+## r1_GCGCAACTGCTC r1_GCGCAACTGCTC         2
+## r1_GATTGGGAGGCA r1_GATTGGGAGGCA         2
+## r1_CCTCCTAGTTGG r1_CCTCCTAGTTGG        NA
+## ...                         ...       ...
+## p1_TCAAAAGCCGGG p1_TCAAAAGCCGGG        24
+## p1_ATTAAGTTCCAA p1_ATTAAGTTCCAA        34
+## p1_CTGTCTGAGACC p1_CTGTCTGAGACC         2
+## p1_TAACGCGCTCCT p1_TAACGCGCTCCT        24
+## p1_ATTCTTGTTCTT p1_ATTCTTGTTCTT        24</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a><span class="co"># Reduced dimensions: reducedDims</span></span>
+<span id="cb36-2"><a href="#cb36-2"></a><span class="kw">reducedDims</span>(sce) <span class="co"># empty for now</span></span></code></pre></div>
+<pre><code>## List of length 0
+## names(0):</code></pre>
+</div>
+<div id="creating-a-new-singlecellexperiment-object" class="section level2">
+<h2><span class="header-section-number">5.2</span> Creating a new <code>SingleCellExperiment</code> object</h2>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>sceNew &lt;-<span class="st"> </span><span class="kw">SingleCellExperiment</span>(<span class="dt">assays =</span> <span class="kw">list</span>(<span class="dt">counts =</span> <span class="kw">assays</span>(sce)<span class="op">$</span>counts))</span>
+<span id="cb38-2"><a href="#cb38-2"></a>sceNew</span></code></pre></div>
+<pre><code>## class: SingleCellExperiment 
+## dim: 24658 49300 
+## metadata(0):
+## assays(1): counts
+## rownames(24658): KITL TMTC3 ... 1110059M19RIK GM20861
+## rowData names(0):
+## colnames(49300): r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA ... p1_TAACGCGCTCCT
+##   p1_ATTCTTGTTCTT
+## colData names(0):
+## reducedDimNames(0):
+## mainExpName: NULL
+## altExpNames(0):</code></pre>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a><span class="kw">rm</span>(sceNew)</span></code></pre></div>
+</div>
+<div id="storing-metadata-in-a-singlecellexperiment-object" class="section level2">
+<h2><span class="header-section-number">5.3</span> Storing (meta)data in a <code>SingleCellExperiment</code> object</h2>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a>fakeGeneNames &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;gene&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(sce))</span>
+<span id="cb41-2"><a href="#cb41-2"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span>fakeGeneNames</span>
+<span id="cb41-3"><a href="#cb41-3"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
+<pre><code>## DataFrame with 6 rows and 1 column
+##                  fakeName
+##               &lt;character&gt;
+## KITL                gene1
+## TMTC3               gene2
+## CEP290              gene3
+## 4930430F08RIK       gene4
+## 1700017N19RIK       gene5
+## MGAT4C              gene6</code></pre>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a><span class="co"># Remove again by setting to NULL</span></span>
+<span id="cb43-2"><a href="#cb43-2"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb43-3"><a href="#cb43-3"></a></span>
+<span id="cb43-4"><a href="#cb43-4"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="kw">log1p</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)</span>
+<span id="cb43-5"><a href="#cb43-5"></a><span class="kw">assays</span>(sce)</span></code></pre></div>
+<pre><code>## List of length 2
+## names(2): counts logCounts</code></pre>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span></code></pre></div>
+<pre><code>## 5 x 5 sparse Matrix of class &quot;dgCMatrix&quot;
+##               r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA r1_GCGCAACTGCTC r1_GATTGGGAGGCA
+## KITL                .               .               0.6931472        .       
+## TMTC3               1.3862944       .               .                .       
+## CEP290              0.6931472       1.3862944       .                1.098612
+## 4930430F08RIK       1.0986123       0.6931472       1.0986123        .       
+## 1700017N19RIK       .               .               .                .       
+##               r1_CCTCCTAGTTGG
+## KITL                .        
+## TMTC3               1.0986123
+## CEP290              0.6931472
+## 4930430F08RIK       0.6931472
+## 1700017N19RIK       .</code></pre>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="ot">NULL</span></span></code></pre></div>
+</div>
+</div>
+<div id="obtaining-and-including-rowdata" class="section level1">
+<h1><span class="header-section-number">6</span> Obtaining and including rowData</h1>
+<p>The <code>rowData</code> slot of a <code>SingleCellExperiment</code> object allows for storing information on the features, i.e. the genes, in a dataset. In our object, the <code>rowData</code> slot is empty.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a><span class="kw">rowData</span>(sce)</span></code></pre></div>
+<pre><code>## DataFrame with 24658 rows and 0 columns</code></pre>
+<p>As such, the only information we have on the genes are their names, which can be retrieved as the <code>rownames</code> of the expression matrix.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="kw">head</span>(<span class="kw">rownames</span>(sce))</span></code></pre></div>
+<pre><code>## [1] &quot;KITL&quot;          &quot;TMTC3&quot;         &quot;CEP290&quot;        &quot;4930430F08RIK&quot;
+## [5] &quot;1700017N19RIK&quot; &quot;MGAT4C&quot;</code></pre>
+<p>These are the gene names (symbols). Note that it may be useful to include additional information in the <code>rowData</code> slot. For instance, we may want to store:</p>
+<ul>
+<li>Unambiguous gene identifiers (e.g. from ENSEMBL)</li>
+<li>On which chromosome the gene is located</li>
+<li>Gene length (genomic start position and end position)</li>
+<li>Others…</li>
+</ul>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a><span class="kw">library</span>(<span class="st">&quot;biomaRt&quot;</span>)</span>
+<span id="cb52-2"><a href="#cb52-2"></a></span>
+<span id="cb52-3"><a href="#cb52-3"></a>ensembl75 &lt;-<span class="st"> </span><span class="kw">useEnsembl</span>(<span class="dt">biomart =</span> <span class="st">&#39;genes&#39;</span>, </span>
+<span id="cb52-4"><a href="#cb52-4"></a>                        <span class="dt">dataset =</span> <span class="st">&#39;mmusculus_gene_ensembl&#39;</span>,</span>
+<span id="cb52-5"><a href="#cb52-5"></a>                        <span class="dt">version =</span> <span class="dv">75</span>)</span>
+<span id="cb52-6"><a href="#cb52-6"></a></span>
+<span id="cb52-7"><a href="#cb52-7"></a><span class="kw">head</span>(<span class="kw">listAttributes</span>(ensembl75)) <span class="co"># potential info to extract</span></span></code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["name"],"name":[1],"type":["chr"],"align":["left"]},{"label":["description"],"name":[2],"type":["chr"],"align":["left"]},{"label":["page"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"ensembl_gene_id","2":"Ensembl Gene ID","3":"feature_page","_rn_":"1"},{"1":"ensembl_transcript_id","2":"Ensembl Transcript ID","3":"feature_page","_rn_":"2"},{"1":"ensembl_peptide_id","2":"Ensembl Protein ID","3":"feature_page","_rn_":"3"},{"1":"ensembl_exon_id","2":"Ensembl Exon ID","3":"feature_page","_rn_":"4"},{"1":"description","2":"Description","3":"feature_page","_rn_":"5"},{"1":"chromosome_name","2":"Chromosome Name","3":"feature_page","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a>geneInfo &lt;-<span class="st"> </span><span class="kw">getBM</span>(<span class="dt">attributes =</span> <span class="kw">c</span>(<span class="st">&quot;ensembl_gene_id&quot;</span>, <span class="co"># ENSEMBL unambiguous identifier</span></span>
+<span id="cb53-2"><a href="#cb53-2"></a>                                 <span class="st">&quot;mgi_symbol&quot;</span>, <span class="co"># Gene symbol (to link with SCE rownames),</span></span>
+<span id="cb53-3"><a href="#cb53-3"></a>                                 <span class="st">&quot;chromosome_name&quot;</span>, <span class="co"># On which chromosome</span></span>
+<span id="cb53-4"><a href="#cb53-4"></a>                                 <span class="st">&quot;start_position&quot;</span>, <span class="co"># Start position</span></span>
+<span id="cb53-5"><a href="#cb53-5"></a>                                 <span class="st">&quot;end_position&quot;</span>),<span class="co"># End position</span></span>
+<span id="cb53-6"><a href="#cb53-6"></a>                  <span class="dt">mart =</span> ensembl75)</span>
+<span id="cb53-7"><a href="#cb53-7"></a></span>
+<span id="cb53-8"><a href="#cb53-8"></a><span class="kw">head</span>(geneInfo)</span></code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["ensembl_gene_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["mgi_symbol"],"name":[2],"type":["chr"],"align":["left"]},{"label":["chromosome_name"],"name":[3],"type":["chr"],"align":["left"]},{"label":["start_position"],"name":[4],"type":["int"],"align":["right"]},{"label":["end_position"],"name":[5],"type":["int"],"align":["right"]}],"data":[{"1":"ENSMUSG00000085172","2":"Gm6542","3":"18","4":"36609958","5":"36610729","_rn_":"1"},{"1":"ENSMUSG00000063514","2":"Gm6756","3":"18","4":"36920396","5":"36922207","_rn_":"2"},{"1":"ENSMUSG00000089983","2":"2010320O07Rik","3":"18","4":"38209772","5":"38229145","_rn_":"3"},{"1":"ENSMUSG00000013653","2":"1810065E05Rik","3":"11","4":"58421111","5":"58426024","_rn_":"4"},{"1":"ENSMUSG00000066475","2":"Gm10268","3":"18","4":"38244828","5":"38245382","_rn_":"5"},{"1":"ENSMUSG00000083766","2":"Gm15335","3":"18","4":"38717528","5":"38718128","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>geneInfo<span class="op">$</span>mgi_symbol_upper &lt;-<span class="st"> </span><span class="kw">toupper</span>(geneInfo<span class="op">$</span>mgi_symbol) </span>
+<span id="cb54-2"><a href="#cb54-2"></a><span class="co"># match between gene info and rownames</span></span>
+<span id="cb54-3"><a href="#cb54-3"></a></span>
+<span id="cb54-4"><a href="#cb54-4"></a><span class="kw">sum</span>(<span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper)</span></code></pre></div>
+<pre><code>## [1] 24360</code></pre>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a><span class="kw">sum</span>(<span class="op">!</span><span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper) <span class="co"># lost in conversion :(</span></span></code></pre></div>
+<pre><code>## [1] 298</code></pre>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="kw">rowData</span>(sce) &lt;-<span class="st"> </span>geneInfo[<span class="kw">match</span>(<span class="kw">rownames</span>(sce),geneInfo<span class="op">$</span>mgi_symbol_upper),]</span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
+<pre><code>## DataFrame with 6 rows and 6 columns
+##                  ensembl_gene_id    mgi_symbol chromosome_name start_position
+##                      &lt;character&gt;   &lt;character&gt;     &lt;character&gt;      &lt;integer&gt;
+## KITL          ENSMUSG00000019966          Kitl              10      100015630
+## TMTC3         ENSMUSG00000036676         Tmtc3              10      100443902
+## CEP290        ENSMUSG00000019971        Cep290              10      100488289
+## 4930430F08RIK ENSMUSG00000046567 4930430F08Rik              10      100572274
+## 1700017N19RIK ENSMUSG00000056912 1700017N19Rik              10      100592386
+## MGAT4C        ENSMUSG00000019888        Mgat4c              10      101681487
+##               end_position mgi_symbol_upper
+##                  &lt;integer&gt;      &lt;character&gt;
+## KITL             100100413             KITL
+## TMTC3            100487350            TMTC3
+## CEP290           100573655           CEP290
+## 4930430F08RIK    100589259    4930430F08RIK
+## 1700017N19RIK    100618391    1700017N19RIK
+## MGAT4C           102391469           MGAT4C</code></pre>
+</div>
+<div id="filtering-non-informative-genes" class="section level1">
+<h1><span class="header-section-number">7</span> Filtering non-informative genes</h1>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a><span class="kw">library</span>(edgeR)</span></code></pre></div>
+<pre><code>## Loading required package: limma</code></pre>
+<pre><code>## 
+## Attaching package: &#39;limma&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     plotMA</code></pre>
+<pre><code>## 
+## Attaching package: &#39;edgeR&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:SingleCellExperiment&#39;:
+## 
+##     cpm</code></pre>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1"></a><span class="co"># A very simple strategy: remove all genes that are expressed in less than 10</span></span>
+<span id="cb67-2"><a href="#cb67-2"></a><span class="co"># out of 49300 cells -&gt; note that this a very lenient filtering criterium</span></span>
+<span id="cb67-3"><a href="#cb67-3"></a>keep &lt;-<span class="st"> </span><span class="kw">rowSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span></span>
+<span id="cb67-4"><a href="#cb67-4"></a><span class="kw">table</span>(keep)</span></code></pre></div>
+<pre><code>## keep
+## FALSE  TRUE 
+##  6771 17887</code></pre>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1"></a>sce &lt;-<span class="st"> </span>sce[keep,]</span></code></pre></div>
+<p>Note that dedicated functions for filtering out lowly expressed genes exist. One such function is the <code>filterByExpr</code> function of the edgeR R package. In brief, the strategy keeps genes that have at least “min.count” reads in a worthwhile number samples.</p>
+<p>More precisely, the filtering keeps genes that have count-per-million (CPM) above k in n samples.</p>
+<p>k is determined by the min.count argument to the function, and by the sample library sizes.</p>
+<p>n is determined by the design matrix. n can be seen as the smallest group sample size. A <code>group</code> of samples/cells can be defined as cells that are more similar to one another, e.g., from the same sequencing batch, the same patient…. Here we could also use the cluster assignment (cell type) for each cell as the grouping variable; <em>note however, that this usually is not available until a</em> <em>later stage in the analysis pipeline</em> (i.e., after dimension reduction and clustering, topics we will cover next session.)</p>
+<p>If all the group sizes are larger than the <code>large.n</code> argument of the filterByExpr function, which defaults to 10, then n will be taken as <code>min.prop</code>* the the number of samples/cells in the smallest group.</p>
+<p>Note that all the group sizes will often be larger than the <code>large.n</code> in case of single-cell data.</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1"></a><span class="co"># Slow (more than 1min) -&gt; do not run</span></span>
+<span id="cb70-2"><a href="#cb70-2"></a><span class="co"># keep2 &lt;- filterByExpr(sce,</span></span>
+<span id="cb70-3"><a href="#cb70-3"></a><span class="co">#                       group = sce$cluster,</span></span>
+<span id="cb70-4"><a href="#cb70-4"></a><span class="co">#                       min.count = 1,</span></span>
+<span id="cb70-5"><a href="#cb70-5"></a><span class="co">#                       min.total.count = 15,</span></span>
+<span id="cb70-6"><a href="#cb70-6"></a><span class="co">#                       min.prop = 0.2)</span></span>
+<span id="cb70-7"><a href="#cb70-7"></a><span class="co"># table(keep2)</span></span></code></pre></div>
+</div>
+<div id="quality-control" class="section level1">
+<h1><span class="header-section-number">8</span> Quality control</h1>
+<p>In quality control (QC), we check the quality of our dataset. In particular, we investigate undesirable oddities, such as low-quality cells, empty droplets or doublets.</p>
+<div id="identifying-and-removing-low-quality-cells" class="section level2">
+<h2><span class="header-section-number">8.1</span> Identifying and removing low-quality cells</h2>
+<p>There are several distinguishing features of low-quality cells that can be used in order to identify them. <a href="http://bioconductor.org/books/3.14/OSCA.basic/quality-control.html">As described in the OSCA book</a> book):</p>
+<ol style="list-style-type: decimal">
+<li><p>The library size is defined as the total sum of counts across all relevant features for each cell. Here, we will consider the relevant features to be the endogenous genes. Cells with small library sizes are of low quality as the RNA has been lost at some point during library preparation, either due to cell lysis or inefficient cDNA capture and amplification.</p></li>
+<li><p>The number of expressed features in each cell is defined as the number of endogenous genes with non-zero counts for that cell. Any cell with very few expressed genes is likely to be of poor quality as the diverse transcript population has not been successfully captured.</p></li>
+<li><p>We sometimes have spike-in (ERCC) transcripts available. The proportion of reads mapped to spike-in transcripts is calculated relative to the total count across all features (including spike-ins) for each cell. As the same amount of spike-in RNA should have been added to each cell, any enrichment in spike-in counts is symptomatic of loss of endogenous RNA.</p></li>
+<li><p>In the absence of spike-in transcripts, the proportion of reads mapped to genes in the mitochondrial genome can be used. High proportions are indicative of poor-quality cells (Islam et al. 2014; Ilicic et al. 2016), presumably because of loss of cytoplasmic RNA from perforated cells. The reasoning is that, in the presence of modest damage, the holes in the cell membrane permit efflux of individual transcript molecules but are too small to allow mitochondria to escape, leading to a relative enrichment of mitochondrial transcripts. For single-nuclei RNA-seq experiments, high proportions are also useful as they can mark cells where the cytoplasm has not been successfully stripped.</p></li>
+</ol>
+</div>
+<div id="calculate-qc-variables" class="section level2">
+<h2><span class="header-section-number">8.2</span> Calculate QC variables</h2>
+<p>This function calculates useful QC metrics for identification and removal of potentially problematic cells. Default per-cell metrics are the sum of counts (i.e., the library size) and the number of detected features. The percentage of counts in the top features also provides a measure of library complexity.</p>
+<p>If subsets is specified, these statistics are also computed for each subset of features. This is useful for investigating gene sets of interest, e.g., mitochondrial genes.</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1"></a><span class="kw">library</span>(scater)</span>
+<span id="cb71-2"><a href="#cb71-2"></a></span>
+<span id="cb71-3"><a href="#cb71-3"></a><span class="co"># check ERCC spike-in transcripts</span></span>
+<span id="cb71-4"><a href="#cb71-4"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^ERCC-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># no spike-in transcripts available</span></span></code></pre></div>
+<pre><code>## [1] 0</code></pre>
+<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1"></a><span class="co"># check mitochondrial genes</span></span>
+<span id="cb73-2"><a href="#cb73-2"></a><span class="kw">sum</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>chromosome_name<span class="op">==</span><span class="st">&quot;MT&quot;</span>,<span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="co"># 28 mitochondrial genes</span></span></code></pre></div>
+<pre><code>## [1] 28</code></pre>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># alternatively</span></span></code></pre></div>
+<pre><code>## [1] 28</code></pre>
+<div class="sourceCode" id="cb77"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1"></a>is.mito &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))</span>
+<span id="cb77-2"><a href="#cb77-2"></a></span>
+<span id="cb77-3"><a href="#cb77-3"></a><span class="co">## calculate QC metrics</span></span>
+<span id="cb77-4"><a href="#cb77-4"></a>df &lt;-<span class="st"> </span><span class="kw">perCellQCMetrics</span>(sce, <span class="dt">subsets=</span><span class="kw">list</span>(<span class="dt">Mito=</span>is.mito))</span>
+<span id="cb77-5"><a href="#cb77-5"></a><span class="kw">head</span>(df)</span></code></pre></div>
+<pre><code>## DataFrame with 6 rows and 6 columns
+##                       sum  detected subsets_Mito_sum subsets_Mito_detected
+##                 &lt;numeric&gt; &lt;integer&gt;        &lt;numeric&gt;             &lt;integer&gt;
+## r1_GGCCGCAGTCCG     37478      7235              427                    14
+## r1_CTTGTGCGGGAA     32034      6921              503                    15
+## r1_GCGCAACTGCTC     28140      6390              460                    13
+## r1_GATTGGGAGGCA     20352      5727              326                    11
+## r1_CCTCCTAGTTGG     19550      5769              264                     9
+## r1_AGTCAAGCCCTC     19176      5217              253                    12
+##                 subsets_Mito_percent     total
+##                            &lt;numeric&gt; &lt;numeric&gt;
+## r1_GGCCGCAGTCCG              1.13934     37478
+## r1_CTTGTGCGGGAA              1.57021     32034
+## r1_GCGCAACTGCTC              1.63468     28140
+## r1_GATTGGGAGGCA              1.60181     20352
+## r1_CCTCCTAGTTGG              1.35038     19550
+## r1_AGTCAAGCCCTC              1.31936     19176</code></pre>
+<div class="sourceCode" id="cb79"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1"></a><span class="co"># add QC variables to sce object</span></span>
+<span id="cb79-2"><a href="#cb79-2"></a><span class="kw">colData</span>(sce) &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">colData</span>(sce), df)</span>
+<span id="cb79-3"><a href="#cb79-3"></a></span>
+<span id="cb79-4"><a href="#cb79-4"></a><span class="co"># the QC variables have now been added to the colData of our SCE object.</span></span>
+<span id="cb79-5"><a href="#cb79-5"></a><span class="kw">head</span>(<span class="kw">colData</span>(sce))</span></code></pre></div>
+<pre><code>## DataFrame with 6 rows and 8 columns
+##                         cell.id   cluster       sum  detected subsets_Mito_sum
+##                     &lt;character&gt; &lt;integer&gt; &lt;numeric&gt; &lt;integer&gt;        &lt;numeric&gt;
+## r1_GGCCGCAGTCCG r1_GGCCGCAGTCCG         2     37478      7235              427
+## r1_CTTGTGCGGGAA r1_CTTGTGCGGGAA         2     32034      6921              503
+## r1_GCGCAACTGCTC r1_GCGCAACTGCTC         2     28140      6390              460
+## r1_GATTGGGAGGCA r1_GATTGGGAGGCA         2     20352      5727              326
+## r1_CCTCCTAGTTGG r1_CCTCCTAGTTGG        NA     19550      5769              264
+## r1_AGTCAAGCCCTC r1_AGTCAAGCCCTC        NA     19176      5217              253
+##                 subsets_Mito_detected subsets_Mito_percent     total
+##                             &lt;integer&gt;            &lt;numeric&gt; &lt;numeric&gt;
+## r1_GGCCGCAGTCCG                    14              1.13934     37478
+## r1_CTTGTGCGGGAA                    15              1.57021     32034
+## r1_GCGCAACTGCTC                    13              1.63468     28140
+## r1_GATTGGGAGGCA                    11              1.60181     20352
+## r1_CCTCCTAGTTGG                     9              1.35038     19550
+## r1_AGTCAAGCCCTC                    12              1.31936     19176</code></pre>
+</div>
+<div id="exploratory-data-analysis" class="section level2">
+<h2><span class="header-section-number">8.3</span> Exploratory data analysis</h2>
+<p>In the figure below, we see that several cells have a very low number of expressed genes, and where most of the molecules are derived from mitochondrial genes. This indicates likely damaged cells, presumably because of loss of cytoplasmic RNA from perforated cells, so we should remove these for the downstream analysis.</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1"></a><span class="co"># Number of genes vs library size</span></span>
+<span id="cb81-2"><a href="#cb81-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;cluster&quot;</span>) </span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1"></a><span class="co"># Mitochondrial genes</span></span>
+<span id="cb82-2"><a href="#cb82-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
+</div>
+<div id="qc-using-adaptive-thresholds" class="section level2">
+<h2><span class="header-section-number">8.4</span> QC using adaptive thresholds</h2>
+<p>Below, we remove cells that are outlying with respect to</p>
+<ol style="list-style-type: decimal">
+<li>A low sequencing depth (number of UMIs);</li>
+<li>A low number of genes detected;</li>
+<li>A high percentage of reads from mitochondrial genes.</li>
+</ol>
+<p>Here we will remove cells for QC based on <strong>adaptive thresholds</strong> related to the three points from above. Adaptive trhesholds are used as opposed to <strong>fixed thresholds</strong>.</p>
+<p>With fixed thresholds, we use fixed cut-off values for each cell to pass QC, e.g., we might consider cells to be low quality if they have library sizes below 100,000 reads; express fewer than 5,000 genes; have spike-in proportions above 10%; or have mitochondrial proportions above 10%.</p>
+<p>With adaptive thresholds, we assume that most of the dataset consists of high-quality cells. We then identify cells that are outliers for the various QC metrics, based on the median absolute deviation (MAD) from the median value of each metric across all cells. By default, we consider a value to be anoutlier if it is more than 3 MADs from the median in the “problematic” direction. This is loosely motivated by the fact that such a filter will retain 99% of non-outlier values that follow a normal distribution. We demonstrate adopting adaptive thresholds on the Macosko dataset:</p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb83-2"><a href="#cb83-2"></a>lowFeatures &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>detected, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb83-3"><a href="#cb83-3"></a>highMito &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>subsets_Mito_percent, <span class="dt">type=</span><span class="st">&quot;higher&quot;</span>)</span>
+<span id="cb83-4"><a href="#cb83-4"></a></span>
+<span id="cb83-5"><a href="#cb83-5"></a><span class="kw">table</span>(lowLib)</span></code></pre></div>
+<pre><code>## lowLib
+## FALSE 
+## 49300</code></pre>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1"></a><span class="kw">table</span>(lowFeatures)</span></code></pre></div>
+<pre><code>## lowFeatures
+## FALSE  TRUE 
+## 49287    13</code></pre>
+<div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1"></a><span class="kw">table</span>(highMito)</span></code></pre></div>
+<pre><code>## highMito
+## FALSE  TRUE 
+## 45890  3410</code></pre>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1"></a>discardCells &lt;-<span class="st"> </span>(lowLib <span class="op">|</span><span class="st"> </span>lowFeatures <span class="op">|</span><span class="st"> </span>highMito)</span>
+<span id="cb89-2"><a href="#cb89-2"></a><span class="kw">table</span>(discardCells)</span></code></pre></div>
+<pre><code>## discardCells
+## FALSE  TRUE 
+## 45877  3423</code></pre>
+<div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1"></a><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells &lt;-<span class="st"> </span>discardCells</span>
+<span id="cb91-2"><a href="#cb91-2"></a></span>
+<span id="cb91-3"><a href="#cb91-3"></a><span class="co"># visualize cells to be removed</span></span>
+<span id="cb91-4"><a href="#cb91-4"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;discardCells&quot;</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;discardCells&quot;</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-19-2.png" width="672" /></p>
+<p>We removed a total of <span class="math inline">\(3423\)</span> cells, most of which because of an outlyingly high percentage of reads from mitochondrial genes.</p>
+</div>
+<div id="identifying-and-removing-empty-droplets" class="section level2">
+<h2><span class="header-section-number">8.5</span> Identifying and removing empty droplets</h2>
+<p>Note that the removal of cells with low sequencing depth using the adaptive threshold procedure above is a way of removing empty droplets. Other approaches are possible, e.g., removing cells by statistical testing using <code>emtpyDrops</code>. This does require us to specify a lower bound on the total number of UMIs, below which all cells are considered to correspond to empty droplets. This lower bound may not be trivial to derive, but the <code>barcodeRanks</code> function can be useful to identify an elbow/knee point.</p>
+<p>In brief, the steps taken by the <code>emtpyDrops</code> function can be summarized as follows:</p>
+<ol style="list-style-type: decimal">
+<li><p>Define threshold T of total UMI counts (e.g. with the help of the <code>barcodeRanks</code> function), below which cells may be considered to be from empty droplets. Call this set of cells E.</p></li>
+<li><p>Define <span class="math inline">\(A_g\)</span> as the total gene expression across all cells in E.</p></li>
+<li><p>Define <span class="math inline">\(pi_g\)</span> as the relative contribution of gene g to the ambient profile.</p></li>
+<li><p>Calculate p-value for each cell to have a transcriptional profile similar to the ambient solution. Intuitively, a p-value below the requested alpha level would correspond to a cell for which the observed count profile strongly deviates from the count profile observed in the cells with a library size below threshold T, i.e., a non-empty droplet.</p></li>
+</ol>
+<div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1"></a><span class="kw">library</span>(DropletUtils)</span>
+<span id="cb93-2"><a href="#cb93-2"></a>bcrank &lt;-<span class="st"> </span><span class="kw">barcodeRanks</span>(<span class="kw">counts</span>(sce))</span>
+<span id="cb93-3"><a href="#cb93-3"></a></span>
+<span id="cb93-4"><a href="#cb93-4"></a><span class="co"># Only showing unique points for plotting speed. Duplicated ranks are a </span></span>
+<span id="cb93-5"><a href="#cb93-5"></a><span class="co"># consequence of ties in the ranks, i.e., when cells have an equal library size.</span></span>
+<span id="cb93-6"><a href="#cb93-6"></a><span class="kw">sum</span>(<span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank))</span></code></pre></div>
+<pre><code>## [1] 43864</code></pre>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1"></a>uniq &lt;-<span class="st"> </span><span class="op">!</span><span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank)</span>
+<span id="cb95-2"><a href="#cb95-2"></a></span>
+<span id="cb95-3"><a href="#cb95-3"></a><span class="kw">plot</span>(bcrank<span class="op">$</span>rank[uniq], bcrank<span class="op">$</span>total[uniq], <span class="dt">log=</span><span class="st">&quot;xy&quot;</span>,</span>
+<span id="cb95-4"><a href="#cb95-4"></a>    <span class="dt">xlab=</span><span class="st">&quot;Rank&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Total UMI count&quot;</span>, <span class="dt">cex.lab=</span><span class="fl">1.2</span>)</span>
+<span id="cb95-5"><a href="#cb95-5"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>inflection, <span class="dt">col=</span><span class="st">&quot;darkgreen&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
+<span id="cb95-6"><a href="#cb95-6"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>knee, <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
+<span id="cb95-7"><a href="#cb95-7"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="dv">350</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>) <span class="co"># picked visually myself</span></span>
+<span id="cb95-8"><a href="#cb95-8"></a><span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, </span>
+<span id="cb95-9"><a href="#cb95-9"></a>       <span class="dt">legend=</span><span class="kw">c</span>(<span class="st">&quot;Inflection&quot;</span>, <span class="st">&quot;Knee&quot;</span>, <span class="st">&quot;Empirical knee point&quot;</span>), </span>
+<span id="cb95-10"><a href="#cb95-10"></a>       <span class="dt">col=</span><span class="kw">c</span>(<span class="st">&quot;darkgreen&quot;</span>, <span class="st">&quot;dodgerblue&quot;</span>, <span class="st">&quot;orange&quot;</span>), </span>
+<span id="cb95-11"><a href="#cb95-11"></a>       <span class="dt">lty=</span><span class="dv">2</span>, </span>
+<span id="cb95-12"><a href="#cb95-12"></a>       <span class="dt">cex=</span><span class="fl">1.2</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1"></a><span class="kw">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb96-2"><a href="#cb96-2"></a>limit &lt;-<span class="st"> </span><span class="dv">350</span>   </span>
+<span id="cb96-3"><a href="#cb96-3"></a>all.out &lt;-<span class="st"> </span><span class="kw">emptyDrops</span>(<span class="kw">counts</span>(sce), <span class="dt">lower=</span>limit, <span class="dt">test.ambient=</span><span class="ot">TRUE</span>)</span>
+<span id="cb96-4"><a href="#cb96-4"></a><span class="co"># p-values for cells with total UMI count under the lower bound.</span></span>
+<span id="cb96-5"><a href="#cb96-5"></a><span class="kw">hist</span>(all.out<span class="op">$</span>PValue[all.out<span class="op">$</span>Total <span class="op">&lt;=</span><span class="st"> </span>limit <span class="op">&amp;</span><span class="st"> </span>all.out<span class="op">$</span>Total <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>],</span>
+<span id="cb96-6"><a href="#cb96-6"></a>    <span class="dt">xlab=</span><span class="st">&quot;P-value&quot;</span>, <span class="dt">main=</span><span class="st">&quot;&quot;</span>, <span class="dt">col=</span><span class="st">&quot;grey80&quot;</span>, <span class="dt">breaks=</span><span class="dv">20</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-20-2.png" width="672" /></p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1"></a><span class="co"># but note that it would remove a very high number of cells</span></span>
+<span id="cb97-2"><a href="#cb97-2"></a><span class="kw">length</span>(<span class="kw">which</span>(all.out<span class="op">$</span>FDR <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.01</span>)) <span class="co"># retained</span></span></code></pre></div>
+<pre><code>## [1] 27230</code></pre>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1"></a><span class="co"># so we stick to the more lenient adaptive filtering strategy</span></span>
+<span id="cb99-2"><a href="#cb99-2"></a><span class="co"># remove cells identified using adaptive thresholds</span></span>
+<span id="cb99-3"><a href="#cb99-3"></a>sce &lt;-<span class="st"> </span>sce[, <span class="op">!</span><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells]</span></code></pre></div>
+</div>
+<div id="identifying-and-removing-doublets" class="section level2">
+<h2><span class="header-section-number">8.6</span> Identifying and removing doublets</h2>
+<p>We will use <a href="https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html">scDblFinder</a> to detect doublet cells.</p>
+<p>As discussed in the theory session of last week, the steps taken by <code>scDblFinder</code> can be summarized as follows:</p>
+<ol style="list-style-type: decimal">
+<li><p>Perform principal components analysis (PCA) on log-normalized expression counts. This allows for projecting each cell in the dataset into a 2D space (for more details on PCA, see next weeks session).</p></li>
+<li><p>Randomly select two cells, sum their counts and normalize, and project into PCA space from step 1. In other words, artificially generate doublets and see where they are located in the 2D space.</p></li>
+<li><p>Repeat step 2 many times (generate many artificial doublets).</p></li>
+<li><p>Generate neighbor network in the 2D space. The network is then used to estimate a number of characteristics for each cell, in particular the proportion f artificial doublets among the nearest neighbors.</p></li>
+<li><p>Use this information, along with other predictors, to train a classifier (gradient boosted tree) that allows for distinguishing doublets from singlets.</p></li>
+</ol>
+<p>Note: only classifies for identifying doublets for which the two cells are from different cell type clusters.</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1"></a><span class="co">## perform doublet detection</span></span>
+<span id="cb100-2"><a href="#cb100-2"></a><span class="kw">library</span>(scDblFinder)</span></code></pre></div>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
+<span id="cb101-2"><a href="#cb101-2"></a>sampleID &lt;-<span class="st"> </span><span class="kw">unlist</span>(<span class="kw">lapply</span>(<span class="kw">strsplit</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cell.id, <span class="dt">split=</span><span class="st">&quot;_&quot;</span>), <span class="st">&quot;[[&quot;</span>, <span class="dv">1</span>))</span>
+<span id="cb101-3"><a href="#cb101-3"></a><span class="kw">table</span>(sampleID)</span></code></pre></div>
+<pre><code>## sampleID
+##   p1   r1   r2   r3   r4   r5   r6 
+## 3942 5953 8414 5319 7015 7487 7747</code></pre>
+<div class="sourceCode" id="cb103"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1"></a>sce &lt;-<span class="st"> </span><span class="kw">scDblFinder</span>(sce, </span>
+<span id="cb103-2"><a href="#cb103-2"></a>                   <span class="dt">returnType=</span><span class="st">&quot;table&quot;</span>,</span>
+<span id="cb103-3"><a href="#cb103-3"></a>                   <span class="dt">samples =</span> <span class="kw">factor</span>(sampleID))</span>
+<span id="cb103-4"><a href="#cb103-4"></a><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class)</span></code></pre></div>
+<pre><code>## 
+## singlet doublet 
+##   41220    4657</code></pre>
+<div class="sourceCode" id="cb105"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb105-1"><a href="#cb105-1"></a><span class="co">## visualize these scores</span></span>
+<span id="cb105-2"><a href="#cb105-2"></a><span class="co">## explore doublet score wrt original cluster labels</span></span>
+<span id="cb105-3"><a href="#cb105-3"></a><span class="kw">boxplot</span>(<span class="kw">log1p</span>(sce<span class="op">$</span>scDblFinder.score) <span class="op">~</span><span class="st"> </span><span class="kw">factor</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cluster, <span class="dt">exclude=</span><span class="ot">NULL</span>))</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1"></a>tab &lt;-<span class="st"> </span><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class, sce<span class="op">$</span>cluster, </span>
+<span id="cb106-2"><a href="#cb106-2"></a>      <span class="dt">exclude=</span><span class="ot">NULL</span>)</span>
+<span id="cb106-3"><a href="#cb106-3"></a>tab</span></code></pre></div>
+<pre><code>##          
+##               1     2     3     4     5     6     7     8     9    10    11
+##   singlet   213   370   253    63    69   177   264   141   305   165   180
+##   doublet     2     7    22     9     5    28    53     8    32    24    27
+##          
+##              12    13    14    15    16    17    18    19    20    21    22
+##   singlet   211    47    85    51   196   304    65   111   318   172   201
+##   doublet    43     3    23    21    55    67    15    14    64    75    60
+##          
+##              23    24    25    26    27    28    29    30    31    32    33
+##   singlet   216 25026  1604  1932   472   357   464   517   412   266   658
+##   doublet    43  1917   169   229   157   124   117   113    90    52   155
+##          
+##              34    35    36    37    38    39  &lt;NA&gt;
+##   singlet  1431    36    42   231    56    64  3475
+##   doublet   133     7     3     9     3     2   677</code></pre>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1"></a><span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))</span></code></pre></div>
+<pre><code>##          
+##                     1           2           3           4           5
+##   singlet 0.990697674 0.981432361 0.920000000 0.875000000 0.932432432
+##   doublet 0.009302326 0.018567639 0.080000000 0.125000000 0.067567568
+##          
+##                     6           7           8           9          10
+##   singlet 0.863414634 0.832807571 0.946308725 0.905044510 0.873015873
+##   doublet 0.136585366 0.167192429 0.053691275 0.094955490 0.126984127
+##          
+##                    11          12          13          14          15
+##   singlet 0.869565217 0.830708661 0.940000000 0.787037037 0.708333333
+##   doublet 0.130434783 0.169291339 0.060000000 0.212962963 0.291666667
+##          
+##                    16          17          18          19          20
+##   singlet 0.780876494 0.819407008 0.812500000 0.888000000 0.832460733
+##   doublet 0.219123506 0.180592992 0.187500000 0.112000000 0.167539267
+##          
+##                    21          22          23          24          25
+##   singlet 0.696356275 0.770114943 0.833976834 0.928849794 0.904681331
+##   doublet 0.303643725 0.229885057 0.166023166 0.071150206 0.095318669
+##          
+##                    26          27          28          29          30
+##   singlet 0.894030541 0.750397456 0.742203742 0.798623064 0.820634921
+##   doublet 0.105969459 0.249602544 0.257796258 0.201376936 0.179365079
+##          
+##                    31          32          33          34          35
+##   singlet 0.820717131 0.836477987 0.809348093 0.914961637 0.837209302
+##   doublet 0.179282869 0.163522013 0.190651907 0.085038363 0.162790698
+##          
+##                    36          37          38          39        &lt;NA&gt;
+##   singlet 0.933333333 0.962500000 0.949152542 0.969696970 0.836946050
+##   doublet 0.066666667 0.037500000 0.050847458 0.030303030 0.163053950</code></pre>
+<div class="sourceCode" id="cb110"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1"></a><span class="kw">barplot</span>(<span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))[<span class="dv">2</span>,],</span>
+<span id="cb110-2"><a href="#cb110-2"></a>        <span class="dt">xlab =</span> <span class="st">&quot;Cluster&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Fraction of doublets&quot;</span>)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-22-2.png" width="672" /></p>
+<div class="sourceCode" id="cb111"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;doublet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span></code></pre></div>
+<pre><code>## [1] 0.6899794 0.9999367</code></pre>
+<div class="sourceCode" id="cb113"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb113-1"><a href="#cb113-1"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;singlet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span></code></pre></div>
+<pre><code>## [1] 2.926333e-05 6.884753e-01</code></pre>
+<div class="sourceCode" id="cb115"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb115-1"><a href="#cb115-1"></a><span class="co"># remove doublets</span></span>
+<span id="cb115-2"><a href="#cb115-2"></a>sce &lt;-<span class="st"> </span>sce[,<span class="op">!</span>sce<span class="op">$</span>scDblFinder.class <span class="op">==</span><span class="st"> &quot;doublet&quot;</span>]</span></code></pre></div>
+</div>
+</div>
+<div id="normalization" class="section level1">
+<h1><span class="header-section-number">9</span> Normalization</h1>
+<p>Normalization aims to remove technical effects such as sequencing depth so that comparisons between cells are not confounded by them. The most commonly used normalization methods methods use scaling, where a scaling factor (also called size factor, normalization factor) is estimated for each cell. These scaling factors (e.g., the effective library size) can be included as an offset to downstream modeling procedures. This effectively allows for performing inference on the relative abundance of a gene in a cell, after accounting for library size and RNA composition differences between cells, which is much more relevant than comparing raw counts</p>
+<p>Note that we always prefer the use of offsets over transformation of the data. In brief, such transformation would distort the mean-variance relationship in the data. For more details, we refer to the document that was discussed in theory session of last week (<a href="https://statomics.github.io/SGA21/sequencing_scalingNormalization.html">link</a>)</p>
+<p>For normalization, the size factors <span class="math inline">\(s_i\)</span> computed here are simply scaled library sizes: <span class="math display">\[ N_i = \sum_g Y_{gi} \]</span> <span class="math display">\[ s_i = N_i / \bar{N}_i \]</span></p>
+<div class="sourceCode" id="cb116"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb116-1"><a href="#cb116-1"></a>sce &lt;-<span class="st"> </span><span class="kw">logNormCounts</span>(sce)</span>
+<span id="cb116-2"><a href="#cb116-2"></a></span>
+<span id="cb116-3"><a href="#cb116-3"></a><span class="co"># note we also returned log counts: see the additional logcounts assay.</span></span>
+<span id="cb116-4"><a href="#cb116-4"></a>sce</span></code></pre></div>
+<pre><code>## class: SingleCellExperiment 
+## dim: 17887 41220 
+## metadata(0):
+## assays(2): counts logcounts
+## rownames(17887): KITL TMTC3 ... GM16012 GM21464
+## rowData names(6): ensembl_gene_id mgi_symbol ... end_position
+##   mgi_symbol_upper
+## colnames(41220): r1_GGCCGCAGTCCG r1_CTTGTGCGGGAA ... p1_TAACGCGCTCCT
+##   p1_ATTCTTGTTCTT
+## colData names(15): cell.id cluster ... scDblFinder.cxds_score
+##   sizeFactor
+## reducedDimNames(0):
+## mainExpName: NULL
+## altExpNames(0):</code></pre>
+<div class="sourceCode" id="cb118"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1"></a><span class="co"># you can extract size factors using</span></span>
+<span id="cb118-2"><a href="#cb118-2"></a>sf &lt;-<span class="st"> </span><span class="kw">librarySizeFactors</span>(sce)</span>
+<span id="cb118-3"><a href="#cb118-3"></a><span class="kw">mean</span>(sf) <span class="co"># equal to 1 due to scaling.</span></span></code></pre></div>
+<pre><code>## [1] 1</code></pre>
+<div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1"></a><span class="kw">plot</span>(<span class="dt">x=</span> <span class="kw">log</span>(<span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)), </span>
+<span id="cb120-2"><a href="#cb120-2"></a>     <span class="dt">y=</span>sf)</span></code></pre></div>
+<p><img src="lab1_MacoskoWorkflow_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>From the OSCA book: Alternatively, we may use more sophisticated approaches for variance stabilizing transformations in genomics data, e.g., <code>DESeq2</code> or <code>sctransform</code>. These aim to remove the mean-variance trend more effectively than the simpler transformations mentioned above, though it could be argued whether this is actually desirable. For low-coverage scRNA-seq data, there will always be a mean-variance trend under any transformation, for the simple reason that the variance must be zero when the mean count is zero. These methods also face the challenge of removing the mean-variance trend while preserving the interesting component of variation, i.e., the log-fold changes between subpopulations; this may or may not be done adequately, depending on the aggressiveness of the algorithm.</p>
+<p>In practice, the log-transformation is a good default choice due to its simplicity and interpretability, and is what we will be using for all downstream analyses.</p>
+<p>— end lab session 1 —</p>
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAnRGF0YSBpbXBvcnQsIHF1YWxpdHkgY29udHJvbCBhbmQgbm9ybWFsaXphdGlvbiBmb3IgdGhlIE1hY29za28gZGF0YXNldCcKYXV0aG9yOiAiS29lbiBWYW4gZGVuIEJlcmdlIGFuZCBKZXJvZW4gR2lsaXMiCmRhdGU6ICIyMC8xMS8yMDIxIgpvdXRwdXQ6IAogIGh0bWxfZG9jdW1lbnQ6CiAgICB0b2M6IHRydWUKICAgIHRvY19mbG9hdDogdHJ1ZQotLS0KCiMgUHJlYW1ibGU6IGluc3RhbGxhdGlvbiBvZiBCaW9jb25kdWN0b3IgbGlicmFyaWVzCgpgYGB7cn0KIyBpbnN0YWxsIEJpb2NNYW5hZ2VyIHBhY2thZ2UgaWYgbm90IGluc3RhbGxlZCB5ZXQuCiMgQmlvY01hbmFnZXIgaXMgdGhlIHBhY2thZ2UgaW5zdGFsbGVyIGZvciBCaW9jb25kdWN0b3Igc29mdHdhcmUuCmlmICghcmVxdWlyZU5hbWVzcGFjZSgiQmlvY01hbmFnZXIiLCBxdWlldGx5ID0gVFJVRSkpCiAgICBpbnN0YWxsLnBhY2thZ2VzKCJCaW9jTWFuYWdlciIpCgojIGluc3RhbGwgcGFja2FnZXMgaWYgbm90IHlldCBpbnN0YWxsZWQuCnBrZ3MgPC0gYygiU2luZ2xlQ2VsbEV4cGVyaW1lbnQiLAogICAgICAgICAgIkV4cGVyaW1lbnRIdWIiLAogICAgICAgICAgImVkZ2VSIiwKICAgICAgICAgICJEcm9wbGV0VXRpbHMiLCAKICAgICAgICAgICJzY1JOQXNlcSIsIAogICAgICAgICAgInNjYXRlciIsIAogICAgICAgICAgInNjdXR0bGUiLCAKICAgICAgICAgICJzY3JhbiIsIAogICAgICAgICAgIkJpb2NTaW5ndWxhciIsIAogICAgICAgICAgInNjRGJsRmluZGVyIikKbm90SW5zdGFsbGVkIDwtIHBrZ3NbIXBrZ3MgJWluJSBpbnN0YWxsZWQucGFja2FnZXMoKVssMV1dCmlmKGxlbmd0aChub3RJbnN0YWxsZWQpID4gMCl7CiAgQmlvY01hbmFnZXI6Omluc3RhbGwobm90SW5zdGFsbGVkKQp9CmBgYAoKIyBUaGUgTWFjb3NrbyBkYXRhc2V0CgpJbiB0aGlzIHdvcmtzaG9wIHNlc3Npb24sIHdlIHdpbGwgcHJlcHJvY2VzcyB0aGUgc2luZ2xlLWNlbGwgUk5BLXNlcSBkYXRhc2V0CmZyb20gdGhlIHB1YmxpY2F0aW9uIGJ5IE1hY29za28gKmV0IGFsLiosIENlbGwgMTYxLCAxMjAy4oCTMTIxNCBmcm9tIDIwMTUKWyhsaW5rKV0oaHR0cHM6Ly9kb2kub3JnLzEwLjEwMTYvai5jZWxsLjIwMTUuMDUuMDAyKS4gVGhpcyBpcyB0aGUgbWFudXNjcmlwdCBpbgp3aGljaCB0aGUgZHJvcGxldCBzY1JOQS1zZXEgdGVjaG5vbG9neSAqKkRyb3Atc2VxKiogd2FzIGludHJvZHVjZWQuClNpeCB5ZWFycyBhZnRlciB0aGUgb3JpZ2luYWwgcHVibGljYXRpb24sIGRyb3Atc2VxIGlzIHN0aWxsIG9uZSBvZiB0aGUgbW9zdCAKY29tbW9ubHkgYWRvcHRlZCBzY1JOQS1zZXEgcHJvdG9jb2xzLCBhcyBldmlkZW5jZWQgYnkgdGhlCmxhcmdlIG51bWJlciBvZiBjaXRhdGlvbnMgZm9yIE1hY29za28gKmV0IGFsLiogCig0LjMwMyBjaXRhdGlvbnMgYXQgTm92ZW1iZXIgMywgMjAyMSkuCgpUaGUgYmFzaWMgaWRlYSBiZWhpbmQgdGhlIERyb3Atc2VxIHByb3RvY29sIGNhbiBiZSB0YWtlbiBmcm9tIHRoZSBncmFwaGljYWwKYWJzdHJhY3Qgb2YgdGhlIHB1YmxpY2F0aW9uLgoKYGBge3IsIGVjaG89RkFMU0V9CmtuaXRyOjppbmNsdWRlX2dyYXBoaWNzKCJtYWNvc2tvX2dyYXBoaWNhbEFic3RyYWN0LmpwZWciKQpgYGAKClRoZSBzdWNjZXNzIG9mIERyb3Atc2VxIGNhbiBiZSBleHBsYWluZWQgYnkgdGhlIGZvbGxvd2luZyBhZHZhbnRhZ2VvdXMgCmZlYXR1cmVzOgoKLSBUaGUgdXNlIG9mIHVuaXF1ZSBtb2xlY3VsYXIgaWRlbnRpZmllcnMgKFVNSXMpLiBCeSB3b3JraW5nIHdpdGggVU1Jcywgb25lIGNvdW50CmNvcnJlc3BvbmRzIHRvIG9uZSBvYnNlcnZlZCBtUk5BIG1vbGVjdWxlIHByZXNlbnQgaW4gdGhlIGNlbGwuIFRoYW5rcyB0byB0aGUgdXNlCm9mIFVNSSBiYXJjb2RlcywgUENSIGFydGlmYWN0cyBhcmUgcmVkdWNlZC4KCi0gU2NhbGFiaWxpdHk6IG1pY3JvZmx1aWRpY3MgdGVjaG5vbG9neSBhbGxvd3MgZm9yIHBlcmZvcm1pbmcgdGhlIGxpYnJhcnkgcHJlcApyZWFjdGlvbnMgaW5zaWRlIG5hbm9kcm9wbGV0cywgaW4gd2hpY2ggc2luZ2xlIGNlbGxzIG1heSBiZSBjb250YWluZWQuIExpYnJhcnkgcHJlcCBvY2N1cnMgYWNyb3NzIGFsbCBkcm9wbGV0cyBzaW11bHRhbmVvdXNseS4KCi0gQ29zdDogdGhlIGV4cGVyaW1lbnQgY29zdHMgYXJvdW5kIDYuNSBjZW50cyAoVVNEKSBwZXIgY2VsbC4KCi0gU3BlZWQ6IFRoZSB2ZXJ5IGxhcmdlIGRhdGFzZXQgdGhhdCB3ZSB3aWxsIGJlIHdvcmtpbmcgd2l0aCB0b2RheSB3YXMgCmdlbmVyYXRlZCBpbiBhbiBleHBlcmltZW50IHRoYXQgdG9vayBvbmx5IDQgZGF5cy4KCkluIHRoaXMgcGFydGljdWxhciBleHBlcmltZW50LCBNYWNvc2tvICpldCBhbC4qIHNlcXVlbmNlZCA0OSwzMDAgY2VsbHMgZnJvbSB0aGUKbW91c2UgcmV0aW5hLCBpZGVudGlmeWluZyAzOSB0cmFuc2NyaXB0aW9uYWxseSBkaXN0aW5jdCBjZWxsIHBvcHVsYXRpb25zLiBUaGUKZXhwZXJpbWVudCB3YXMgcGVyZm9ybWVkIGluIDcgYmF0Y2hlcy4KCiMgRGF0YSBhdmFpbGFiaWxpdHkKCiMjIFNSQQoKVGhlIFtTZXF1ZW5jZSBSZWFkIEFyY2hpdmUgKFNSQSldKGh0dHBzOi8vd3d3Lm5jYmkubmxtLm5paC5nb3Yvc3JhKSBpcyB0aGUgCmxhcmdlc3QgcHVibGljbHkgYXZhaWxhYmxlIHJlcG9zaXRvcnkgb2YgaGlnaC10aHJvdWdocHV0IHNlcXVlbmNpbmcgZGF0YS4KVGhlIGRhdGEgYXJlIHN0b3JlZCBieSB0aGUgTmF0aW9uYWwgQ2VudGVyIGZvciBCaW90ZWNobm9sb2d5IEluZm9ybWF0aW9uIChOQ0JJKSAKc2VydmljZXMgYW5kIG11bHRpcGxlIGNsb3VkIHN0b3JhZ2UgcHJvdmlkZXJzLiBGcm9tIHRoaXMgd2Vic2l0ZSAicmF3IiAKc2VxdWVuY2luZyBkYXRhIGNhbiBiZSByZXRyaWV2ZWQuIEluIHByYWN0aWNlLCB0aGVzZSBhcmUgdXN1YWxseSBgLnNyYWAgZmlsZXMsCndoaWNoIGNhbiBiZSBkb3dubG9hZGVkIGFuZCBjb252ZXJ0ZWQgaW50byBGQVNUUSBmaWxlcyB1c2luZyBmdW5jdGlvbnMKZnJvbSB0aGUgYHNyYXRvb2xraXRgIHNvZnR3YXJlLiAKCkZvciBvdXIgZGF0YXNldCwgdGhlIEZBU1RRIGRhdGEgY2FuIGJlIHJldHJpZXZlZCBmcm9tIHRoaXMgCltsaW5rXShodHRwczovL3d3dy5uY2JpLm5sbS5uaWguZ292L1RyYWNlcy9zdHVkeS8/YWNjPVBSSk5BMjY3ODU3Jm89YWNjX3MlM0FhKS4KVGhlIGRhdGEgYXJlIHN0b3JlZCBhcyBvbmUgZmlsZSBwZXIgc2VxdWVuY2luZyBiYXRjaCwgd2l0aCBlYWNoIGZpbGUgCmFwcHJveGltYXRlbHkgMjBHYi4gQXMgc3VjaCwgaXQgd2lsbCBiZSB1bmZlYXNpYmxlIHRvIGRvd25sb2FkIGFuZCBwcm9jZXNzIHRoZXNlCkZBU1RRIGZpbGVzIGluIHRoaXMgcHJhY3RpY2FsIHNlc3Npb24uCgpJbnN0ZWFkLCBmb3IgZGVtb25zdHJhdGl2ZSBwdXJwb3Nlcywgd2UgaGF2ZSB0YWtlbiBhIHN1YnNhbXBsZSBvZiB0aGUgRkFTVFEKZmlsZSBmb3IgdGhlIGZpcnN0IHNlcXVlbmNpbmcgYmF0Y2ggZm9yIHlvdSB0byB3b3JrIHdpdGguIE9uIHRoaXMgc3Vic2FtcGxlLCAKd2UgbWF5IHBlcmZvcm0gYWxsIHRoZSB0YXNrcyB0aGF0IHdlIHdvdWxkIGhhdmUgcGVyZm9ybWVkIG9uIHRoZSBmdWxsIGRhdGFzZXQuClRoZSBzdGVwcyB0aGF0IGFyZSByZXF1aXJlZCBmb3IgZG93bmxvYWRpbmcgYW5kIHF1YW50aWZ5aW5nIGRyb3Atc2VxIGRhdGEKY2FuIGJlIGZvdW5kIGluIFthIFNoZWxsIHNjcmlwdCBvbiBvdXIgY29tcGFuaW9uIEdpdEh1YiByZXBvc2l0b3J5XShodHRwczovL2dpdGh1Yi5jb20vc3RhdE9taWNzL3NpbmdsZUNlbGxDb3Vyc2UvYmxvYi9tYXN0ZXIvbGFiMV9wcmVwcm9jZXNzaW5nL3ByZXByb2Nlc3NEcm9wc2VxLnNoKS4KCiMjIEdFTwoKVGhlIGRhdGFzZXQgZnJvbSBNYWNvc2tvICpldCBhbC4qIHdhcyBhbHNvIHVwbG9hZGVkIGJ5IHRoZSBhdXRob3JzIG9uIHRoZSAKR2VuZSBFeHByZXNzaW9uIE9tbmlidXMgKEdFTykgcGxhdGZvcm0gdW5kZXIgYWNjZXNzaW9uIG51bWJlciAKW0dTRTYzNDcyXShodHRwczovL3d3dy5uY2JpLm5sbS5uaWguZ292L2dlby9xdWVyeS9hY2MuY2dpP2FjYz1HU0U2MzQ3MiksIApmcm9tIHdoaWNoIHJhdyBhbmQgcmVhZGlseS1wcm9jZXNzZWQgZGF0YSBmaWxlcyBtYXkgYmUgcmV0cmlldmVkLCBpbmNsdWRpbmc6CgoxLiAqR1NFNjM0NzJfUkFXLnRhciosIGEgOTAuNkdiIG9iamVjdCB0aGF0IGNvbnRhaW5zIHRoZSAicmF3IGRhdGEiIGZvciB0aGUKZXhwZXJpbWVudC4gSW4gdGhlIHNjUk5BLXNlcSBjb250ZXh0LCBGQVNUUSBmaWxlcyBhcmUgb2Z0ZW4gY29uc2lkZXJlZCB0aGUgcmF3CmRhdGEgZm9ybWF0LgoKMi4gKkdTRTYzNDcyX1AxNFJldGluYV9tZXJnZWRfZGlnaXRhbF9leHByZXNzaW9uLnR4dC5neiosIGEgNTAuN01iIG1hdHJpeCB0aGF0CnN0b3JlcyB0aGUgZ2VuZSBleHByZXNzaW9uIHZhbHVlcyBmb3IgZWFjaCBjZWxsLiBUaGVzZSB2YWx1ZXMgYXJlIGludGVnZXIgCmNvdW50cywgdGhhdCBkaWQgbm90IHVuZGVyZ28gYW55IHR5cGUgb2YgcHJlcHJvY2Vzc2luZyBvciBub3JtYWxpemF0aW9uLgoKMy4gKkdTRTYzNDcyX21tMTBfcmVmZXJlbmNlX21ldGFkYXRhLnRhci5neiosIGEgODYyLjlNYiBjb21wcmVzc2VkIGZvbGRlcgpjb250YWluaW5nIGluZm9ybWF0aW9uIG9uIHRoZSByZWZlcmVuY2UgZ2Vub21lIHRvIHdoaWNoIHRoZSBzY1JOQS1zZXEgcmVhZHMKd2VyZSBhbGlnbmVkIChzZWUgdGhlb3J5IHNsaWRlcykuCgo0LiAqR1NFNjM0NzJfUDE0UmV0aW5hX2xvZ0RHRS50eHQuZ3oqLCBhIDMxNi44TWIgY29tcHJlc3NlZCB0ZXh0IGZpbGUsIG5vdCBjbGVhcgp3aGF0IGl0IGNvbnRhaW5zIChyZXN1bHRzIGZyb20gYSBkaWZmZXJlbnRpYWwgZ2VuZSBleHByZXNzaW9uIGFuYWx5c2lzLCBidXQKd2l0aCBsb2ctdHJhbnNmb3JtYXRpb24sIHNvIGxvZy1mb2xkIGNoYW5nZXMgbWF5YmU/KS4KCkFzIHN1Y2gsIGJ5IGRvd25sb2FkaW5nICpHU0U2MzQ3Ml9QMTRSZXRpbmFfbWVyZ2VkX2RpZ2l0YWxfZXhwcmVzc2lvbi50eHQuZ3oqLAp3ZSBhdm9pZCByZS1xdWFudGlmeWluZyB0aGUgZGF0YSwgaS5lLiwgdGhlIHRyYW5zbGF0aW9uIGZyb20gcmVhZHMgZnJvbSB0aGUKRkFTVFEgZmlsZXMgaW50byBhIGdlbmUtbGV2ZWwgZXhwcmVzc2lvbiB2YWx1ZXMgZm9yIGVhY2ggY2VsbC4gCgpPbmUgaXNzdWUgdGhhdCBvZnRlbiBhcmlzZXMgZnJvbSBkYXRhIGRvd25sb2FkZWQgZnJvbSBHRU8sIGlzIHRoYXQgdGhlcmUgaXMgbm8Kc3RyaWN0IHJlcXVpcmVtZW50cyBmb3Igd2hpY2ggZGF0YSBzaG91bGQgYmUgaW5jbHVkZWQgaW4gdGhlIHVwbG9hZCBieSB0aGUgCmF1dGhvcnMuIEFzIHN1Y2gsIGZyb20gbXkgcGVyc29uYWwgZXhwZXJpZW5jZSwgaXQgY2FuIG9mdGVuIGJlIHRoZSBjYXNlIHRoYXQKaW1wb3J0YW50IGluZm9ybWF0aW9uIGxpa2UgbWV0YWRhdGEgYXJlIG1pc3NpbmcsIG9yIHRoZSBjb250ZW50IG9mIHRoZSBzdWJtaXR0ZWQKZmlsZXMgaXMgdW5jbGVhci4gRXZlbiBpZiBhbGwgdGhlIHJlcXVpcmVkIGRhdGEgYXJlIGF2YWlsYWJsZSwgYXMgaXMgdGhlIGNhc2UgCmhlcmUsIHdlIHdvdWxkIHN0aWxsIG5lZWQgdG8gcGllY2UgYWxsIHRoZSBpbmZvcm1hdGlvbiB0b2dldGhlciBmcm9tIGRpZmZlcmVudCAKZmlsZXMgYW5kIGZpbGUgZm9ybWF0cyBiZWZvcmUgd2UgY2FuIHVzZSB0aGVtLgoKIyMgRXhwZXJpbWVudEh1YgoKVGhlIEJpb2NvbmR1Y3RvciAqRXhwZXJpbWVudEh1Yiogd2ViIHJlc291cmNlLCB3aGljaCBjYW4gYmUgYWNjZXNzZWQgdXNpbmcgdGhlIApbRXhwZXJpbWVudEh1Yl0oaHR0cHM6Ly9iaW9jb25kdWN0b3Iub3JnL3BhY2thZ2VzL3JlbGVhc2UvYmlvYy9odG1sL0V4cGVyaW1lbnRIdWIuaHRtbCkgClIgcGFja2FnZSwgcHJvdmlkZXMgYSBjZW50cmFsIGxvY2F0aW9uIHdoZXJlIGN1cmF0ZWQgZGF0YSBmcm9tIGV4cGVyaW1lbnRzLCAKcHVibGljYXRpb25zIG9yIHRyYWluaW5nIGNvdXJzZXMgY2FuIGJlIGFjY2Vzc2VkLiBXaGlsZSBpdCBjb250YWlucyBmYXIgbGVzcwpkYXRhc2V0cyB0aGFuIHRoZSBTUkEgb3IgR0VPICg0OTY1IHJlY29yZHMgdG8gZGF0ZSksIHRoZXNlIGRhdGFzZXRzIGFsbCBmb2xsb3cgCnRoZSB0aWR5IGRhdGEgZm9ybWF0IG9mIEJpb2NvbmR1Y3Rvci4gTm90ZSB0aGF0IHRoZSBFeHBlcmltZW50SHViIGNvbnRhaW5zIApzZXZlcmFsIHR5cGVzIG9mIGRhdGEsIGxpa2UgYnVsayBhbmQgc2luZ2xlLWNlbGwgdHJhbnNjcmlwdG9taWNzIGRhdGEsIAptaWNyb2FycmF5cyBhbmQgbW9yZS4KClRoZSBNYWNvc2tvIGRhdGFzZXQgaXMgYXZhaWxhYmxlIGZyb20gRXhwZXJpbWVudEh1YiBhbmQgY2FuIGJlIGFjY2Vzc2VkIGFzCmZvbGxvd3M6CgpgYGB7ciwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0KbGlicmFyeShFeHBlcmltZW50SHViKQplZGIgPC0gRXhwZXJpbWVudEh1YigpCgplZGJbZ3JlcCgiTWFjb3NrbyIsIGVkYiR0aXRsZSldICMgZmluZCBhY2Nlc3Npb24gbnVtYmVyIChjYW4gYmUgaW5lZmZpY2llbnQpCgplZGJfY291bnRzIDwtIGVkYltbIkVIMjY5MCJdXQplZGJfY291bnRzWzE6NSwxOjVdCgplZGJfY29sZGF0YSA8LSBlZGJbWyJFSDI2OTEiXV0KZWRiX2NvbGRhdGFbMTo1LF0KCnJtKGVkYiwgZWRiX2NvdW50cywgZWRiX2NvbGRhdGEpCmBgYAoKIyMgc2NSTkFTZXEKCkluIGFkZGl0aW9uIHRvIEV4cGVyaW1lbnRIdWIsIEJpb2NvbmR1Y3RvciBwcm92aWRlcyB0aGUgcGFja2FnZQpbc2NSTkFzZXFdKGh0dHBzOi8vYmlvY29uZHVjdG9yLm9yZy9wYWNrYWdlcy9yZWxlYXNlL2RhdGEvZXhwZXJpbWVudC9odG1sL3NjUk5Bc2VxLmh0bWwpLgpUaGlzIHBhY2thZ2UgcHJvdmlkZXMgYW4gZXZlbiBtb3JlIHVzZXItZnJpZW5kbHkgY2xpZW50IHRvIGFjY2VzcyAob25seSkgCnNjUk5BLXNlcSBkYXRhc2V0cyBmcm9tIHRoZSBFeHBlcmltZW50SHViIHdlYiByZXNvdXJjZS4gRGF0YSByZXRyaWV2ZWQgdXNpbmcgdGhlCnNjUk5Bc2VxIHBhY2thZ2UgYXJlIHN0b3JlZCBhcyB1c2VyLWZyaWVuZGx5IGBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0cywgCndpdGggdGhlIGV4cHJlc3Npb24gZGF0YSwgZ2VuZS1sZXZlbCBpbmZvcm1hdGlvbiwgY2VsbC1sZXZlbCBpbmZvcm1hdGlvbiBhbmQgCmV4cGVyaW1lbnQgbWV0YWRhdGEgYWxsIGluIHBsYWNlIGluIG9uZSBkYXRhIG9iamVjdC4gVGhlIHNjUk5BLXNlcSBwYWNrYWdlCmN1cnJlbnRseSBob2xkcyA2MSBkYXRhc2V0cywgaW5jbHVkaW5nIHRoZSBkYXRhIGZyb20gKk1hY29za28gZXQgYWwuKjoKCmBgYHtyLCBtZXNzYWdlPUZBTFNFLCB3YXJuaW5nPUZBTFNFfQpsaWJyYXJ5KHNjUk5Bc2VxKQpzY1JOQXNlcTo6TWFjb3Nrb1JldGluYURhdGEoKQpgYGAKCiMgSW1wb3J0IGRhdGEKClRoZSBgc2NSTkFzZXFgIHBhY2thZ2UgcHJvdmlkZXMgY29udmVuaWVudCBhY2Nlc3MgdG8gc2V2ZXJhbCBkYXRhc2V0cy4gU2VlIHRoZSBbcGFja2FnZSBCaW9jb25kdWN0b3IgcGFnZV0oaHR0cDovL2Jpb2NvbmR1Y3Rvci5vcmcvcGFja2FnZXMvcmVsZWFzZS9kYXRhL2V4cGVyaW1lbnQvaHRtbC9zY1JOQXNlcS5odG1sKSAKZm9yIG1vcmUgaW5mb3JtYXRpb24uCgpgYGB7cn0KIyBDb2RlIGJlbG93IG1pZ2h0IGFzayB5b3UgdG8gY3JlYXRlIGFuIEV4cGVyaW1lbnRIdWIgZGlyZWN0b3J5LiAKIyBUeXBlICd5ZXMnIGFuZCBoaXQgRW50ZXIsIHRvIGFsbG93IHRoaXMuCnN1cHByZXNzUGFja2FnZVN0YXJ0dXBNZXNzYWdlcyhsaWJyYXJ5KHNjUk5Bc2VxKSkKc2NlIDwtIE1hY29za29SZXRpbmFEYXRhKCkKYGBgCgojIEEgYFNpbmdsZUNlbGxFeHBlcmltZW50YCBvYmplY3QKCmBgYHtyfQpzY2UKYGBgCgojIyBBY2Nlc3NpbmcgZGF0YSBmcm9tIGEgYFNpbmdsZUNlbGxFeHBlcmltZW50YCBvYmplY3QKClBsZWFzZSBzZWUgW0ZpZ3VyZSA0LjEgaW4gT1NDQV0oaHR0cDovL2Jpb2NvbmR1Y3Rvci5vcmcvYm9va3MvcmVsZWFzZS9PU0NBL2RhdGEtaW5mcmFzdHJ1Y3R1cmUuaHRtbCkgCmZvciBhbiBvdmVydmlldyBvZiBhIGBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0LgoKYGBge3J9CiMgRGF0YTogYXNzYXlzCmFzc2F5cyhzY2UpCmFzc2F5cyhzY2UpJGNvdW50c1sxOjUsIDE6NV0KCiMgRmVhdHVyZSBtZXRhZGF0YTogcm93RGF0YQpyb3dEYXRhKHNjZSkgIyBlbXB0eSBmb3Igbm93CgojIENlbGwgbWV0YWRhdGE6IGNvbERhdGEKY29sRGF0YShzY2UpCgojIFJlZHVjZWQgZGltZW5zaW9uczogcmVkdWNlZERpbXMKcmVkdWNlZERpbXMoc2NlKSAjIGVtcHR5IGZvciBub3cKYGBgCgojIyBDcmVhdGluZyBhIG5ldyBgU2luZ2xlQ2VsbEV4cGVyaW1lbnRgIG9iamVjdAoKYGBge3J9CnNjZU5ldyA8LSBTaW5nbGVDZWxsRXhwZXJpbWVudChhc3NheXMgPSBsaXN0KGNvdW50cyA9IGFzc2F5cyhzY2UpJGNvdW50cykpCnNjZU5ldwoKcm0oc2NlTmV3KQpgYGAKCiMjIFN0b3JpbmcgKG1ldGEpZGF0YSBpbiBhIGBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0CgpgYGB7cn0KZmFrZUdlbmVOYW1lcyA8LSBwYXN0ZTAoImdlbmUiLCAxOm5yb3coc2NlKSkKcm93RGF0YShzY2UpJGZha2VOYW1lIDwtIGZha2VHZW5lTmFtZXMKaGVhZChyb3dEYXRhKHNjZSkpCiMgUmVtb3ZlIGFnYWluIGJ5IHNldHRpbmcgdG8gTlVMTApyb3dEYXRhKHNjZSkkZmFrZU5hbWUgPC0gTlVMTAoKYXNzYXlzKHNjZSkkbG9nQ291bnRzIDwtIGxvZzFwKGFzc2F5cyhzY2UpJGNvdW50cykKYXNzYXlzKHNjZSkKYXNzYXlzKHNjZSkkbG9nQ291bnRzWzE6NSwgMTo1XQphc3NheXMoc2NlKSRsb2dDb3VudHMgPC0gTlVMTApgYGAKCiMgT2J0YWluaW5nIGFuZCBpbmNsdWRpbmcgcm93RGF0YQoKVGhlIGByb3dEYXRhYCBzbG90IG9mIGEgYFNpbmdsZUNlbGxFeHBlcmltZW50YCBvYmplY3QgYWxsb3dzIGZvciBzdG9yaW5nIAppbmZvcm1hdGlvbiBvbiB0aGUgZmVhdHVyZXMsIGkuZS4gdGhlIGdlbmVzLCBpbiBhIGRhdGFzZXQuIEluIG91ciBvYmplY3QsCnRoZSBgcm93RGF0YWAgc2xvdCBpcyBlbXB0eS4KCmBgYHtyfQpyb3dEYXRhKHNjZSkKYGBgCgpBcyBzdWNoLCB0aGUgb25seSBpbmZvcm1hdGlvbiB3ZSBoYXZlIG9uIHRoZSBnZW5lcyBhcmUgdGhlaXIgbmFtZXMsIHdoaWNoIGNhbgpiZSByZXRyaWV2ZWQgYXMgdGhlIGByb3duYW1lc2Agb2YgdGhlIGV4cHJlc3Npb24gbWF0cml4LgoKYGBge3J9CmhlYWQocm93bmFtZXMoc2NlKSkKYGBgCgpUaGVzZSBhcmUgdGhlIGdlbmUgbmFtZXMgKHN5bWJvbHMpLiBOb3RlIHRoYXQgaXQgbWF5IGJlIHVzZWZ1bCB0byBpbmNsdWRlIAphZGRpdGlvbmFsIGluZm9ybWF0aW9uIGluIHRoZSBgcm93RGF0YWAgc2xvdC4gRm9yIGluc3RhbmNlLCB3ZSBtYXkgd2FudCB0byAKc3RvcmU6CgotIFVuYW1iaWd1b3VzIGdlbmUgaWRlbnRpZmllcnMgKGUuZy4gZnJvbSBFTlNFTUJMKQotIE9uIHdoaWNoIGNocm9tb3NvbWUgdGhlIGdlbmUgaXMgbG9jYXRlZAotIEdlbmUgbGVuZ3RoIChnZW5vbWljIHN0YXJ0IHBvc2l0aW9uIGFuZCBlbmQgcG9zaXRpb24pCi0gT3RoZXJzLi4uCgpgYGB7ciwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0KbGlicmFyeSgiYmlvbWFSdCIpCgplbnNlbWJsNzUgPC0gdXNlRW5zZW1ibChiaW9tYXJ0ID0gJ2dlbmVzJywgCiAgICAgICAgICAgICAgICAgICAgICAgIGRhdGFzZXQgPSAnbW11c2N1bHVzX2dlbmVfZW5zZW1ibCcsCiAgICAgICAgICAgICAgICAgICAgICAgIHZlcnNpb24gPSA3NSkKCmhlYWQobGlzdEF0dHJpYnV0ZXMoZW5zZW1ibDc1KSkgIyBwb3RlbnRpYWwgaW5mbyB0byBleHRyYWN0CgpnZW5lSW5mbyA8LSBnZXRCTShhdHRyaWJ1dGVzID0gYygiZW5zZW1ibF9nZW5lX2lkIiwgIyBFTlNFTUJMIHVuYW1iaWd1b3VzIGlkZW50aWZpZXIKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIm1naV9zeW1ib2wiLCAjIEdlbmUgc3ltYm9sICh0byBsaW5rIHdpdGggU0NFIHJvd25hbWVzKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgImNocm9tb3NvbWVfbmFtZSIsICMgT24gd2hpY2ggY2hyb21vc29tZQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAic3RhcnRfcG9zaXRpb24iLCAjIFN0YXJ0IHBvc2l0aW9uCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJlbmRfcG9zaXRpb24iKSwjIEVuZCBwb3NpdGlvbgogICAgICAgICAgICAgICAgICBtYXJ0ID0gZW5zZW1ibDc1KQoKaGVhZChnZW5lSW5mbykKYGBgCgpgYGB7cn0KZ2VuZUluZm8kbWdpX3N5bWJvbF91cHBlciA8LSB0b3VwcGVyKGdlbmVJbmZvJG1naV9zeW1ib2wpIAojIG1hdGNoIGJldHdlZW4gZ2VuZSBpbmZvIGFuZCByb3duYW1lcwoKc3VtKHJvd25hbWVzKHNjZSkgJWluJSBnZW5lSW5mbyRtZ2lfc3ltYm9sX3VwcGVyKQpzdW0oIXJvd25hbWVzKHNjZSkgJWluJSBnZW5lSW5mbyRtZ2lfc3ltYm9sX3VwcGVyKSAjIGxvc3QgaW4gY29udmVyc2lvbiA6KAoKcm93RGF0YShzY2UpIDwtIGdlbmVJbmZvW21hdGNoKHJvd25hbWVzKHNjZSksZ2VuZUluZm8kbWdpX3N5bWJvbF91cHBlciksXQpgYGAKCmBgYHtyfQpoZWFkKHJvd0RhdGEoc2NlKSkKYGBgCgojIEZpbHRlcmluZyBub24taW5mb3JtYXRpdmUgZ2VuZXMKCmBgYHtyfQpsaWJyYXJ5KGVkZ2VSKQoKIyBBIHZlcnkgc2ltcGxlIHN0cmF0ZWd5OiByZW1vdmUgYWxsIGdlbmVzIHRoYXQgYXJlIGV4cHJlc3NlZCBpbiBsZXNzIHRoYW4gMTAKIyBvdXQgb2YgNDkzMDAgY2VsbHMgLT4gbm90ZSB0aGF0IHRoaXMgYSB2ZXJ5IGxlbmllbnQgZmlsdGVyaW5nIGNyaXRlcml1bQprZWVwIDwtIHJvd1N1bXMoYXNzYXlzKHNjZSkkY291bnRzID4gMCkgPiAxMAp0YWJsZShrZWVwKQoKc2NlIDwtIHNjZVtrZWVwLF0KYGBgCgpOb3RlIHRoYXQgZGVkaWNhdGVkIGZ1bmN0aW9ucyBmb3IgZmlsdGVyaW5nIG91dCBsb3dseSBleHByZXNzZWQgZ2VuZXMgZXhpc3QuCk9uZSBzdWNoIGZ1bmN0aW9uIGlzIHRoZSBgZmlsdGVyQnlFeHByYCBmdW5jdGlvbiBvZiB0aGUgZWRnZVIgUiBwYWNrYWdlLgpJbiBicmllZiwgdGhlIHN0cmF0ZWd5IGtlZXBzIGdlbmVzIHRoYXQgaGF2ZSBhdCBsZWFzdCAibWluLmNvdW50IiByZWFkcyBpbiBhIAp3b3J0aHdoaWxlIG51bWJlciBzYW1wbGVzLiAKCk1vcmUgcHJlY2lzZWx5LCB0aGUgZmlsdGVyaW5nIGtlZXBzIGdlbmVzIHRoYXQgaGF2ZSBjb3VudC1wZXItbWlsbGlvbiAoQ1BNKSAKYWJvdmUgayBpbiBuIHNhbXBsZXMuIAoKayBpcyBkZXRlcm1pbmVkIGJ5IHRoZSBtaW4uY291bnQgYXJndW1lbnQgdG8gdGhlIGZ1bmN0aW9uLCBhbmQgYnkgdGhlIHNhbXBsZSAKbGlicmFyeSBzaXplcy4KCm4gaXMgZGV0ZXJtaW5lZCBieSB0aGUgZGVzaWduIG1hdHJpeC4gbiBjYW4gYmUgc2VlbiBhcyB0aGUgc21hbGxlc3QgZ3JvdXAgc2FtcGxlCnNpemUuIEEgYGdyb3VwYCBvZiBzYW1wbGVzL2NlbGxzIGNhbiBiZSBkZWZpbmVkIGFzIGNlbGxzIHRoYXQgYXJlIG1vcmUgc2ltaWxhcgp0byBvbmUgYW5vdGhlciwgZS5nLiwgZnJvbSB0aGUgc2FtZSBzZXF1ZW5jaW5nIGJhdGNoLCB0aGUgc2FtZSBwYXRpZW50Li4uLgpIZXJlIHdlIGNvdWxkIGFsc28gdXNlIHRoZSBjbHVzdGVyIGFzc2lnbm1lbnQgKGNlbGwgdHlwZSkgZm9yIGVhY2ggY2VsbCBhcyB0aGUKZ3JvdXBpbmcgdmFyaWFibGU7ICpub3RlIGhvd2V2ZXIsIHRoYXQgdGhpcyB1c3VhbGx5IGlzIG5vdCBhdmFpbGFibGUgdW50aWwgYSoKKmxhdGVyIHN0YWdlIGluIHRoZSBhbmFseXNpcyBwaXBlbGluZSogKGkuZS4sIGFmdGVyIGRpbWVuc2lvbiByZWR1Y3Rpb24gYW5kIApjbHVzdGVyaW5nLCB0b3BpY3Mgd2Ugd2lsbCBjb3ZlciBuZXh0IHNlc3Npb24uKQoKSWYgYWxsIHRoZSBncm91cCBzaXplcyBhcmUgbGFyZ2VyIHRoYW4gdGhlIGBsYXJnZS5uYCBhcmd1bWVudCBvZiB0aGUgCmZpbHRlckJ5RXhwciBmdW5jdGlvbiwgd2hpY2ggZGVmYXVsdHMgdG8gMTAsIHRoZW4gbiB3aWxsIGJlIHRha2VuIGFzCmBtaW4ucHJvcGAqIHRoZSB0aGUgbnVtYmVyIG9mIHNhbXBsZXMvY2VsbHMgaW4gdGhlIHNtYWxsZXN0IGdyb3VwLgoKTm90ZSB0aGF0IGFsbCB0aGUgZ3JvdXAgc2l6ZXMgd2lsbCBvZnRlbiBiZSBsYXJnZXIgdGhhbiB0aGUgYGxhcmdlLm5gIGluIGNhc2UKb2Ygc2luZ2xlLWNlbGwgZGF0YS4KCmBgYHtyfQojIFNsb3cgKG1vcmUgdGhhbiAxbWluKSAtPiBkbyBub3QgcnVuCiMga2VlcDIgPC0gZmlsdGVyQnlFeHByKHNjZSwKIyAgICAgICAgICAgICAgICAgICAgICAgZ3JvdXAgPSBzY2UkY2x1c3RlciwKIyAgICAgICAgICAgICAgICAgICAgICAgbWluLmNvdW50ID0gMSwKIyAgICAgICAgICAgICAgICAgICAgICAgbWluLnRvdGFsLmNvdW50ID0gMTUsCiMgICAgICAgICAgICAgICAgICAgICAgIG1pbi5wcm9wID0gMC4yKQojIHRhYmxlKGtlZXAyKQpgYGAKCgojIFF1YWxpdHkgY29udHJvbAoKSW4gcXVhbGl0eSBjb250cm9sIChRQyksIHdlIGNoZWNrIHRoZSBxdWFsaXR5IG9mIG91ciBkYXRhc2V0LiBJbiBwYXJ0aWN1bGFyLCAKd2UgaW52ZXN0aWdhdGUgdW5kZXNpcmFibGUgb2RkaXRpZXMsIHN1Y2ggYXMgbG93LXF1YWxpdHkgY2VsbHMsIGVtcHR5IGRyb3BsZXRzCm9yIGRvdWJsZXRzLgoKIyMgSWRlbnRpZnlpbmcgYW5kIHJlbW92aW5nIGxvdy1xdWFsaXR5IGNlbGxzCgpUaGVyZSBhcmUgc2V2ZXJhbCBkaXN0aW5ndWlzaGluZyBmZWF0dXJlcyBvZiBsb3ctcXVhbGl0eSBjZWxscyB0aGF0IGNhbiBiZSB1c2VkCmluIG9yZGVyIHRvIGlkZW50aWZ5IHRoZW0uIFtBcyBkZXNjcmliZWQgaW4gdGhlIE9TQ0EgYm9va10oaHR0cDovL2Jpb2NvbmR1Y3Rvci5vcmcvYm9va3MvMy4xNC9PU0NBLmJhc2ljL3F1YWxpdHktY29udHJvbC5odG1sKSAKYm9vayk6CgoxLiBUaGUgbGlicmFyeSBzaXplIGlzIGRlZmluZWQgYXMgdGhlIHRvdGFsIHN1bSBvZiBjb3VudHMgYWNyb3NzIGFsbCAKcmVsZXZhbnQgZmVhdHVyZXMgZm9yIGVhY2ggY2VsbC4gSGVyZSwgd2Ugd2lsbCBjb25zaWRlciB0aGUgcmVsZXZhbnQgZmVhdHVyZXMgCnRvIGJlIHRoZSBlbmRvZ2Vub3VzIGdlbmVzLiBDZWxscyB3aXRoIHNtYWxsIGxpYnJhcnkgc2l6ZXMgYXJlIG9mIGxvdyBxdWFsaXR5IAphcyB0aGUgUk5BIGhhcyBiZWVuIGxvc3QgYXQgc29tZSBwb2ludCBkdXJpbmcgbGlicmFyeSBwcmVwYXJhdGlvbiwgZWl0aGVyIGR1ZSAKdG8gY2VsbCBseXNpcyBvciBpbmVmZmljaWVudCBjRE5BIGNhcHR1cmUgYW5kIGFtcGxpZmljYXRpb24uCgoyLiBUaGUgbnVtYmVyIG9mIGV4cHJlc3NlZCBmZWF0dXJlcyBpbiBlYWNoIGNlbGwgaXMgZGVmaW5lZCBhcyB0aGUgbnVtYmVyIG9mIAplbmRvZ2Vub3VzIGdlbmVzIHdpdGggbm9uLXplcm8gY291bnRzIGZvciB0aGF0IGNlbGwuIEFueSBjZWxsIHdpdGggdmVyeSAKZmV3IGV4cHJlc3NlZCBnZW5lcyBpcyBsaWtlbHkgdG8gYmUgb2YgcG9vciBxdWFsaXR5IGFzIHRoZSBkaXZlcnNlIHRyYW5zY3JpcHQgCnBvcHVsYXRpb24gaGFzIG5vdCBiZWVuIHN1Y2Nlc3NmdWxseSBjYXB0dXJlZC4KCjMuIFdlIHNvbWV0aW1lcyBoYXZlIHNwaWtlLWluIChFUkNDKSB0cmFuc2NyaXB0cyBhdmFpbGFibGUuClRoZSBwcm9wb3J0aW9uIG9mIHJlYWRzIG1hcHBlZCB0byBzcGlrZS1pbiB0cmFuc2NyaXB0cyBpcyBjYWxjdWxhdGVkIHJlbGF0aXZlIAp0byB0aGUgdG90YWwgY291bnQgYWNyb3NzIGFsbCBmZWF0dXJlcyAoaW5jbHVkaW5nIHNwaWtlLWlucykgZm9yIGVhY2ggY2VsbC4gCkFzIHRoZSBzYW1lIGFtb3VudCBvZiBzcGlrZS1pbiBSTkEgc2hvdWxkIGhhdmUgYmVlbiBhZGRlZCB0byBlYWNoIGNlbGwsIAphbnkgZW5yaWNobWVudCBpbiBzcGlrZS1pbiBjb3VudHMgaXMgc3ltcHRvbWF0aWMgb2YgbG9zcyBvZiBlbmRvZ2Vub3VzIFJOQS4KCjQuIEluIHRoZSBhYnNlbmNlIG9mIHNwaWtlLWluIHRyYW5zY3JpcHRzLCB0aGUgcHJvcG9ydGlvbiBvZiByZWFkcyBtYXBwZWQgCnRvIGdlbmVzIGluIHRoZSBtaXRvY2hvbmRyaWFsIGdlbm9tZSBjYW4gYmUgdXNlZC4gSGlnaCBwcm9wb3J0aW9ucyBhcmUgCmluZGljYXRpdmUgb2YgcG9vci1xdWFsaXR5IGNlbGxzIChJc2xhbSBldCBhbC4gMjAxNDsgSWxpY2ljIGV0IGFsLiAyMDE2KSwgCnByZXN1bWFibHkgYmVjYXVzZSBvZiBsb3NzIG9mIGN5dG9wbGFzbWljIFJOQSBmcm9tIHBlcmZvcmF0ZWQgY2VsbHMuIApUaGUgcmVhc29uaW5nIGlzIHRoYXQsIGluIHRoZSBwcmVzZW5jZSBvZiBtb2Rlc3QgZGFtYWdlLCB0aGUgaG9sZXMgaW4gdGhlIApjZWxsIG1lbWJyYW5lIHBlcm1pdCBlZmZsdXggb2YgaW5kaXZpZHVhbCB0cmFuc2NyaXB0IG1vbGVjdWxlcyBidXQgYXJlIHRvbyAKc21hbGwgdG8gYWxsb3cgbWl0b2Nob25kcmlhIHRvIGVzY2FwZSwgbGVhZGluZyB0byBhIHJlbGF0aXZlIGVucmljaG1lbnQgb2YgCm1pdG9jaG9uZHJpYWwgdHJhbnNjcmlwdHMuIEZvciBzaW5nbGUtbnVjbGVpIFJOQS1zZXEgZXhwZXJpbWVudHMsIGhpZ2ggCnByb3BvcnRpb25zIGFyZSBhbHNvIHVzZWZ1bCBhcyB0aGV5IGNhbiBtYXJrIGNlbGxzIHdoZXJlIHRoZSBjeXRvcGxhc20gaGFzIApub3QgYmVlbiBzdWNjZXNzZnVsbHkgc3RyaXBwZWQuCgojIyBDYWxjdWxhdGUgUUMgdmFyaWFibGVzCgpUaGlzIGZ1bmN0aW9uIGNhbGN1bGF0ZXMgdXNlZnVsIFFDIG1ldHJpY3MgZm9yIGlkZW50aWZpY2F0aW9uIGFuZCByZW1vdmFsIG9mIApwb3RlbnRpYWxseSBwcm9ibGVtYXRpYyBjZWxscy4gRGVmYXVsdCBwZXItY2VsbCBtZXRyaWNzIGFyZSB0aGUgc3VtIG9mIGNvdW50cyAKKGkuZS4sIHRoZSBsaWJyYXJ5IHNpemUpIGFuZCB0aGUgbnVtYmVyIG9mIGRldGVjdGVkIGZlYXR1cmVzLiBUaGUgcGVyY2VudGFnZSBvZiAKY291bnRzIGluIHRoZSB0b3AgZmVhdHVyZXMgYWxzbyBwcm92aWRlcyBhIG1lYXN1cmUgb2YgbGlicmFyeSBjb21wbGV4aXR5LgoKSWYgc3Vic2V0cyBpcyBzcGVjaWZpZWQsIHRoZXNlIHN0YXRpc3RpY3MgYXJlIGFsc28gY29tcHV0ZWQgZm9yIGVhY2ggc3Vic2V0IG9mIApmZWF0dXJlcy4gVGhpcyBpcyB1c2VmdWwgZm9yIGludmVzdGlnYXRpbmcgZ2VuZSBzZXRzIG9mIGludGVyZXN0LCBlLmcuLCAKbWl0b2Nob25kcmlhbCBnZW5lcy4KCmBgYHtyLCBtZXNzYWdlPUZBTFNFLCB3YXJuaW5nPUZBTFNFfQpsaWJyYXJ5KHNjYXRlcikKCiMgY2hlY2sgRVJDQyBzcGlrZS1pbiB0cmFuc2NyaXB0cwpzdW0oZ3JlcGwoIl5FUkNDLSIsIHJvd25hbWVzKHNjZSkpKSAjIG5vIHNwaWtlLWluIHRyYW5zY3JpcHRzIGF2YWlsYWJsZQoKIyBjaGVjayBtaXRvY2hvbmRyaWFsIGdlbmVzCnN1bShyb3dEYXRhKHNjZSkkY2hyb21vc29tZV9uYW1lPT0iTVQiLG5hLnJtID0gVFJVRSkgIyAyOCBtaXRvY2hvbmRyaWFsIGdlbmVzCnN1bShncmVwbCgiXk1ULSIsIHJvd25hbWVzKHNjZSkpKSAjIGFsdGVybmF0aXZlbHkKaXMubWl0byA8LSBncmVwbCgiXk1ULSIsIHJvd25hbWVzKHNjZSkpCgojIyBjYWxjdWxhdGUgUUMgbWV0cmljcwpkZiA8LSBwZXJDZWxsUUNNZXRyaWNzKHNjZSwgc3Vic2V0cz1saXN0KE1pdG89aXMubWl0bykpCmhlYWQoZGYpCgojIGFkZCBRQyB2YXJpYWJsZXMgdG8gc2NlIG9iamVjdApjb2xEYXRhKHNjZSkgPC0gY2JpbmQoY29sRGF0YShzY2UpLCBkZikKCiMgdGhlIFFDIHZhcmlhYmxlcyBoYXZlIG5vdyBiZWVuIGFkZGVkIHRvIHRoZSBjb2xEYXRhIG9mIG91ciBTQ0Ugb2JqZWN0LgpoZWFkKGNvbERhdGEoc2NlKSkKYGBgCgojIyBFeHBsb3JhdG9yeSBkYXRhIGFuYWx5c2lzCgpJbiB0aGUgZmlndXJlIGJlbG93LCB3ZSBzZWUgdGhhdCBzZXZlcmFsIGNlbGxzIGhhdmUgYSB2ZXJ5IGxvdyBudW1iZXIgb2YgCmV4cHJlc3NlZCBnZW5lcywgYW5kIHdoZXJlIG1vc3Qgb2YgdGhlIG1vbGVjdWxlcyBhcmUgZGVyaXZlZCBmcm9tIAptaXRvY2hvbmRyaWFsIGdlbmVzLiBUaGlzIGluZGljYXRlcyBsaWtlbHkgZGFtYWdlZCBjZWxscywgcHJlc3VtYWJseSBiZWNhdXNlIApvZiBsb3NzIG9mIGN5dG9wbGFzbWljIFJOQSBmcm9tIHBlcmZvcmF0ZWQgY2VsbHMsIHNvIHdlIHNob3VsZCByZW1vdmUgdGhlc2UgZm9yIAp0aGUgZG93bnN0cmVhbSBhbmFseXNpcy4KCmBgYHtyfQojIE51bWJlciBvZiBnZW5lcyB2cyBsaWJyYXJ5IHNpemUKcGxvdENvbERhdGEoc2NlLCB4ID0gInN1bSIsIHk9ImRldGVjdGVkIiwgY29sb3VyX2J5PSJjbHVzdGVyIikgCgojIE1pdG9jaG9uZHJpYWwgZ2VuZXMKcGxvdENvbERhdGEoc2NlLCB4ID0gImRldGVjdGVkIiwgeT0ic3Vic2V0c19NaXRvX3BlcmNlbnQiKQpgYGAKCiMjIFFDIHVzaW5nIGFkYXB0aXZlIHRocmVzaG9sZHMKCkJlbG93LCB3ZSByZW1vdmUgY2VsbHMgdGhhdCBhcmUgb3V0bHlpbmcgd2l0aCByZXNwZWN0IHRvCgogMS4gQSBsb3cgc2VxdWVuY2luZyBkZXB0aCAobnVtYmVyIG9mIFVNSXMpOwogMi4gQSBsb3cgbnVtYmVyIG9mIGdlbmVzIGRldGVjdGVkOwogMy4gQSBoaWdoIHBlcmNlbnRhZ2Ugb2YgcmVhZHMgZnJvbSBtaXRvY2hvbmRyaWFsIGdlbmVzLgogCiBIZXJlIHdlIHdpbGwgcmVtb3ZlIGNlbGxzIGZvciBRQyBiYXNlZCBvbiAqKmFkYXB0aXZlIHRocmVzaG9sZHMqKiByZWxhdGVkIHRvCiB0aGUgdGhyZWUgcG9pbnRzIGZyb20gYWJvdmUuIEFkYXB0aXZlIHRyaGVzaG9sZHMgYXJlIHVzZWQgYXMgb3Bwb3NlZCB0bwogKipmaXhlZCB0aHJlc2hvbGRzKiouIAogCldpdGggZml4ZWQgdGhyZXNob2xkcywgd2UgdXNlIGZpeGVkIGN1dC1vZmYgdmFsdWVzIGZvciBlYWNoIGNlbGwgdG8gcGFzcyBRQywgCmUuZy4sIHdlIG1pZ2h0IGNvbnNpZGVyIGNlbGxzIHRvIGJlIGxvdyBxdWFsaXR5IGlmIHRoZXkgaGF2ZSBsaWJyYXJ5IHNpemVzIApiZWxvdyAxMDAsMDAwIHJlYWRzOyBleHByZXNzIGZld2VyIHRoYW4gNSwwMDAgZ2VuZXM7IGhhdmUgc3Bpa2UtaW4gcHJvcG9ydGlvbnMKYWJvdmUgMTAlOyBvciBoYXZlIG1pdG9jaG9uZHJpYWwgcHJvcG9ydGlvbnMgYWJvdmUgMTAlLgoKV2l0aCBhZGFwdGl2ZSB0aHJlc2hvbGRzLCB3ZSBhc3N1bWUgdGhhdCBtb3N0IG9mIHRoZSBkYXRhc2V0IGNvbnNpc3RzIG9mIApoaWdoLXF1YWxpdHkgY2VsbHMuIFdlIHRoZW4gaWRlbnRpZnkgY2VsbHMgdGhhdCBhcmUgb3V0bGllcnMgZm9yIHRoZSB2YXJpb3VzIApRQyBtZXRyaWNzLCBiYXNlZCBvbiB0aGUgbWVkaWFuIGFic29sdXRlIGRldmlhdGlvbiAoTUFEKSBmcm9tIHRoZSBtZWRpYW4gdmFsdWUKb2YgZWFjaCBtZXRyaWMgYWNyb3NzIGFsbCBjZWxscy4gQnkgZGVmYXVsdCwgd2UgY29uc2lkZXIgYSB2YWx1ZSB0byBiZSBhbm91dGxpZXIgCmlmIGl0IGlzIG1vcmUgdGhhbiAzIE1BRHMgZnJvbSB0aGUgbWVkaWFuIGluIHRoZSDigJxwcm9ibGVtYXRpY+KAnSBkaXJlY3Rpb24uIFRoaXMgCmlzIGxvb3NlbHkgbW90aXZhdGVkIGJ5IHRoZSBmYWN0IHRoYXQgc3VjaCBhIGZpbHRlciB3aWxsIHJldGFpbiA5OSUgb2YgCm5vbi1vdXRsaWVyIHZhbHVlcyB0aGF0IGZvbGxvdyBhIG5vcm1hbCBkaXN0cmlidXRpb24uIFdlIGRlbW9uc3RyYXRlIGFkb3B0aW5nCmFkYXB0aXZlIHRocmVzaG9sZHMgb24gdGhlIE1hY29za28gZGF0YXNldDoKCmBgYHtyfQpsb3dMaWIgPC0gaXNPdXRsaWVyKGRmJHN1bSwgdHlwZT0ibG93ZXIiLCBsb2c9VFJVRSkKbG93RmVhdHVyZXMgPC0gaXNPdXRsaWVyKGRmJGRldGVjdGVkLCB0eXBlPSJsb3dlciIsIGxvZz1UUlVFKQpoaWdoTWl0byA8LSBpc091dGxpZXIoZGYkc3Vic2V0c19NaXRvX3BlcmNlbnQsIHR5cGU9ImhpZ2hlciIpCgp0YWJsZShsb3dMaWIpCnRhYmxlKGxvd0ZlYXR1cmVzKQp0YWJsZShoaWdoTWl0bykKCmRpc2NhcmRDZWxscyA8LSAobG93TGliIHwgbG93RmVhdHVyZXMgfCBoaWdoTWl0bykKdGFibGUoZGlzY2FyZENlbGxzKQpjb2xEYXRhKHNjZSkkZGlzY2FyZENlbGxzIDwtIGRpc2NhcmRDZWxscwoKIyB2aXN1YWxpemUgY2VsbHMgdG8gYmUgcmVtb3ZlZApwbG90Q29sRGF0YShzY2UsIHggPSAic3VtIiwgeT0iZGV0ZWN0ZWQiLCBjb2xvdXJfYnk9ImRpc2NhcmRDZWxscyIpCnBsb3RDb2xEYXRhKHNjZSwgeCA9ICJkZXRlY3RlZCIsIHk9InN1YnNldHNfTWl0b19wZXJjZW50IiwgY29sb3VyX2J5ID0gImRpc2NhcmRDZWxscyIpCmBgYAoKV2UgcmVtb3ZlZCBhIHRvdGFsIG9mICQzNDIzJCBjZWxscywgbW9zdCBvZiB3aGljaCBiZWNhdXNlIG9mIGFuIG91dGx5aW5nbHkgaGlnaCAKcGVyY2VudGFnZSBvZiByZWFkcyBmcm9tIG1pdG9jaG9uZHJpYWwgZ2VuZXMuCgojIyBJZGVudGlmeWluZyBhbmQgcmVtb3ZpbmcgZW1wdHkgZHJvcGxldHMKCk5vdGUgdGhhdCB0aGUgcmVtb3ZhbCBvZiBjZWxscyB3aXRoIGxvdyBzZXF1ZW5jaW5nIGRlcHRoIHVzaW5nIHRoZSBhZGFwdGl2ZSAKdGhyZXNob2xkIHByb2NlZHVyZSBhYm92ZSBpcyBhIHdheSBvZiByZW1vdmluZyBlbXB0eSBkcm9wbGV0cy4gCk90aGVyIGFwcHJvYWNoZXMgYXJlIHBvc3NpYmxlLCBlLmcuLCByZW1vdmluZyBjZWxscyBieSBzdGF0aXN0aWNhbCB0ZXN0aW5nIAp1c2luZyBgZW10cHlEcm9wc2AuIFRoaXMgZG9lcyByZXF1aXJlIHVzIHRvIHNwZWNpZnkgYSBsb3dlciBib3VuZCBvbiB0aGUgdG90YWwgCm51bWJlciBvZiBVTUlzLCBiZWxvdyB3aGljaCBhbGwgY2VsbHMgYXJlIGNvbnNpZGVyZWQgdG8gY29ycmVzcG9uZCB0byBlbXB0eSAKZHJvcGxldHMuIFRoaXMgbG93ZXIgYm91bmQgbWF5IG5vdCBiZSB0cml2aWFsIHRvIGRlcml2ZSwgYnV0IHRoZSBgYmFyY29kZVJhbmtzYApmdW5jdGlvbiBjYW4gYmUgdXNlZnVsIHRvIGlkZW50aWZ5IGFuIGVsYm93L2tuZWUgcG9pbnQuCgpJbiBicmllZiwgdGhlIHN0ZXBzIHRha2VuIGJ5IHRoZSBgZW10cHlEcm9wc2AgZnVuY3Rpb24gY2FuIGJlIHN1bW1hcml6ZWQgYXMgCmZvbGxvd3M6CgoxLglEZWZpbmUgdGhyZXNob2xkIFQgb2YgdG90YWwgVU1JIGNvdW50cyAoZS5nLiB3aXRoIHRoZSBoZWxwIG9mIHRoZSAKYGJhcmNvZGVSYW5rc2AgZnVuY3Rpb24pLCBiZWxvdyB3aGljaCBjZWxscyBtYXkgYmUgY29uc2lkZXJlZCB0byBiZSBmcm9tIGVtcHR5IApkcm9wbGV0cy4gQ2FsbCB0aGlzIHNldCBvZiBjZWxscyBFLgoKMi4JRGVmaW5lICRBX2ckIGFzIHRoZSB0b3RhbCBnZW5lIGV4cHJlc3Npb24gYWNyb3NzIGFsbCBjZWxscyBpbiBFLgoKMy4JRGVmaW5lICRwaV9nJCBhcyB0aGUgcmVsYXRpdmUgY29udHJpYnV0aW9uIG9mIGdlbmUgZyB0byB0aGUgYW1iaWVudCBwcm9maWxlLgoKNC4JQ2FsY3VsYXRlIHAtdmFsdWUgZm9yIGVhY2ggY2VsbCB0byBoYXZlIGEgdHJhbnNjcmlwdGlvbmFsIHByb2ZpbGUgc2ltaWxhciB0bwp0aGUgYW1iaWVudCBzb2x1dGlvbi4gSW50dWl0aXZlbHksIGEgcC12YWx1ZSBiZWxvdyB0aGUgcmVxdWVzdGVkIGFscGhhIGxldmVsIAp3b3VsZCBjb3JyZXNwb25kIHRvIGEgY2VsbCBmb3Igd2hpY2ggdGhlIG9ic2VydmVkIGNvdW50IHByb2ZpbGUgc3Ryb25nbHkgCmRldmlhdGVzIGZyb20gdGhlIGNvdW50IHByb2ZpbGUgb2JzZXJ2ZWQgaW4gdGhlIGNlbGxzIHdpdGggYSBsaWJyYXJ5IHNpemUgCmJlbG93IHRocmVzaG9sZCBULCBpLmUuLCBhIG5vbi1lbXB0eSBkcm9wbGV0LgoKYGBge3IsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9CmxpYnJhcnkoRHJvcGxldFV0aWxzKQpiY3JhbmsgPC0gYmFyY29kZVJhbmtzKGNvdW50cyhzY2UpKQoKIyBPbmx5IHNob3dpbmcgdW5pcXVlIHBvaW50cyBmb3IgcGxvdHRpbmcgc3BlZWQuIER1cGxpY2F0ZWQgcmFua3MgYXJlIGEgCiMgY29uc2VxdWVuY2Ugb2YgdGllcyBpbiB0aGUgcmFua3MsIGkuZS4sIHdoZW4gY2VsbHMgaGF2ZSBhbiBlcXVhbCBsaWJyYXJ5IHNpemUuCnN1bShkdXBsaWNhdGVkKGJjcmFuayRyYW5rKSkKdW5pcSA8LSAhZHVwbGljYXRlZChiY3JhbmskcmFuaykKCnBsb3QoYmNyYW5rJHJhbmtbdW5pcV0sIGJjcmFuayR0b3RhbFt1bmlxXSwgbG9nPSJ4eSIsCiAgICB4bGFiPSJSYW5rIiwgeWxhYj0iVG90YWwgVU1JIGNvdW50IiwgY2V4LmxhYj0xLjIpCmFibGluZShoPW1ldGFkYXRhKGJjcmFuaykkaW5mbGVjdGlvbiwgY29sPSJkYXJrZ3JlZW4iLCBsdHk9MikKYWJsaW5lKGg9bWV0YWRhdGEoYmNyYW5rKSRrbmVlLCBjb2w9ImRvZGdlcmJsdWUiLCBsdHk9MikKYWJsaW5lKGg9MzUwLCBjb2w9Im9yYW5nZSIsIGx0eT0yKSAjIHBpY2tlZCB2aXN1YWxseSBteXNlbGYKbGVnZW5kKCJ0b3ByaWdodCIsIAogICAgICAgbGVnZW5kPWMoIkluZmxlY3Rpb24iLCAiS25lZSIsICJFbXBpcmljYWwga25lZSBwb2ludCIpLCAKICAgICAgIGNvbD1jKCJkYXJrZ3JlZW4iLCAiZG9kZ2VyYmx1ZSIsICJvcmFuZ2UiKSwgCiAgICAgICBsdHk9MiwgCiAgICAgICBjZXg9MS4yKQoKc2V0LnNlZWQoMTAwKQpsaW1pdCA8LSAzNTAgICAKYWxsLm91dCA8LSBlbXB0eURyb3BzKGNvdW50cyhzY2UpLCBsb3dlcj1saW1pdCwgdGVzdC5hbWJpZW50PVRSVUUpCiMgcC12YWx1ZXMgZm9yIGNlbGxzIHdpdGggdG90YWwgVU1JIGNvdW50IHVuZGVyIHRoZSBsb3dlciBib3VuZC4KaGlzdChhbGwub3V0JFBWYWx1ZVthbGwub3V0JFRvdGFsIDw9IGxpbWl0ICYgYWxsLm91dCRUb3RhbCA+IDBdLAogICAgeGxhYj0iUC12YWx1ZSIsIG1haW49IiIsIGNvbD0iZ3JleTgwIiwgYnJlYWtzPTIwKQoKIyBidXQgbm90ZSB0aGF0IGl0IHdvdWxkIHJlbW92ZSBhIHZlcnkgaGlnaCBudW1iZXIgb2YgY2VsbHMKbGVuZ3RoKHdoaWNoKGFsbC5vdXQkRkRSIDw9IDAuMDEpKSAjIHJldGFpbmVkCgojIHNvIHdlIHN0aWNrIHRvIHRoZSBtb3JlIGxlbmllbnQgYWRhcHRpdmUgZmlsdGVyaW5nIHN0cmF0ZWd5CiMgcmVtb3ZlIGNlbGxzIGlkZW50aWZpZWQgdXNpbmcgYWRhcHRpdmUgdGhyZXNob2xkcwpzY2UgPC0gc2NlWywgIWNvbERhdGEoc2NlKSRkaXNjYXJkQ2VsbHNdCmBgYAoKIyMgSWRlbnRpZnlpbmcgYW5kIHJlbW92aW5nIGRvdWJsZXRzCgpXZSB3aWxsIHVzZSAKW3NjRGJsRmluZGVyXShodHRwczovL2Jpb2NvbmR1Y3Rvci5vcmcvcGFja2FnZXMvMy4xNC9iaW9jL2h0bWwvc2NEYmxGaW5kZXIuaHRtbCkgCnRvIGRldGVjdCBkb3VibGV0IGNlbGxzLgoKQXMgZGlzY3Vzc2VkIGluIHRoZSB0aGVvcnkgc2Vzc2lvbiBvZiBsYXN0IHdlZWssIHRoZSBzdGVwcyB0YWtlbiBieSAKYHNjRGJsRmluZGVyYCBjYW4gYmUgc3VtbWFyaXplZCBhcyBmb2xsb3dzOgoKMS4gUGVyZm9ybSBwcmluY2lwYWwgY29tcG9uZW50cyBhbmFseXNpcyAoUENBKSBvbiBsb2ctbm9ybWFsaXplZCBleHByZXNzaW9uIApjb3VudHMuIFRoaXMgYWxsb3dzIGZvciBwcm9qZWN0aW5nIGVhY2ggY2VsbCBpbiB0aGUgZGF0YXNldCBpbnRvIGEgMkQgc3BhY2UKKGZvciBtb3JlIGRldGFpbHMgb24gUENBLCBzZWUgbmV4dCB3ZWVrcyBzZXNzaW9uKS4KCjIuIFJhbmRvbWx5IHNlbGVjdCB0d28gY2VsbHMsIHN1bSB0aGVpciBjb3VudHMgYW5kIG5vcm1hbGl6ZSwgYW5kIHByb2plY3QgCmludG8gUENBIHNwYWNlIGZyb20gc3RlcCAxLiBJbiBvdGhlciB3b3JkcywgYXJ0aWZpY2lhbGx5IGdlbmVyYXRlIGRvdWJsZXRzIGFuZApzZWUgd2hlcmUgdGhleSBhcmUgbG9jYXRlZCBpbiB0aGUgMkQgc3BhY2UuCgozLiBSZXBlYXQgc3RlcCAyIG1hbnkgdGltZXMgKGdlbmVyYXRlIG1hbnkgYXJ0aWZpY2lhbCBkb3VibGV0cykuCgo0LiBHZW5lcmF0ZSBuZWlnaGJvciBuZXR3b3JrIGluIHRoZSAyRCBzcGFjZS4gVGhlIG5ldHdvcmsgaXMgdGhlbiB1c2VkIHRvIAplc3RpbWF0ZSBhIG51bWJlciBvZiBjaGFyYWN0ZXJpc3RpY3MgZm9yIGVhY2ggY2VsbCwgaW4gcGFydGljdWxhciB0aGUgcHJvcG9ydGlvbiAKZiBhcnRpZmljaWFsIGRvdWJsZXRzIGFtb25nIHRoZSBuZWFyZXN0IG5laWdoYm9ycy4KCjUuIFVzZSB0aGlzIGluZm9ybWF0aW9uLCBhbG9uZyB3aXRoIG90aGVyIHByZWRpY3RvcnMsIHRvIHRyYWluIGEgY2xhc3NpZmllcgooZ3JhZGllbnQgYm9vc3RlZCB0cmVlKSB0aGF0IGFsbG93cyBmb3IgZGlzdGluZ3Vpc2hpbmcgZG91YmxldHMgZnJvbSBzaW5nbGV0cy4KCk5vdGU6IG9ubHkgY2xhc3NpZmllcyBmb3IgaWRlbnRpZnlpbmcgZG91YmxldHMgZm9yIHdoaWNoIHRoZSB0d28gY2VsbHMKYXJlIGZyb20gZGlmZmVyZW50IGNlbGwgdHlwZSBjbHVzdGVycy4KCgpgYGB7ciwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0KIyMgcGVyZm9ybSBkb3VibGV0IGRldGVjdGlvbgpsaWJyYXJ5KHNjRGJsRmluZGVyKQpgYGAKCmBgYHtyfQpzZXQuc2VlZCgyMTExMDMpCnNhbXBsZUlEIDwtIHVubGlzdChsYXBwbHkoc3Ryc3BsaXQoY29sRGF0YShzY2UpJGNlbGwuaWQsIHNwbGl0PSJfIiksICJbWyIsIDEpKQp0YWJsZShzYW1wbGVJRCkKc2NlIDwtIHNjRGJsRmluZGVyKHNjZSwgCiAgICAgICAgICAgICAgICAgICByZXR1cm5UeXBlPSJ0YWJsZSIsCiAgICAgICAgICAgICAgICAgICBzYW1wbGVzID0gZmFjdG9yKHNhbXBsZUlEKSkKdGFibGUoc2NlJHNjRGJsRmluZGVyLmNsYXNzKQoKCiMjIHZpc3VhbGl6ZSB0aGVzZSBzY29yZXMKIyMgZXhwbG9yZSBkb3VibGV0IHNjb3JlIHdydCBvcmlnaW5hbCBjbHVzdGVyIGxhYmVscwpib3hwbG90KGxvZzFwKHNjZSRzY0RibEZpbmRlci5zY29yZSkgfiBmYWN0b3IoY29sRGF0YShzY2UpJGNsdXN0ZXIsIGV4Y2x1ZGU9TlVMTCkpCgp0YWIgPC0gdGFibGUoc2NlJHNjRGJsRmluZGVyLmNsYXNzLCBzY2UkY2x1c3RlciwgCiAgICAgIGV4Y2x1ZGU9TlVMTCkKdGFiCnQodCh0YWIpIC8gY29sU3Vtcyh0YWIpKQoKYmFycGxvdCh0KHQodGFiKSAvIGNvbFN1bXModGFiKSlbMixdLAogICAgICAgIHhsYWIgPSAiQ2x1c3RlciIsIHlsYWIgPSAiRnJhY3Rpb24gb2YgZG91YmxldHMiKQoKcmFuZ2Uoc2NlJHNjRGJsRmluZGVyLnNjb3JlW3NjZSRzY0RibEZpbmRlci5jbGFzcyAgPT0gImRvdWJsZXQiICYgc2FtcGxlSUQgPT0gInIxIl0pCnJhbmdlKHNjZSRzY0RibEZpbmRlci5zY29yZVtzY2Ukc2NEYmxGaW5kZXIuY2xhc3MgID09ICJzaW5nbGV0IiAmIHNhbXBsZUlEID09ICJyMSJdKQpgYGAKCmBgYHtyfQojIHJlbW92ZSBkb3VibGV0cwpzY2UgPC0gc2NlWywhc2NlJHNjRGJsRmluZGVyLmNsYXNzID09ICJkb3VibGV0Il0KYGBgCgojIE5vcm1hbGl6YXRpb24KCk5vcm1hbGl6YXRpb24gYWltcyB0byByZW1vdmUgdGVjaG5pY2FsIGVmZmVjdHMgc3VjaCBhcyBzZXF1ZW5jaW5nIGRlcHRoIHNvIHRoYXQgCmNvbXBhcmlzb25zIGJldHdlZW4gY2VsbHMgYXJlIG5vdCBjb25mb3VuZGVkIGJ5IHRoZW0uIFRoZSBtb3N0IGNvbW1vbmx5IHVzZWQgCm5vcm1hbGl6YXRpb24gbWV0aG9kcyBtZXRob2RzIHVzZSBzY2FsaW5nLCB3aGVyZSBhIHNjYWxpbmcgZmFjdG9yIChhbHNvIGNhbGxlZCAKc2l6ZSBmYWN0b3IsIG5vcm1hbGl6YXRpb24gZmFjdG9yKSBpcyBlc3RpbWF0ZWQgZm9yIGVhY2ggY2VsbC4gVGhlc2Ugc2NhbGluZyAKZmFjdG9ycyAoZS5nLiwgdGhlIGVmZmVjdGl2ZSBsaWJyYXJ5IHNpemUpIGNhbiBiZSBpbmNsdWRlZCBhcyBhbiBvZmZzZXQKdG8gZG93bnN0cmVhbSBtb2RlbGluZyBwcm9jZWR1cmVzLiBUaGlzIGVmZmVjdGl2ZWx5IGFsbG93cyBmb3IgcGVyZm9ybWluZwppbmZlcmVuY2Ugb24gdGhlIHJlbGF0aXZlIGFidW5kYW5jZSBvZiBhIGdlbmUgaW4gYSBjZWxsLCBhZnRlciBhY2NvdW50aW5nIGZvciAKbGlicmFyeSBzaXplIGFuZCBSTkEgY29tcG9zaXRpb24gZGlmZmVyZW5jZXMgYmV0d2VlbiBjZWxscywgd2hpY2ggaXMgbXVjaCBtb3JlCnJlbGV2YW50IHRoYW4gY29tcGFyaW5nIHJhdyBjb3VudHMKCk5vdGUgdGhhdCB3ZSBhbHdheXMgcHJlZmVyIHRoZSB1c2Ugb2Ygb2Zmc2V0cyBvdmVyIHRyYW5zZm9ybWF0aW9uIG9mIHRoZSBkYXRhLgpJbiBicmllZiwgc3VjaCB0cmFuc2Zvcm1hdGlvbiB3b3VsZCBkaXN0b3J0IHRoZSBtZWFuLXZhcmlhbmNlIHJlbGF0aW9uc2hpcAppbiB0aGUgZGF0YS4gRm9yIG1vcmUgZGV0YWlscywgd2UgcmVmZXIgdG8gdGhlIGRvY3VtZW50IHRoYXQgd2FzIGRpc2N1c3NlZAppbiB0aGVvcnkgc2Vzc2lvbiBvZiBsYXN0IHdlZWsKKFtsaW5rXShodHRwczovL3N0YXRvbWljcy5naXRodWIuaW8vU0dBMjEvc2VxdWVuY2luZ19zY2FsaW5nTm9ybWFsaXphdGlvbi5odG1sKSkKCkZvciBub3JtYWxpemF0aW9uLCB0aGUgc2l6ZSBmYWN0b3JzICRzX2kkIGNvbXB1dGVkIGhlcmUgYXJlIHNpbXBseSBzY2FsZWQgCmxpYnJhcnkgc2l6ZXM6ClxbIE5faSA9IFxzdW1fZyBZX3tnaX0gXF0KXFsgc19pID0gTl9pIC8gXGJhcntOfV9pIFxdCgpgYGB7cn0Kc2NlIDwtIGxvZ05vcm1Db3VudHMoc2NlKQoKIyBub3RlIHdlIGFsc28gcmV0dXJuZWQgbG9nIGNvdW50czogc2VlIHRoZSBhZGRpdGlvbmFsIGxvZ2NvdW50cyBhc3NheS4Kc2NlCgojIHlvdSBjYW4gZXh0cmFjdCBzaXplIGZhY3RvcnMgdXNpbmcKc2YgPC0gbGlicmFyeVNpemVGYWN0b3JzKHNjZSkKbWVhbihzZikgIyBlcXVhbCB0byAxIGR1ZSB0byBzY2FsaW5nLgpwbG90KHg9IGxvZyhjb2xTdW1zKGFzc2F5cyhzY2UpJGNvdW50cykpLCAKICAgICB5PXNmKQpgYGAKCkZyb20gdGhlIE9TQ0EgYm9vazoKQWx0ZXJuYXRpdmVseSwgd2UgbWF5IHVzZSBtb3JlIHNvcGhpc3RpY2F0ZWQgYXBwcm9hY2hlcyBmb3IgdmFyaWFuY2Ugc3RhYmlsaXppbmcgCnRyYW5zZm9ybWF0aW9ucyBpbiBnZW5vbWljcyBkYXRhLCBlLmcuLCBgREVTZXEyYCBvciBgc2N0cmFuc2Zvcm1gLiBUaGVzZSBhaW0gCnRvIHJlbW92ZSB0aGUgbWVhbi12YXJpYW5jZSB0cmVuZCBtb3JlIGVmZmVjdGl2ZWx5IHRoYW4gdGhlIHNpbXBsZXIgCnRyYW5zZm9ybWF0aW9ucyBtZW50aW9uZWQgYWJvdmUsIHRob3VnaCBpdCBjb3VsZCBiZSBhcmd1ZWQgd2hldGhlciB0aGlzIGlzIAphY3R1YWxseSBkZXNpcmFibGUuIEZvciBsb3ctY292ZXJhZ2Ugc2NSTkEtc2VxIGRhdGEsIHRoZXJlIHdpbGwgYWx3YXlzIGJlIGEgCm1lYW4tdmFyaWFuY2UgdHJlbmQgdW5kZXIgYW55IHRyYW5zZm9ybWF0aW9uLCBmb3IgdGhlIHNpbXBsZSByZWFzb24gdGhhdCB0aGUgCnZhcmlhbmNlIG11c3QgYmUgemVybyB3aGVuIHRoZSBtZWFuIGNvdW50IGlzIHplcm8uIFRoZXNlIG1ldGhvZHMgYWxzbyBmYWNlIHRoZSAKY2hhbGxlbmdlIG9mIHJlbW92aW5nIHRoZSBtZWFuLXZhcmlhbmNlIHRyZW5kIHdoaWxlIHByZXNlcnZpbmcgdGhlIGludGVyZXN0aW5nIApjb21wb25lbnQgb2YgdmFyaWF0aW9uLCBpLmUuLCB0aGUgbG9nLWZvbGQgY2hhbmdlcyBiZXR3ZWVuIHN1YnBvcHVsYXRpb25zOyB0aGlzIAptYXkgb3IgbWF5IG5vdCBiZSBkb25lIGFkZXF1YXRlbHksIGRlcGVuZGluZyBvbiB0aGUgYWdncmVzc2l2ZW5lc3Mgb2YgCnRoZSBhbGdvcml0aG0uCgpJbiBwcmFjdGljZSwgdGhlIGxvZy10cmFuc2Zvcm1hdGlvbiBpcyBhIGdvb2QgZGVmYXVsdCBjaG9pY2UgZHVlIHRvIGl0cyAKc2ltcGxpY2l0eSBhbmQgaW50ZXJwcmV0YWJpbGl0eSwgYW5kIGlzIHdoYXQgd2Ugd2lsbCBiZSB1c2luZyBmb3IgYWxsIApkb3duc3RyZWFtIGFuYWx5c2VzLgoKLS0tIGVuZCBsYWIgc2Vzc2lvbiAxIC0tLQoKCgoK</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("lab1_MacoskoWorkflow.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

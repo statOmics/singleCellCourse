@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Koen Van den Berge" />
+
+
+<title>Batch correction and data integration</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Single-cell course</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="introSequencingBulk.html">A brief introduction to sequencing technology</a>
+    </li>
+    <li>
+      <a href="singleCellProtocols.html">Two popular single-cell protocols</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="labSession_1.html">Lab 1</a>
+    </li>
+    <li>
+      <a href="labSession_2.html">Lab 2</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Batch correction and data integration</h1>
+<h4 class="author">Koen Van den Berge</h4>
+<h4 class="date">Last compiled on 30 November, 2021</h4>
+
+</div>
+
+
+<div id="batch-correction" class="section level1">
+<h1><span class="header-section-number">1</span> Batch correction</h1>
+<div id="what-is-a-batch-effect" class="section level2">
+<h2><span class="header-section-number">1.1</span> What is a batch effect?</h2>
+<ul>
+<li>A batch effect is a <strong>systematic technical effect</strong> that may confound the biological variation of interest. Batch effects occur by samples being processed in different batches, be it different laboratory personnel, reagent lots/concentrations, processing times, sequencing runs, etc. All these may have an effect on the resulting data.</li>
+<li>Batch effects are not of interest and a failure to account for or even to acknowledge them is almost guaranteed to lead to either spurious results or a loss in statistical power, in particular when batch effects are correlated with the biological variation of interest, i.e., when confounding occurs between batch effects and the biological covariate of interest.</li>
+<li>Identifying batch effects is an essential skill when working with public datasets. <strong>Exploratory data analysis is key</strong> to their identification.</li>
+<li>Batch effects are not unique to high-throughput data and also occur in low-dimensional biological measurements such as quantitative PCR or western blots. However, the many variables measured in high-throughput datasets allow us to identify and even correct for them!</li>
+</ul>
+<p><img src="figures/batchEffectsPaper.png" alt="Paper by Leek and colleagues." /> —</p>
+</div>
+<div id="exploring-processing-batch-in-the-drop-seq-data-from-macosko" class="section level2">
+<h2><span class="header-section-number">1.2</span> Exploring processing batch in the Drop-seq data from Macosko</h2>
+<p><strong>TODO</strong> after finishing lab on dimensionality reduction and using corresponding object.</p>
+</div>
+<div id="accounting-for-known-batch-effects" class="section level2">
+<h2><span class="header-section-number">1.3</span> Accounting for known batch effects</h2>
+<p>We will discuss two approaches to handle known batch effects.</p>
+<div id="incorporating-batch-covariates-in-statistical-model-conditioning-on-the-batch-effect" class="section level3">
+<h3><span class="header-section-number">1.3.1</span> Incorporating batch covariates in statistical model (conditioning on the batch effect)</h3>
+<p>A natural approach in dealing with batch effects is to incorporate them as covariates in our statistical model. In practice, this may happen in multiple ways. We provide a few examples:</p>
+<ul>
+<li><strong>Feature selection</strong>: If we are confronted with batch effects, we could incorporate the batch variable(s) as covariates in a GLM, which we may then use to calculate deviance or Pearson residuals for feature selection purposes. Since the batch effect is included in the covariate, we effectively condition on it in the calculation of our residuals.</li>
+<li><strong>Dimensionality reduction</strong>: When using a latent-variable model for dimensionality reduction, such as <code>zinbwave</code> or <code>scVI</code>, one can incorporate covariates and effectively calculate reduced dimensions conditional on the batch effect.</li>
+<li><strong>Differential expression</strong>: In differential expression analysis, we typically fit a single GLM to each gene. Also here, we can add the batch variable(s) as covariates in the GLM.</li>
+</ul>
+<p>It is crucial, however, that the batch variable(s) is (are) not confounded with the biological variable(s) of interest. If these variables are correlated, accounting for the batch effect will also remove biological signal. In such scenarios, it is very hard, if not impossible, to separate biological from technical variation.</p>
+</div>
+<div id="estimating-batch-corrected-counts" class="section level3">
+<h3><span class="header-section-number">1.3.2</span> Estimating batch-corrected counts</h3>
+<p>Sometimes it is not straight forward to simply incorporate a covariate in the analysis framework, e.g., when performing PCA dimensionality reduction. In these cases, it can be useful to estimate batch-corrected counts. Depending on the statistical model, this may be implemented differently, but the idea is always similar: we estimate the batch effect using a regression model, and substract it from our observed data.</p>
+<div id="plain-residuals-of-glm" class="section level4">
+<h4><span class="header-section-number">1.3.2.1</span> Plain residuals of GLM</h4>
+<p>For example, say we are working with a (Poisson or negative binomial) count GLM. Let <span class="math inline">\(Y_{gi}\)</span> denote a measure of the gene expression from gene <span class="math inline">\(g\)</span> in cell <span class="math inline">\(i\)</span>. Let <span class="math inline">\(\mathbf{B}\)</span> denote a <span class="math inline">\(n \times 2\)</span> matrix denoting the batch effect we want to correct for. Since <span class="math inline">\(\mathbf{B}\)</span> has only two columns, there is only a single batch effect (i.e., there are two batches in total). Let <span class="math inline">\(\mathbf{X}\)</span> denote the <span class="math inline">\(n \times p\)</span> design matrix containing the covariates of interest (cell type, treatment condition, etc.). Finally, let <span class="math inline">\(O_i\)</span> correspond to known cell-specific offsets.</p>
+<p>The mean model would correspond to</p>
+<p><span class="math display">\[ \log E(Y_{gi} | B_i, X_i, O_i) = \mathbf{X}_i\beta_g + \mathbf{B}_i \gamma_g + O_i. \]</span></p>
+<p>with <span class="math inline">\(\beta_g\)</span> a <span class="math inline">\(\p \times 1\)</span> vector of parameters of interest, and <span class="math inline">\(\gamma_g\)</span> a <span class="math inline">\(2 \times 1\)</span> vector of parameters modeling the effect of batch on average gene expression. We can then obtain batch- and offset-corrected counts via</p>
+<p><span class="math display">\[ \log(\tilde{Y}_{gi}) = \log E(Y_{gi}) - \mathbf{B}_i \gamma_g - O_i, \]</span></p>
+<p>i.e., these are obtained as residuals of the GLM, correcting for technical variation, but keeping biological variation (i.e., we do not substract the <span class="math inline">\(\mathbf{X}_i\beta_g\)</span> effects).</p>
+<p>In <code>RUVSeq</code>, developed by <a href="https://www.nature.com/articles/nbt.2931">Risso <em>et al.</em> (2014)</a>, for example, the authors approximate this by regressing <span class="math inline">\(Z_{gi} = \log (Y_{gi}) - O_i\)</span> onto <span class="math inline">\(\mathbf{B}\)</span>, and calculating the residuals from this linear model, i.e., <span class="math inline">\(\log(\tilde{Y}_{gi}) = \log (Y_{gi}) - O_i - \mathbf{B}_i \gamma_g\)</span>.</p>
+</div>
+<div id="pearson-residuals" class="section level4">
+<h4><span class="header-section-number">1.3.2.2</span> Pearson residuals</h4>
+<p>Similarly, we may calculate Pearson residuals as batch-corrected counts</p>
+<p><span class="math display">\[  R_{gi} = \frac{Y_{gi} - \mu_{gi}}{\sqrt{\mu_{gi} + \phi_g \mu_{gi}^2}} ,\]</span></p>
+<p>assuming a negative binomial model, where</p>
+<p><span class="math display">\[ \log E(Y_{gi} | B_i, X_i, O_i) = \log( \mu_{gi} | B_i, X_i, O_i) = \mathbf{X}_i\beta_g + \mathbf{B}_i \gamma_g + O_i. \]</span></p>
+<p>This approach is adopted in the recent <a href="https://www.biorxiv.org/content/10.1101/2021.11.06.467575v1"><code>RUV-III-NB</code> paper by Salim <em>et al.</em> (2021)</a>.</p>
+</div>
+</div>
+</div>
+<div id="estimating-unknown-unwanted-variation" class="section level2">
+<h2><span class="header-section-number">1.4</span> Estimating unknown unwanted variation</h2>
+<p>In all of the above, we have assumed we know the major sources of technical variation, and that are able to represent these using the batch effects encoded in <span class="math inline">\(\mathbf{B}\)</span> and offsets <span class="math inline">\(\mathbf{O}\)</span>. In some cases, we may want to account for unknown (latent) unwanted variation. These may consist of complex technical effects that typical normalization procedures do not account for, or batch effects for which we do not observe the batch variable, e.g., using public data when we do not have access to the full metadata. In such a setting, we typically try to summarize these complex effects by assuming that the unknown unwanted variation (UUV) is of low-rank, e.g., of rank <span class="math inline">\(K \le 10\)</span>, and we attempt to estimate this low-rank matrix, using approaches such as factor analysis or principal component analysis.</p>
+<p>Individuals can also be considered batch effects if doing dimensitonality reduction.</p>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQmF0Y2ggY29ycmVjdGlvbiBhbmQgZGF0YSBpbnRlZ3JhdGlvbiIKYXV0aG9yOiAiS29lbiBWYW4gZGVuIEJlcmdlIgpkYXRlOiAiTGFzdCBjb21waWxlZCBvbiBgciBmb3JtYXQoU3lzLnRpbWUoKSwgJyVkICVCLCAlWScpYCIKb3V0cHV0OiAKICBodG1sX2RvY3VtZW50OgogICAgdG9jOiB0cnVlCiAgICB0b2NfZmxvYXQ6IHRydWUKLS0tCgpgYGB7ciBmdW5jdGlvbnMsIGluY2x1ZGU9RkFMU0V9CmxpYnJhcnkoa25pdHIpCmxpYnJhcnkocm1hcmtkb3duKQojIEEgZnVuY3Rpb24gZm9yIGNhcHRpb25pbmcgYW5kIHJlZmVyZW5jaW5nIGltYWdlcwpmaWcgPC0gbG9jYWwoewogICAgaSA8LSAwCiAgICByZWYgPC0gbGlzdCgpCiAgICBsaXN0KAogICAgICAgIGNhcD1mdW5jdGlvbihyZWZOYW1lLCB0ZXh0KSB7CiAgICAgICAgICAgIGkgPDwtIGkgKyAxCiAgICAgICAgICAgIHJlZltbcmVmTmFtZV1dIDw8LSBpCiAgICAgICAgICAgIHBhc3RlKCJGaWd1cmUgIiwgaSwgIjogIiwgdGV4dCwgc2VwPSIiKQogICAgICAgIH0sCiAgICAgICAgcmVmPWZ1bmN0aW9uKHJlZk5hbWUpIHsKICAgICAgICAgICAgcmVmW1tyZWZOYW1lXV0KICAgICAgICB9KQp9KQpgYGAgCgoKIyBCYXRjaCBjb3JyZWN0aW9uCgojIyBXaGF0IGlzIGEgYmF0Y2ggZWZmZWN0PwoKIC0gQSBiYXRjaCBlZmZlY3QgaXMgYSAqKnN5c3RlbWF0aWMgdGVjaG5pY2FsIGVmZmVjdCoqIHRoYXQgbWF5IGNvbmZvdW5kIHRoZSBiaW9sb2dpY2FsIHZhcmlhdGlvbiBvZiBpbnRlcmVzdC4gQmF0Y2ggZWZmZWN0cyBvY2N1ciBieSBzYW1wbGVzIGJlaW5nIHByb2Nlc3NlZCBpbiBkaWZmZXJlbnQgYmF0Y2hlcywgYmUgaXQgZGlmZmVyZW50IGxhYm9yYXRvcnkgcGVyc29ubmVsLCByZWFnZW50IGxvdHMvY29uY2VudHJhdGlvbnMsIHByb2Nlc3NpbmcgdGltZXMsIHNlcXVlbmNpbmcgcnVucywgZXRjLiBBbGwgdGhlc2UgbWF5IGhhdmUgYW4gZWZmZWN0IG9uIHRoZSByZXN1bHRpbmcgZGF0YS4KIC0gQmF0Y2ggZWZmZWN0cyBhcmUgbm90IG9mIGludGVyZXN0IGFuZCBhIGZhaWx1cmUgdG8gYWNjb3VudCBmb3Igb3IgZXZlbiB0byBhY2tub3dsZWRnZSB0aGVtIGlzIGFsbW9zdCBndWFyYW50ZWVkIHRvIGxlYWQgdG8gZWl0aGVyIHNwdXJpb3VzIHJlc3VsdHMgb3IgYSBsb3NzIGluIHN0YXRpc3RpY2FsIHBvd2VyLCBpbiBwYXJ0aWN1bGFyIHdoZW4gYmF0Y2ggZWZmZWN0cyBhcmUgY29ycmVsYXRlZCB3aXRoIHRoZSBiaW9sb2dpY2FsIHZhcmlhdGlvbiBvZiBpbnRlcmVzdCwgaS5lLiwgd2hlbiBjb25mb3VuZGluZyBvY2N1cnMgYmV0d2VlbiBiYXRjaCBlZmZlY3RzIGFuZCB0aGUgYmlvbG9naWNhbCBjb3ZhcmlhdGUgb2YgaW50ZXJlc3QuCiAtIElkZW50aWZ5aW5nIGJhdGNoIGVmZmVjdHMgaXMgYW4gZXNzZW50aWFsIHNraWxsIHdoZW4gd29ya2luZyB3aXRoIHB1YmxpYyBkYXRhc2V0cy4gKipFeHBsb3JhdG9yeSBkYXRhIGFuYWx5c2lzIGlzIGtleSoqIHRvIHRoZWlyIGlkZW50aWZpY2F0aW9uLgogLSBCYXRjaCBlZmZlY3RzIGFyZSBub3QgdW5pcXVlIHRvIGhpZ2gtdGhyb3VnaHB1dCBkYXRhIGFuZCBhbHNvIG9jY3VyIGluIGxvdy1kaW1lbnNpb25hbCBiaW9sb2dpY2FsIG1lYXN1cmVtZW50cyBzdWNoIGFzIHF1YW50aXRhdGl2ZSBQQ1Igb3Igd2VzdGVybiBibG90cy4gSG93ZXZlciwgdGhlIG1hbnkgdmFyaWFibGVzIG1lYXN1cmVkIGluIGhpZ2gtdGhyb3VnaHB1dCBkYXRhc2V0cyBhbGxvdyB1cyB0byBpZGVudGlmeSBhbmQgZXZlbiBjb3JyZWN0IGZvciB0aGVtIQoKYGBge3IsIGVjaG89RkFMU0UsIGZpZy5jYXA9cGFzdGUoIlBhcGVyIGJ5IExlZWsgYW5kIGNvbGxlYWd1ZXMuIil9CiMgQWxsIGRlZmF1bHRzCmtuaXRyOjppbmNsdWRlX2dyYXBoaWNzKCIuL2ZpZ3VyZXMvYmF0Y2hFZmZlY3RzUGFwZXIucG5nIikKYGBgCiAtLS0KIAojIyBFeHBsb3JpbmcgcHJvY2Vzc2luZyBiYXRjaCBpbiB0aGUgRHJvcC1zZXEgZGF0YSBmcm9tIE1hY29za28KCioqVE9ETyoqIGFmdGVyIGZpbmlzaGluZyBsYWIgb24gZGltZW5zaW9uYWxpdHkgcmVkdWN0aW9uIGFuZCB1c2luZyBjb3JyZXNwb25kaW5nIG9iamVjdC4KCiMjIEFjY291bnRpbmcgZm9yIGtub3duIGJhdGNoIGVmZmVjdHMKCldlIHdpbGwgZGlzY3VzcyB0d28gYXBwcm9hY2hlcyB0byBoYW5kbGUga25vd24gYmF0Y2ggZWZmZWN0cy4KCiMjIyBJbmNvcnBvcmF0aW5nIGJhdGNoIGNvdmFyaWF0ZXMgaW4gc3RhdGlzdGljYWwgbW9kZWwgKGNvbmRpdGlvbmluZyBvbiB0aGUgYmF0Y2ggZWZmZWN0KQoKQSBuYXR1cmFsIGFwcHJvYWNoIGluIGRlYWxpbmcgd2l0aCBiYXRjaCBlZmZlY3RzIGlzIHRvIGluY29ycG9yYXRlIHRoZW0gYXMgY292YXJpYXRlcyBpbiBvdXIgc3RhdGlzdGljYWwgbW9kZWwuIEluIHByYWN0aWNlLCB0aGlzIG1heSBoYXBwZW4gaW4gbXVsdGlwbGUgd2F5cy4gV2UgcHJvdmlkZSBhIGZldyBleGFtcGxlczoKCiAtICoqRmVhdHVyZSBzZWxlY3Rpb24qKjogSWYgd2UgYXJlIGNvbmZyb250ZWQgd2l0aCBiYXRjaCBlZmZlY3RzLCB3ZSBjb3VsZCBpbmNvcnBvcmF0ZSB0aGUgYmF0Y2ggdmFyaWFibGUocykgYXMgY292YXJpYXRlcyBpbiBhIEdMTSwgd2hpY2ggd2UgbWF5IHRoZW4gdXNlIHRvIGNhbGN1bGF0ZSBkZXZpYW5jZSBvciBQZWFyc29uIHJlc2lkdWFscyBmb3IgZmVhdHVyZSBzZWxlY3Rpb24gcHVycG9zZXMuIFNpbmNlIHRoZSBiYXRjaCBlZmZlY3QgaXMgaW5jbHVkZWQgaW4gdGhlIGNvdmFyaWF0ZSwgd2UgZWZmZWN0aXZlbHkgY29uZGl0aW9uIG9uIGl0IGluIHRoZSBjYWxjdWxhdGlvbiBvZiBvdXIgcmVzaWR1YWxzLgogLSAqKkRpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbioqOiBXaGVuIHVzaW5nIGEgbGF0ZW50LXZhcmlhYmxlIG1vZGVsIGZvciBkaW1lbnNpb25hbGl0eSByZWR1Y3Rpb24sIHN1Y2ggYXMgYHppbmJ3YXZlYCBvciBgc2NWSWAsIG9uZSBjYW4gaW5jb3Jwb3JhdGUgY292YXJpYXRlcyBhbmQgZWZmZWN0aXZlbHkgY2FsY3VsYXRlIHJlZHVjZWQgZGltZW5zaW9ucyBjb25kaXRpb25hbCBvbiB0aGUgYmF0Y2ggZWZmZWN0LgogLSAqKkRpZmZlcmVudGlhbCBleHByZXNzaW9uKio6IEluIGRpZmZlcmVudGlhbCBleHByZXNzaW9uIGFuYWx5c2lzLCB3ZSB0eXBpY2FsbHkgZml0IGEgc2luZ2xlIEdMTSB0byBlYWNoIGdlbmUuIEFsc28gaGVyZSwgd2UgY2FuIGFkZCB0aGUgYmF0Y2ggdmFyaWFibGUocykgYXMgY292YXJpYXRlcyBpbiB0aGUgR0xNLgogCkl0IGlzIGNydWNpYWwsIGhvd2V2ZXIsIHRoYXQgdGhlIGJhdGNoIHZhcmlhYmxlKHMpIGlzIChhcmUpIG5vdCBjb25mb3VuZGVkIHdpdGggdGhlIGJpb2xvZ2ljYWwgdmFyaWFibGUocykgb2YgaW50ZXJlc3QuIElmIHRoZXNlIHZhcmlhYmxlcyBhcmUgY29ycmVsYXRlZCwgYWNjb3VudGluZyBmb3IgdGhlIGJhdGNoIGVmZmVjdCB3aWxsIGFsc28gcmVtb3ZlIGJpb2xvZ2ljYWwgc2lnbmFsLiBJbiBzdWNoIHNjZW5hcmlvcywgaXQgaXMgdmVyeSBoYXJkLCBpZiBub3QgaW1wb3NzaWJsZSwgdG8gc2VwYXJhdGUgYmlvbG9naWNhbCBmcm9tIHRlY2huaWNhbCB2YXJpYXRpb24uCgojIyMgRXN0aW1hdGluZyBiYXRjaC1jb3JyZWN0ZWQgY291bnRzCgpTb21ldGltZXMgaXQgaXMgbm90IHN0cmFpZ2h0IGZvcndhcmQgdG8gc2ltcGx5IGluY29ycG9yYXRlIGEgY292YXJpYXRlIGluIHRoZSBhbmFseXNpcyBmcmFtZXdvcmssIGUuZy4sIHdoZW4gcGVyZm9ybWluZyBQQ0EgZGltZW5zaW9uYWxpdHkgcmVkdWN0aW9uLiBJbiB0aGVzZSBjYXNlcywgaXQgY2FuIGJlIHVzZWZ1bCB0byBlc3RpbWF0ZSBiYXRjaC1jb3JyZWN0ZWQgY291bnRzLiBEZXBlbmRpbmcgb24gdGhlIHN0YXRpc3RpY2FsIG1vZGVsLCB0aGlzIG1heSBiZSBpbXBsZW1lbnRlZCBkaWZmZXJlbnRseSwgYnV0IHRoZSBpZGVhIGlzIGFsd2F5cyBzaW1pbGFyOiB3ZSBlc3RpbWF0ZSB0aGUgYmF0Y2ggZWZmZWN0IHVzaW5nIGEgcmVncmVzc2lvbiBtb2RlbCwgYW5kIHN1YnN0cmFjdCBpdCBmcm9tIG91ciBvYnNlcnZlZCBkYXRhLgoKIyMjIyBQbGFpbiByZXNpZHVhbHMgb2YgR0xNCgpGb3IgZXhhbXBsZSwgc2F5IHdlIGFyZSB3b3JraW5nIHdpdGggYSAoUG9pc3NvbiBvciBuZWdhdGl2ZSBiaW5vbWlhbCkgY291bnQgR0xNLiBMZXQgJFlfe2dpfSQgZGVub3RlIGEgbWVhc3VyZSBvZiB0aGUgZ2VuZSBleHByZXNzaW9uIGZyb20gZ2VuZSAkZyQgaW4gY2VsbCAkaSQuIExldCAkXG1hdGhiZntCfSQgZGVub3RlIGEgJG4gXHRpbWVzIDIkIG1hdHJpeCBkZW5vdGluZyB0aGUgYmF0Y2ggZWZmZWN0IHdlIHdhbnQgdG8gY29ycmVjdCBmb3IuIFNpbmNlICRcbWF0aGJme0J9JCBoYXMgb25seSB0d28gY29sdW1ucywgdGhlcmUgaXMgb25seSBhIHNpbmdsZSBiYXRjaCBlZmZlY3QgKGkuZS4sIHRoZXJlIGFyZSB0d28gYmF0Y2hlcyBpbiB0b3RhbCkuIExldCAkXG1hdGhiZntYfSQgZGVub3RlIHRoZSAkbiBcdGltZXMgcCQgZGVzaWduIG1hdHJpeCBjb250YWluaW5nIHRoZSBjb3ZhcmlhdGVzIG9mIGludGVyZXN0IChjZWxsIHR5cGUsIHRyZWF0bWVudCBjb25kaXRpb24sIGV0Yy4pLiBGaW5hbGx5LCBsZXQgJE9faSQgY29ycmVzcG9uZCB0byBrbm93biBjZWxsLXNwZWNpZmljIG9mZnNldHMuIAoKVGhlIG1lYW4gbW9kZWwgd291bGQgY29ycmVzcG9uZCB0bwoKXFsgXGxvZyBFKFlfe2dpfSB8IEJfaSwgWF9pLCBPX2kpID0gXG1hdGhiZntYfV9pXGJldGFfZyArIFxtYXRoYmZ7Qn1faSBcZ2FtbWFfZyArIE9faS4gXF0KCndpdGggJFxiZXRhX2ckIGEgJFxwIFx0aW1lcyAxJCB2ZWN0b3Igb2YgcGFyYW1ldGVycyBvZiBpbnRlcmVzdCwgYW5kICRcZ2FtbWFfZyQgYSAkMiBcdGltZXMgMSQgdmVjdG9yIG9mIHBhcmFtZXRlcnMgbW9kZWxpbmcgdGhlIGVmZmVjdCBvZiBiYXRjaCBvbiBhdmVyYWdlIGdlbmUgZXhwcmVzc2lvbi4gV2UgY2FuIHRoZW4gb2J0YWluIGJhdGNoLSBhbmQgb2Zmc2V0LWNvcnJlY3RlZCBjb3VudHMgdmlhCgpcWyBcbG9nKFx0aWxkZXtZfV97Z2l9KSA9IFxsb2cgRShZX3tnaX0pIC0gXG1hdGhiZntCfV9pIFxnYW1tYV9nIC0gT19pLCBcXQoKaS5lLiwgdGhlc2UgYXJlIG9idGFpbmVkIGFzIHJlc2lkdWFscyBvZiB0aGUgR0xNLCBjb3JyZWN0aW5nIGZvciB0ZWNobmljYWwgdmFyaWF0aW9uLCBidXQga2VlcGluZyBiaW9sb2dpY2FsIHZhcmlhdGlvbiAoaS5lLiwgd2UgZG8gbm90IHN1YnN0cmFjdCB0aGUgJFxtYXRoYmZ7WH1faVxiZXRhX2ckIGVmZmVjdHMpLgoKSW4gYFJVVlNlcWAsIGRldmVsb3BlZCBieSBbUmlzc28gKmV0IGFsLiogKDIwMTQpXShodHRwczovL3d3dy5uYXR1cmUuY29tL2FydGljbGVzL25idC4yOTMxKSwgZm9yIGV4YW1wbGUsIHRoZSBhdXRob3JzIGFwcHJveGltYXRlIHRoaXMgYnkgcmVncmVzc2luZyAkWl97Z2l9ID0gXGxvZyAoWV97Z2l9KSAtIE9faSQgb250byAkXG1hdGhiZntCfSQsIGFuZCBjYWxjdWxhdGluZyB0aGUgcmVzaWR1YWxzIGZyb20gdGhpcyBsaW5lYXIgbW9kZWwsIGkuZS4sICRcbG9nKFx0aWxkZXtZfV97Z2l9KSA9IFxsb2cgKFlfe2dpfSkgLSBPX2kgLSBcbWF0aGJme0J9X2kgXGdhbW1hX2ckLgoKIyMjIyBQZWFyc29uIHJlc2lkdWFscwoKU2ltaWxhcmx5LCB3ZSBtYXkgY2FsY3VsYXRlIFBlYXJzb24gcmVzaWR1YWxzIGFzIGJhdGNoLWNvcnJlY3RlZCBjb3VudHMKClxbICBSX3tnaX0gPSBcZnJhY3tZX3tnaX0gLSBcbXVfe2dpfX17XHNxcnR7XG11X3tnaX0gKyBccGhpX2cgXG11X3tnaX1eMn19ICxcXQoKYXNzdW1pbmcgYSBuZWdhdGl2ZSBiaW5vbWlhbCBtb2RlbCwgd2hlcmUKClxbIFxsb2cgRShZX3tnaX0gfCBCX2ksIFhfaSwgT19pKSA9IFxsb2coIFxtdV97Z2l9IHwgQl9pLCBYX2ksIE9faSkgPSBcbWF0aGJme1h9X2lcYmV0YV9nICsgXG1hdGhiZntCfV9pIFxnYW1tYV9nICsgT19pLiBcXQoKVGhpcyBhcHByb2FjaCBpcyBhZG9wdGVkIGluIHRoZSByZWNlbnQgW2BSVVYtSUlJLU5CYCBwYXBlciBieSBTYWxpbSAqZXQgYWwuKiAoMjAyMSldKGh0dHBzOi8vd3d3LmJpb3J4aXYub3JnL2NvbnRlbnQvMTAuMTEwMS8yMDIxLjExLjA2LjQ2NzU3NXYxKS4KCiMjIEVzdGltYXRpbmcgdW5rbm93biB1bndhbnRlZCB2YXJpYXRpb24KCkluIGFsbCBvZiB0aGUgYWJvdmUsIHdlIGhhdmUgYXNzdW1lZCB3ZSBrbm93IHRoZSBtYWpvciBzb3VyY2VzIG9mIHRlY2huaWNhbCB2YXJpYXRpb24sIGFuZCB0aGF0IGFyZSBhYmxlIHRvIHJlcHJlc2VudCB0aGVzZSB1c2luZyB0aGUgYmF0Y2ggZWZmZWN0cyBlbmNvZGVkIGluICRcbWF0aGJme0J9JCBhbmQgb2Zmc2V0cyAkXG1hdGhiZntPfSQuCkluIHNvbWUgY2FzZXMsIHdlIG1heSB3YW50IHRvIGFjY291bnQgZm9yIHVua25vd24gKGxhdGVudCkgdW53YW50ZWQgdmFyaWF0aW9uLiBUaGVzZSBtYXkgY29uc2lzdCBvZiBjb21wbGV4IHRlY2huaWNhbCBlZmZlY3RzIHRoYXQgdHlwaWNhbCBub3JtYWxpemF0aW9uIHByb2NlZHVyZXMgZG8gbm90IGFjY291bnQgZm9yLCBvciBiYXRjaCBlZmZlY3RzIGZvciB3aGljaCB3ZSBkbyBub3Qgb2JzZXJ2ZSB0aGUgYmF0Y2ggdmFyaWFibGUsIGUuZy4sIHVzaW5nIHB1YmxpYyBkYXRhIHdoZW4gd2UgZG8gbm90IGhhdmUgYWNjZXNzIHRvIHRoZSBmdWxsIG1ldGFkYXRhLgpJbiBzdWNoIGEgc2V0dGluZywgd2UgdHlwaWNhbGx5IHRyeSB0byBzdW1tYXJpemUgdGhlc2UgY29tcGxleCBlZmZlY3RzIGJ5IGFzc3VtaW5nIHRoYXQgdGhlIHVua25vd24gdW53YW50ZWQgdmFyaWF0aW9uIChVVVYpIGlzIG9mIGxvdy1yYW5rLCBlLmcuLCBvZiByYW5rICRLIFxsZSAxMCQsIGFuZCB3ZSBhdHRlbXB0IHRvIGVzdGltYXRlIHRoaXMgbG93LXJhbmsgbWF0cml4LCB1c2luZyBhcHByb2FjaGVzIHN1Y2ggYXMgZmFjdG9yIGFuYWx5c2lzIG9yIHByaW5jaXBhbCBjb21wb25lbnQgYW5hbHlzaXMuCgoKCgoKCgoKCgoKCgogSW5kaXZpZHVhbHMgY2FuIGFsc28gYmUgY29uc2lkZXJlZCBiYXRjaCBlZmZlY3RzIGlmIGRvaW5nIGRpbWVuc2l0b25hbGl0eSByZWR1Y3Rpb24uCgoKCiAKCg==</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("batchCorrectionDataIntegration.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
