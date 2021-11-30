@@ -1,7 +1,7 @@
 ---
 title: 'Data import, quality control and normalization for the Cuomo dataset'
 author: "Koen Van den Berge and Jeroen Gilis"
-date: "20/11/2021"
+date: "30/11/2021"
 output: 
   html_document:
     toc: true
@@ -46,7 +46,8 @@ doing this during the lab session, to avoid overloading the system.
 
 # Import data
 
-First we read in the count matrix:
+First we read in the count matrix (change the path to the location where you
+downloaded data from the Belnet Filesender link):
 
 ```{r, message=FALSE, warning=FALSE}
 sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
@@ -314,76 +315,24 @@ sce <- sce[, !colData(sce)$discardCells]
 
 ## Identifying and removing empty droplets
 
-This does not make much sense for plate-based data!
-
-```
-library(DropletUtils)
-bcrank <- barcodeRanks(counts(sce))
-
-# Only showing unique points for plotting speed. Duplicated ranks are a 
-# consequence of ties in the ranks, i.e., when cells have an equal library size.
-sum(duplicated(bcrank$rank))
-uniq <- !duplicated(bcrank$rank)
-
-plot(bcrank$rank[uniq], bcrank$total[uniq], log="xy",
-    xlab="Rank", ylab="Total UMI count", cex.lab=1.2)
-abline(h=metadata(bcrank)$inflection, col="darkgreen", lty=2)
-abline(h=metadata(bcrank)$knee, col="dodgerblue", lty=2)
-abline(h=3e+5, col="orange", lty=2) # picked visually myself
-legend("topright", 
-       legend=c("Inflection", "Knee", "Empirical knee point"), 
-       col=c("darkgreen", "dodgerblue", "orange"), 
-       lty=2, 
-       cex=1.2)
-
-set.seed(100)
-limit <- 3e+5   
-all.out <- emptyDrops(counts(sce), lower=limit, test.ambient=TRUE)
-# p-values for cells with total UMI count under the lower bound.
-hist(all.out$PValue[all.out$Total <= limit & all.out$Total > 0],
-    xlab="P-value", main="", col="grey80", breaks=20)
-
-# but note that it would remove a very high number of cells
-length(which(all.out$FDR <= 0.01)) # retained
-```
+This does not make much sense for plate-based data! While we could imagine the
+presence of empty plate wells for the SMART-Seq2 experiment, these are typically
+detected and removed upstream of our analysis using laser technology.
 
 ## Identifying and removing doublets
 
-We will use [scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) to detect doublet cells.
+Again, this step typically does not make much sense for plate-based 
+data. While we could imagine the presence of plate wells in which more than two
+cells are present for the SMART-Seq2 experiment, these are again typically
+detected and removed upstream of our analysis using laser technology.
 
-```{r, message=FALSE, warning=FALSE}
-## perform doublet detection
-library(scDblFinder)
-```
-
-```{r}
-set.seed(7498864)
-sce <- scDblFinder(sce, 
-                   samples = as.factor(sce$experiment), # 14 batches
-                   returnType="sce")
-## visualize these scores
-## explore doublet score wrt original day labels
-boxplot(log1p(sce$scDblFinder.score) ~ factor(colData(sce)$day, exclude=NULL))
-
-tab <- table(sce$scDblFinder.class, sce$day, 
-      exclude=NULL)
-tab
-t(t(tab) / colSums(tab))
-
-barplot(t(t(tab) / colSums(tab))[2,],
-        xlab = "Cluster", ylab = "Fraction of doublets")
-```
-
-Only a very small fraction of the cells are removed in this step. Indeed, this
-step is much more relevant for droplet-based protocols. For plate-based 
-protocols like smartseq2, the experimental procedure usually takes care of
-removing empty wells, and lasers are also used to detect wells with more than
-1 cell.
-
-```
-# remove doublets -> I will here not remove them
-sce <- sce[,!sce$scDblFinder.class == "doublet"]
-```
+If we would use
+[scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
+to detect doublet cells on this dataset, we would see that only a very small 
+fraction of the cells would be removed. These removed cells could correspond to 
+actual doublets that were missed by the upstream doublet detection technology,
+or more likely could correspond to false positive doublets of the `scDblFinder`
+doublet detection procedure.
 
 # Normalization
 

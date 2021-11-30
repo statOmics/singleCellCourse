@@ -13,7 +13,7 @@ output:
 ---
 
 In this first lab session, we will perform quality control, gene-level 
-quantification and data pre-processing on two different scRNA-seq dataset.
+quantification and data pre-processing on two different scRNA-seq datasets.
 
 # Macosko dataset
 
@@ -54,12 +54,12 @@ using the following link
 Here, we provide an example of a script for performing data exploration
 and preprocessing in R for the Macosko dataset
 
-[Macosko_rmd](./singleCell_MacoskoWorkflow.html)
+[lab1_MacoskoWorkflow](./lab1_MacoskoWorkflow.html)
 
 # Cuomo dataset
 
 We here make use of the publication of Anna Cuomo et al.
-(last author Oliver Stegle), which we will refer to as the `iPSC dataset`. The 
+(last author Oliver Stegle), which we will refer to as the `Cuomo dataset`. The 
 paper that describes this dataset can be found using this 
 [link](https://www.nature.com/articles/s41467-020-14457-z).
 
@@ -98,9 +98,15 @@ and preprocessing in R for the Cuomo dataset. It is up to you to fill out
 this script, based on the concepts discussed in the theory session and the
 fucntions explained for the Macosko analysis!
 
-[Cuomo_rmd](./singleCell_CuomoWorkflow_template.html)
+[lab1_CuomoTemplate](./lab1_CuomoTemplate.html)
 
+Here, we provide a "solution" file for the analysis of the Cuomo dataset for
+the first lab session:
 
+[lab1_CuomoWorkflow_html](./lab1_preprocessing/lab1_CuomoWorkflow.html)
+[lab1_CuomoWorkflow_rmd](./lab1_preprocessing/lab1_CuomoWorkflow.Rmd)
+
+---
 
 
 
