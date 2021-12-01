@@ -9,10 +9,10 @@ navbar:
     - text: "Lectures"
       icon: fa-chalkboard-teacher
       menu:
-        - text: "A brief introduction to sequencing technology"
-          href: introSequencingBulk.html
-        - text: "Two popular single-cell protocols"
-          href: singleCellProtocols.html
+      - text: "A brief introduction to sequencing technology"
+        href: introSequencingBulk.html
+      - text: "Two popular single-cell protocols"
+        href: singleCellProtocols.html
     - text: "Labs"
       icon: fa-laptop
       menu:
