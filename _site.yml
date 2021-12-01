@@ -19,7 +19,7 @@ navbar:
       - text: "Lab 1"
         href: labSession_1.html
       - text: "Lab 2"
-        href: labSession_2.html
+        href: lab2test.html
       - text: "Lab 3"
         href: 
   right:
