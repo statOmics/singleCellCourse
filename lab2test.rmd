@@ -1,30 +1,74 @@
 ---
-title: "lab2test"
-author: "Koen Van den Berge"
-date: "12/1/2021"
-output: html_document
+title: "Normalization, feature selection and dimensionality reduction"
+author: "Koen van den Berge and Jeroen Gilis"
+date: "30/11/2021"
+output:
+    html_document:
+      code_download: true    
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+In this second lab session, we will perform normalization, feature selection and 
+dimension reduction on two different scRNA-seq datasets.
 
-## R Markdown
+# Macosko dataset
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+In the first lab session (24 November, 2021), we have quantified and 
+pre-processed the droplet single-cell RNA-seq dataset (**drop-seq protocol**) 
+from the publication by Macosko *et al.*, Cell 161, 1202–1214
+[(link)](https://doi.org/10.1016/j.cell.2015.05.002). In this experiment, 
+Macosko *et al.* sequenced 49,300 cells from the mouse retina, identifying 
+39 transcriptionally distinct cell populations. The experiment was performed in
+7 batches.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+We now take off where we left last week. Last week, we have performed the 
+following steps:
 
-```{r cars}
-summary(cars)
-```
+ - Constructed a `SingleCellExperiment` object for the Macosko experiment
+ - Included information on the genes to that object
+ - Removed lowly abundant genes
+ - Performed cell-level quality control, including the removal of cells with
+ a lower than expected library size or transcriptional complexity, cells with
+ a high percentage of counts going to mitochondrial RNA, removing empty droplets
+ and removing doublets.
+ - Normalization to remove technical noise (brief)
+ 
+ During this session, we will add the following steps to this workflow :
+ 
+ - Normalization to remove technical noise (continued)
+ - Feature selection (selecting genes for downstream dimension reduction and
+ clustering)
+ - Various flavors of dimension reduction
+ 
+To guide you with these next steps, we provide with an Rmarkdown template
+that you can fill out:
 
-## Including Plots
+[lab2_MacoskoTemplate](./lab2_MacoskoWorkflow_template.html)
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+# Cuomo dataset
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Same as for the Macosko dataset, we will continue our workflow for the Cuomo
+dataset. 
+
+In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
+from 125 healthy human donors. These cells were used to study the endoderm 
+differentiation process. The authors cultered the iPSCs cell lines and allowed 
+for differentiation for three days. Knowing the process of endoderm 
+differentiation, these time points should correspond with different cell types: 
+day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
+are "intermediate" cells and day3 are fully differentiated endoderm cells.
+This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
+
+We will continue our analysis for the Cuomo dataset by including normalization,
+feature selection and dimension reduction to last session's workflow. 
+
+We here provide you with a "solution" file for the analysis of last week's 
+session, and some placeholders for the analysis of this session:
+
+[lab2_CuomoTemplate](./lab2_CuomoWorkflow_template.html)
+
