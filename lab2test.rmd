@@ -47,7 +47,7 @@ following steps:
 To guide you with these next steps, we provide with an Rmarkdown template
 that you can fill out:
 
-[lab2_MacoskoTemplate](./lab2_MacoskoWorkflow_template.html)
+[lab2_MacoskoTemplate](./lab2_MacoskoTemplate.html)
 
 
 # Cuomo dataset
@@ -70,5 +70,5 @@ feature selection and dimension reduction to last session's workflow.
 We here provide you with a "solution" file for the analysis of last week's 
 session, and some placeholders for the analysis of this session:
 
-[lab2_CuomoTemplate](./lab2_CuomoWorkflow_template.html)
+[lab2_CuomoTemplate](./lab2_CuomoTemplate.html)
 

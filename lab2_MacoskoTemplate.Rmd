@@ -701,7 +701,8 @@ variation:
  Since the contaminant will be taking up a significant proportion of the reads 
  being sequenced, the counts will not be directly comparable between the 
  samples. Hence, we may also want to correct for differences in the composition 
- of the RNA population of the samples.
+ of the RNA population of the samples
+ (see [edgeR manual chapter 2.8](https://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf)).
  - **Other technical variation** such as sample-specific GC-content or 
  transcript length effects may also be accounted for.
 
@@ -742,7 +743,7 @@ abline(h = 0, col="orange", lwd=2)
 
 We see clear bias in the comparison of the 1st and 10th most deeply sequenced 
 cell from cell cluster 1. We see that the log fold-changes are biased downwards. 
-This means that, on average, a gene is lower expressed in cell 1 versus cell 10.
+This means that, on average, a gene is higher expressed in cell 1 versus cell 10.
 Looking at the library sizes, we can indeed see that the library size for 
 cell 1 is 20869 counts, while it is only 14719 counts for cell 10! This is a
 clear library size effect that we should take into account.
@@ -786,6 +787,8 @@ space to help us find cell-type clusters in the data), we want to move to an
 informative, lower-dimensional space. We will select genes which we hope are
 informative for recovering the biological structure. But what defines an 
 informative gene?
+
+## Selecting genes with high variance
 
 The simplest approach to quantifying per-gene variation is to compute the 
 variance of the log-normalized expression values (i.e., "log-counts") for 
