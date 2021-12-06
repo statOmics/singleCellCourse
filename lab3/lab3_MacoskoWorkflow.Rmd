@@ -1,5 +1,5 @@
 ---
-title: 'Lab3'
+title: 'Lab3: Clustering, cell type annotation, differential expression'
 author: "Koen Van den Berge and Jeroen Gilis"
 date: "6/12/2021"
 output: 
@@ -76,7 +76,7 @@ library(scran)
 ```
 
 ```{r}
-sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds") # 147Gb SCE object
+sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds") # 147Mb SCE object
 ```
 
 ```{r}
@@ -194,7 +194,7 @@ cluster that we can use for downstream interpretation.
 
 The major advantage of graph-based clustering lies in its scalability. It only 
 requires a k-nearest neighbor search that can be done in log-linear time on 
-average, in contrast to hierachical clustering methods with runtimes that are 
+average, in contrast to hierarchical clustering methods with runtimes that are 
 quadratic with respect to the number of cells. Graph construction avoids making 
 strong assumptions about the shape of the clusters or the distribution of cells 
 within each cluster, compared to other methods like k-means (that favor 
@@ -207,17 +207,17 @@ pre-computed principal components; these are used to take advantage of data
 compression and denoising. If the default settings are adopted, `clusterCells`
 will perform two steps under the hood:
 
-1. Build a shared neighbors (SNN) graph of observations for downstream community 
+1. Build a shared nearest neighbors (SNN) graph of observations for downstream community 
 detection. The SNN graph is closely related to the more common KNN graph. For 
 each observation, its k-nearest neighbors are identified (k=10 by default), 
 based on distances between their expression profiles (Euclidean distances are 
-used by default). An edge is drawn between all pairs of observations that share
+used by default) as observed in PCA space. An edge is drawn between all pairs of observations that share
 at least one neighbor, weighted by the characteristics of the shared nearest 
 neighbors.
 
 2. The `clusterCells` function next internally calls the `cluster_walktrap` function 
 from the `igraph` library. Based on the SNN graph from step 1, this function tries
-to find densely connected subgraphs, also called communities in a graph via 
+to find densely connected subgraphs (communities) in a graph via 
 random walks. The idea is that short random walks tend to stay in the same 
 community.
 
@@ -234,7 +234,7 @@ The disadvantage of using `clusterCells` is that the default setting of the
 second step, the `cluster_walktrap` function, is slow for large datasets. While 
 it is possible to adjust the different arguments of the `clusterCells` function,
 it might be more clear and intuitive to simply break up the process in two steps:
-building a graph and detecting clusters in that graph. For this second step, 
+building the graph and detecting clusters in that graph. For this second step, 
 we may then adopt a faster algorithm.
 
 ### Build graph (SNN graph)
@@ -246,16 +246,9 @@ graph <- buildSNNGraph(sce,
 # alternative: buildKNNGraph()
 ```
 
-```
-# Slow and not really informative -> leave out?
-library(igraph)
-igraph::plot.igraph(
-  graph, layout = layout_with_fr(graph),
-  vertex.size = 5, vertex.label = NA
-)
-```
-
 ### Detect clusters on the graph
+
+**TODO**: should we add some background on Leiden and Louvain?
 
 ```{r}
 # Walktrap community finding algorithm on the SNN graph
@@ -269,11 +262,11 @@ igraph::plot.igraph(
 
 # Louvain clustering on the SNN graph
 cluster_louvain <- factor(igraph::cluster_louvain(graph)$membership) #8sec
-nlevels(cluster_louvain)
+nlevels(cluster_louvain) # 11 clusters
 
 # Leiden clustering on the SNN graph
 cluster_leiden <- factor(igraph::cluster_leiden(graph)$membership) #10sec
-nlevels(cluster_leiden) #1329 different clusters!
+nlevels(cluster_leiden) #1326 different clusters!
 
 cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
                                                  resolution_parameter = 0.01)$membership) #10sec
@@ -286,7 +279,7 @@ colData(sce)$cluster_leiden2 <- cluster_leiden2
 
 ### Comparing clustering strategies
 
-A direct comparison using a table of the cluster labels.
+A direct comparison of the Louvain and Leiden clustering results using a table of the cluster labels, shows good agreement.
 
 ```{r}
 table(cluster_louvain, cluster_leiden2)
@@ -294,6 +287,8 @@ table(cluster_louvain, cluster_leiden2)
 
 First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t 
 make much sense.
+
+**TODO** I'm getting good correspondence too but different cluster label matches. Could this be solved by setting a seed?
 
 Next, we see the following clear correspondences between the cluster labels:
 
@@ -304,19 +299,19 @@ Louvain 7 -> Leiden 6
 Louvain 8 -> Leiden 7
 Louvain 10 -> Leiden 8
 
-For the remain clusters, we see that 
+For the remaining clusters, we see that 
 - Leiden cluster 3 contains almost cells of Louvain clusters 2, 9 and 11 
 - Leiden cluster 5 contains almost cells of Louvain clusters 4 and 5
 
 To make a visualization that gives us very similar information, we may use a 
-heathmap:
+heatmap:
 
 ```{r}
 library(pheatmap)
 pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
 ```
 
-Alternatively, we may compute a clustering similarity score that captures ...
+Alternatively, we may compute a clustering similarity score that captures the agreement between two sets of partitions. The Adjusted Rand Index (ARI) is oftne used in the literature for this purpose. The ARI is equal to 1 if the two partitions agree perfectly, and it is zero if the two partitions are unrelated. In some cases, the ARI may also be negative if the partitions are much more different than what could be expected by chance.
 
 ```{r}
 library(mclust)
@@ -340,11 +335,11 @@ plotTSNE(sce,
 
 K-means is a clustering algorithm that has been used in many application areas. 
 In R, it can be applied via the `kmeans` function. Typically, it is applied to 
-a reduced dimensional representation of the expression data (most often PCA, 
-because of the interpretability of the low-dimensional distances). We need to 
+a reduced dimensional representation of the expression data (most often PCA). We need to 
 define the number of clusters in advance. Since the results depend on the 
 initialization of the cluster centers, it is typically recommended to run 
-k-means with multiple starting configurations (via the nstart argument).
+k-means with multiple starting configurations (via the `nstart` argument).
+For reproducibility, we also strongly advise to set a seed.
 
 ```{r}
 set.seed(123)
@@ -413,10 +408,10 @@ Equivalently, we may again split the process in two steps:
 
 1. Compute the pairwise distances between all cells. These are by default Euclidean
 distances and, in order to reduce data complexity and increase signal to noise, 
-we may perform this on the top (30) PC’s. Calculating a dissimilarity matrix 
+we may perform this on the top (30) PCs, just like we did when constructing the SNN graph in graph-based clustering. Calculating a dissimilarity matrix 
 is implemented in the `dist` function.
 
-2. Perform a hierarchical cluster analysis on the distances from step 1. In an 
+2. Perform a hierarchical clustering analysis on the distances from step 1. In an 
 agglomerative procedure, each cell is first assigned to its own cluster and 
 then the algorithm proceeds iteratively, at each stage joining the two most 
 similar clusters, continuing until there is just a single cluster. Implemented 
@@ -425,7 +420,7 @@ in the `hclust` function.
 Note that the `hclust` function allows for specifying a "method" argument. 
 The differences between the different methods goes beyond the scope of this 
 session, but a brief description is provided in the function help file. In 
-the context of scRNA-seq, we recommend the use of the "ward.D2" method.
+the context of scRNA-seq, we recommend the use of the `"ward.D2"` method.
 
 ```{r}
 distsce <- dist(reducedDim(sce, "PCA")) #1min
@@ -433,19 +428,21 @@ hcl <- hclust(distsce, method = "ward.D2") #3min
 plot(hcl, labels = FALSE)
 ```
 
-Next, we need to "cut the tree", i.e., choose at which resolution we want to 
-report the (cell-type) clusters. This can be achieved with the `cutree` 
+Next, in order to derive a given set of cluster labels, we need to "cut the tree", i.e., choose at which resolution we want to 
+report the (cell type) clusters. This can be achieved with the `cutree` 
 function. As an input, `cutree` takes the dendrogram from the `hclust` function 
-and a threshold value for cutting the tree. This is either k, the number of 
-clusters we want to report, or h, the height in the dendrogram at which we want
+and a threshold value for cutting the tree. The latter may be either `k`, the number of 
+clusters we want to report, or `h`, the height of the dendrogram at which we want
 to cut the tree.
 
 ```{r}
+# cut to get 10 clusters
 clust_hcl_k10 <- cutree(hcl, k = 10)
 table(clust_hcl_k10)
 ```
 
 ````{r}
+# cut to get 39 clusters
 clust_hcl_k39 <- cutree(hcl, k = 39)
 table(clust_hcl_k39)
 ```
@@ -466,8 +463,8 @@ plotTSNE(sce,
 # Clustering in the original paper
 
 When we compare our cluster labels with those from the original paper, we will
-see that the correspondence is not great. As a demonstration, I make a table and 
-a heathmap comparing the low resolution cluster labels from the paper with our 
+see that the correspondence is not great. As a demonstration, we'll make a table and 
+a heatmap comparing the low-resolution cluster labels from the paper with our 
 Louvain, Leiden2 and hierarchical clustering (k=10) labels:
 
 ```{r}
@@ -495,25 +492,22 @@ different strategy for performing the feature selection and dimension reduction
 that we have performed in lab session 2.
 
 To demonstrate the pipeline of the original authors, and to make our results 
-more comparable to theirs, I will here mimic their strategy for feature 
-selection and clustering. **However, I will do this approximatively!** I will 
+more comparable to theirs, we will here mimic their strategy for feature 
+selection and clustering. **However, we will do this approximatively!** We will 
 take similar steps conceptually, but will remain within the current 
-bioconductor framework and the range of functions that we have seen in this 
+Bioconductor framework and the range of functions that we have seen in this 
 lecture series.
 
 The authors performed the following steps:
 
-1. **Downsampling:** In order to increase the power of unsupervised 
-dimensionality reduction techniques for discovering cell types, the authors 
-first downsampled the 49,300-cell dataset to extract single-cell libraries where
-900 or more genes were detected.
+1. **Filtering:** The authors first filtered the 49,300-cell dataset to retain only single-cell libraries where at least 900 genes were detected.
 
-2. **Feature selection:** We first identified the set of genes that was most 
-variable across our training set, after controlling for the relationship between
-mean expression and variability. To do this, the authors used a manual 
-implementation for this.
+2. **Feature selection:** The authors first identified the set of genes that were most 
+variable across the selected susbet of cells, after controlling for the relationship between
+mean expression and variability. To do this, the authors adopted a manual 
+implementation.
 
--> I will not use the exact same strategy, but the `modelGeneVar-getTopHVGs` 
+-> We will not use the exact same strategy, but the `modelGeneVar-getTopHVGs` 
 strategy, which is conceptually similar in addressing the mean-variance 
 relationship during feature selection.
 
@@ -531,9 +525,9 @@ remaining cells (where less than 900 different genes were detected) on the
 t-SNE embedding obtained in step 4. Next, they cluster the cells using a 
 density clustering (DBSCAN algorithm) that was not discussed in this lecture 
 series. Because this 5th step uses techniques beyond the scope of this course, 
-we will simply continue working with the downsampled dataset and perform 
-hierarchical clustering. However, I included some code that allows you do 
-something similar to what the authors did for your reference (not that running 
+we will simply continue working with the filtered dataset and perform 
+hierarchical clustering. However, we included some code that allows you to do 
+something similar to what the authors did for your reference (note that running 
 this code requires installing the `snifter` R package, which requires a working
 Python and Conda installation).
 
@@ -662,8 +656,7 @@ the authors)
 3. We aggregate some clusters into 1 (e.g. cluster 14) that are split up in the
 original results (clusters 37 and 38)
 
-**Overall, we observe a rather strong correspondence between our clusters and**
-**those of the authors.**
+**Overall, we observe a rather strong correspondence between our clusters and those of the authors.**
 
 # Cell type annotation
 
