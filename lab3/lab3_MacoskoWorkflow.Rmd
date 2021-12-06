@@ -34,13 +34,12 @@ if(length(notInstalled) > 0){
 }
 ```
 
-
 Steps taken
 
-1. Import the Macosko dataset as SingleCellExperiment object from the scRNAseq 
-Bioconductor package.
+1. Import the Macosko dataset as `SingleCellExperiment` object from the 
+`scRNAseq` Bioconductor package.
 
-2. Include ENSEMBL gene identifiers in the rowData
+2. Include ENSEMBL gene identifiers in the `rowData`
 
 3. Remove very lowly expressed genes
 
@@ -90,7 +89,7 @@ reducedDimNames(sce)
 
 # Add cluster information from publication
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
            "Horizontal_cells" = "1",
@@ -175,8 +174,7 @@ sce$cluster_highRes <- fct_recode(colData(sce)$cluster,
            "Microglia" = "39")
 ```
 
-
-#Clustering
+# Clustering
 
 ## Graph-based clustering
 
@@ -184,7 +182,7 @@ First, we discuss graph-based clustering methods for scRNA-Seq data.
 This is very well explained in the 
 [OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#clustering-graph).
 
-As written in the OSCA book: “Popularized by its use in Seurat, graph-based 
+As written in the OSCA book: "Popularized by its use in Seurat, graph-based 
 clustering is a flexible and scalable technique for clustering large scRNA-seq 
 datasets. We first build a graph where each node is a cell that is connected 
 to its nearest neighbors in the high-dimensional space. Edges are weighted 
@@ -200,7 +198,7 @@ average, in contrast to hierachical clustering methods with runtimes that are
 quadratic with respect to the number of cells. Graph construction avoids making 
 strong assumptions about the shape of the clusters or the distribution of cells 
 within each cluster, compared to other methods like k-means (that favor 
-spherical clusters) or Gaussian mixture models (that require normality).”
+spherical clusters) or Gaussian mixture models (that require normality)."
 
 Several graph-based clustering algorithms are implemented in the `scran` library. 
 The most global wrapper-function in this package is the `clusterCells` function. 
@@ -294,7 +292,8 @@ A direct comparison using a table of the cluster labels.
 table(cluster_louvain, cluster_leiden2)
 ```
 
-First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t make much sense.
+First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t 
+make much sense.
 
 Next, we see the following clear correspondences between the cluster labels:
 
@@ -317,7 +316,7 @@ library(pheatmap)
 pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
 ```
 
-Alternatively, we may compute a clustering similarity score that captures …
+Alternatively, we may compute a clustering similarity score that captures ...
 
 ```{r}
 library(mclust)
@@ -332,7 +331,6 @@ mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))],
 # coordinates
 plotTSNE(sce, 
          colour_by="cluster_louvain")
-
 
 plotTSNE(sce, 
          colour_by="cluster_leiden2")
@@ -373,7 +371,7 @@ is arbitrary at least to some interval.
 
 From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#hierarchical-clustering):
 
-“Hierarchical clustering is an old technique that arranges samples into a 
+"Hierarchical clustering is an old technique that arranges samples into a 
 hierarchy based on their relative similarity to each other. Most implementations
 do so by joining the most similar samples into a new cluster, then joining 
 similar clusters into larger clusters, and so on, until all samples belong to a 
@@ -389,7 +387,7 @@ in the production of the dendrogram. This is a rich summary that quantitatively
 captures the relationships between subpopulations at various resolutions. 
 Cutting the dendrogram at high resolution is also guaranteed to yield clusters 
 that are nested within those obtained at a low-resolution cut; this can be
-helpful for interpretation.”
+helpful for interpretation."
 
 Indeed, low-resolution clusters can typically be interpreted as super-level cell
 types, like immune cells, neuron cells or endothelial cells. Higher resolution
@@ -424,7 +422,7 @@ then the algorithm proceeds iteratively, at each stage joining the two most
 similar clusters, continuing until there is just a single cluster. Implemented 
 in the `hclust` function.
 
-Note that the `hclust` function allows for specifying a “method” argument. 
+Note that the `hclust` function allows for specifying a "method" argument. 
 The differences between the different methods goes beyond the scope of this 
 session, but a brief description is provided in the function help file. In 
 the context of scRNA-seq, we recommend the use of the "ward.D2" method.
@@ -439,7 +437,8 @@ Next, we need to "cut the tree", i.e., choose at which resolution we want to
 report the (cell-type) clusters. This can be achieved with the `cutree` 
 function. As an input, `cutree` takes the dendrogram from the `hclust` function 
 and a threshold value for cutting the tree. This is either k, the number of 
-clusters we want to report, or h, the height in the dendrogram at which we wan to cut the tree.
+clusters we want to report, or h, the height in the dendrogram at which we want
+to cut the tree.
 
 ```{r}
 clust_hcl_k10 <- cutree(hcl, k = 10)
@@ -460,7 +459,6 @@ sce$clust_hcl_k39 <- as.factor(clust_hcl_k39)
 plotTSNE(sce, 
          colour_by="clust_hcl_k10")
 
-
 plotTSNE(sce, 
          colour_by ="clust_hcl_k39")
 ```
@@ -468,7 +466,7 @@ plotTSNE(sce,
 # Clustering in the original paper
 
 When we compare our cluster labels with those from the original paper, we will
-see that the correspondence is not great. As demonstration, I make a table and 
+see that the correspondence is not great. As a demonstration, I make a table and 
 a heathmap comparing the low resolution cluster labels from the paper with our 
 Louvain, Leiden2 and hierarchical clustering (k=10) labels:
 
@@ -531,7 +529,7 @@ the `perplexity` parameter of the t-SNE algorithm to 30.
 adopted a manually implemented, rather complex strategy to project the 
 remaining cells (where less than 900 different genes were detected) on the 
 t-SNE embedding obtained in step 4. Next, they cluster the cells using a 
-density clustering (DBSCAN algorith) that was not discussed in this lecture 
+density clustering (DBSCAN algorithm) that was not discussed in this lecture 
 series. Because this 5th step uses techniques beyond the scope of this course, 
 we will simply continue working with the downsampled dataset and perform 
 hierarchical clustering. However, I included some code that allows you do 
@@ -539,7 +537,7 @@ something similar to what the authors did for your reference (not that running
 this code requires installing the `snifter` R package, which requires a working
 Python and Conda installation).
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # code for steps 1-4
 library(scater)
 library(genefilter)
@@ -629,27 +627,63 @@ plotTSNE(sce_900,
          text_by = "cluster_lowRes")
 ```
 
+For the low resolution labels, we observe a strong correspondence between our
+clustering and that of the original authors. More specifically:
+
+- The original rods correspond with our group 5
+- The original cones correspond with our group 2
+- The original pericytes and vascular endothelium correspond with our group 7
+- The original muller glia, astrocytes, fibroblasts amd microglia (which are 
+similar cell types, see paper figure 5D) correspond with our group 8
+- The original ganglion and horizontal cells (which are similar cell types, 
+see paper figure 5D) correspond with our group 1
+- The original bipolar cells are split out between our groups 4 and 10
+- The original amacrine cells correspond with our groups 3, 6 and 9
+
 ```{r}
 plotTSNE(sce_900,
          colour_by = "clust_hcl_k39",
          text_by = "clust_hcl_k39")
-
 
 plotTSNE(sce_900,
          colour_by = "cluster",
          text_by = "cluster")
 ```
 
+I will not make an extensive comparison here. However, note that we see
+several scenarios:
+
+1. Clusters that correspond one-on-one (e.g., our cluster 19 with cluster 16 of
+the authors)
+
+2. We split up some clusters in multiple sets (e.g., our clusters 16, 18 and
+32) that are just 1 cluster in the analysis of the authors (cluster 34)
+
+3. We aggregate some clusters into 1 (e.g. cluster 14) that are split up in the
+original results (clusters 37 and 38)
+
+**Overall, we observe a rather strong correspondence between our clusters and**
+**those of the authors.**
+
 # Cell type annotation
 
 ## Supervised: using a limited set of known markers
+
+In the publication, the authors aimed to identify the different clusters in the
+data by using a set of 12 well-known molecular markers; genes for which the
+expression profile is typically very specific, i.e., highly expressed only in
+one specific cell type. They used the following markers: 
 
 ```{r}
 markers <- c("LHX1", "SLC17A6","PAX6","GAD1","SLC6A9","OPN1MW","VSX2",
              "RLBP1", "GFAP", "PECAM1", "KCNJ8","CX3CR1")
 ```
 
-```{r}
+We will here visualize the expression of these markers on our t-SNE space.
+First, we create a "baseline" figure, displaying each cell in 2D space, colored
+in black.
+
+```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
 gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
                           y = reducedDim(sce_900, type = "TSNE")[,2],
@@ -663,22 +697,25 @@ gg_base <- ggplot(data = gg_hlp_data[!is.na(sce_900$cluster),],
 gg_base
 ```
 
-Get marker counts
+Next, we obtain the counts of the 12 pre-selected marker genes for all cells.
 
 ```{r}
 marker_counts <- assays(sce_900)$counts[markers,]
 marker_counts <- as.matrix(t(marker_counts))
 ```
 
-Binary marker coloring
+Finally, we make one figure for each of the 12 marker genes. The idea is to
+give each cell that has a non-zero expression of the marker (i.e., for which
+the marker is expressed) a red coloring.
 
 ```{r}
 marker_counts_binary <- marker_counts
 marker_counts_binary[which(marker_counts_binary > 0)] <- 1
+
 for (i in seq_along(markers)) {
-    gg <- ggplot(data = gg_hlp_data,
+    gg <- ggplot(data = gg_hlp_data[!is.na(sce_900$cluster),],
                     aes(x = x, y = y)) +
-        geom_point(aes(color = as.factor(marker_counts_binary[,i])), size = 0.4) +
+        geom_point(aes(color = as.factor(marker_counts_binary[,i])[!is.na(sce_900$cluster)]), size = 0.4) +
         scale_color_manual(values=c("black","red")) +
         xlab("TSNE 1") +
         ylab("TSNE 2") +
@@ -689,9 +726,24 @@ for (i in seq_along(markers)) {
 }
 ```
 
+```{r}
+# Visualize our clusters
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k39",
+         text_by = "clust_hcl_k39")
+```
+
+From figure 5D, we obtain the marker-cell type relationship, and draw the
+following conclusions.
+
+- The LHX1 marker is specific for horizontal cells. As such, our cluster 3
+corresponds to horizontal cells.
+
+- 
+
 ## Using marker genes detected from this data
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(scran)
 marker.info <- scoreMarkers(sce_900, 
                             sce_900$clust_hcl_k39)
@@ -710,7 +762,7 @@ head(ordered[,1:4],n=10) # showing basic stats only, for brevity.
 
 Note: the paper used the 9th gene (SLC17A6), which indeed is very specific!
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(scater)
 plotExpression(sce_900, 
                features=head(rownames(ordered),n=10), 
@@ -724,19 +776,19 @@ I need to still work this out, but will only do this for 1 of 2 clusters…
 
 ## Semi-supervised using SingleR
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 #BiocManager::install("SingleR")
 library(SingleR)
 ```
 
-Import reference data
+### Import reference data
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(scRNAseq)
 (ref.data <- scRNAseq::ShekharRetinaData())
 ```
 
-Explore metadata of reference data
+### Explore metadata of reference data
 
 ```{r}
 head(colData(ref.data))
@@ -752,16 +804,16 @@ levels(as.factor(ref.data$`SUB-CLUSTER`))
 all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
 ```
 
-Process reference data
+### Process reference data
 
-Process reference data (1): Remove unlabeled cells
+1. Remove unlabeled cells
 
 ```{r}
 sum(is.na(ref.data$CLUSTER))
 ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
 ```
 
-Process reference data (2): remove doublets/contaminant cells
+2. Remove doublets/contaminant cells
 
 The original authors already performed quality control; we have cells with cluster label “Doublets/Contaminants”. Let’s remove those:
 
@@ -770,8 +822,7 @@ sum(ref.data$CLUSTER == "Doublets/Contaminants")
 ref.data <- ref.data[,-which(ref.data$CLUSTER == "Doublets/Contaminants")]
 ```
 
-Process reference data (3): make lower resolution cell type levels (for easier 
-interpretation)
+3. Make lower resolution cell type levels (for easier interpretation)
 
 ```{r}
 ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER, 
@@ -795,7 +846,7 @@ ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER,
            "Rod Photoreceptors" = "Rod Photoreceptors")
 ```
 
-Process reference data (4): remove lowly expressed genes
+4. Remove lowly expressed genes
 
 ```{r}
 keep <- rowSums(assays(ref.data)$counts > 0) > 10
@@ -803,7 +854,7 @@ table(keep)
 ref.data <- ref.data[keep,]
 ```
 
-Process reference data (5): obtain same gene ID format as in target data
+5. Obtain same gene ID format as in target data
 
 ```{r}
 # TODO: maybe even better to use ENSEMBL
@@ -811,14 +862,14 @@ rownames(ref.data) <- toupper(rownames(ref.data))
 sum(rownames(sce_900) %in% rownames(ref.data))
 ```
 
-Process reference data (6): compute lognormcounts
+6. Compute `logNormCounts`
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(scuttle)
 ref.data <- logNormCounts(ref.data)
 ```
 
-Use SingleR at low reference resolution:
+### `SingleR` at low reference resolution:
 
 ```{r}
 # runs 2min 30sec for me
@@ -847,7 +898,7 @@ table(sce_900$cluster_lowRes[!is.na(pred.lowRes$pruned.labels)],
       pred.lowRes$labels[!is.na(pred.lowRes$pruned.labels)])
 ```
 
-Do the same but at high resolution of the reference label
+### `SingleR` at high reference resolution:
 
 ```{r}
 # Runs 3min 30sec for me
