@@ -304,7 +304,7 @@ head(rowData(sce))
 
 # Filtering non-informative genes
 
-```{r}
+```{r, gene filter}
 library(edgeR)
 
 # A very simple strategy: remove all genes that are expressed in less than 10
@@ -467,7 +467,7 @@ is loosely motivated by the fact that such a filter will retain 99% of
 non-outlier values that follow a normal distribution. We demonstrate adopting
 adaptive thresholds on the Macosko dataset:
 
-```{r}
+```{r, quick QC}
 lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
@@ -515,7 +515,7 @@ would correspond to a cell for which the observed count profile strongly
 deviates from the count profile observed in the cells with a library size 
 below threshold T, i.e., a non-empty droplet.
 
-```{r, message=FALSE, warning=FALSE}
+```{r, empty droplets, message=FALSE, warning=FALSE}
 library(DropletUtils)
 bcrank <- barcodeRanks(counts(sce))
 
