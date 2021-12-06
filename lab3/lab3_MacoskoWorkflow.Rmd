@@ -1,9 +1,10 @@
 ---
-title: 'Data import, quality control and normalization for the Macosko dataset'
+title: 'Lab3'
 author: "Koen Van den Berge and Jeroen Gilis"
-date: "20/11/2021"
+date: "6/12/2021"
 output: 
   html_document:
+    download: true
     toc: true
     toc_float: true
 ---
@@ -33,839 +34,165 @@ if(length(notInstalled) > 0){
 }
 ```
 
-# The Macosko dataset
 
-In this workshop session, we will preprocess the single-cell RNA-seq dataset
-from the publication by Macosko *et al.*, Cell 161, 1202–1214 from 2015
-[(link)](https://doi.org/10.1016/j.cell.2015.05.002). This is the manuscript in
-which the droplet scRNA-seq technology **Drop-seq** was introduced.
-Six years after the original publication, drop-seq is still one of the most 
-commonly adopted scRNA-seq protocols, as evidenced by the
-large number of citations for Macosko *et al.* 
-(4.303 citations at November 3, 2021).
+Steps taken
 
-The basic idea behind the Drop-seq protocol can be taken from the graphical
-abstract of the publication.
+1. Import the Macosko dataset as SingleCellExperiment object from the scRNAseq 
+Bioconductor package.
 
-```
-knitr::include_graphics("macosko_graphicalAbstract.jpeg")
-```
+2. Include ENSEMBL gene identifiers in the rowData
 
-The success of Drop-seq can be explained by the following advantageous 
-features:
+3. Remove very lowly expressed genes
 
-- The use of unique molecular identifiers (UMIs). By working with UMIs, one count
-corresponds to one observed mRNA molecule present in the cell. Thanks to the use
-of UMI barcodes, PCR artifacts are reduced.
+4. Remove low quality cells 
+  4.1. Cells with outlying library size 
+  4.2. Cells with outlying transcriptome complexity 
+  4.3. Cells with outlying percentage of mitochondrial reads 
+  4.4. Empty droplets 
+  4.5. Doublets
 
-- Scalability: microfluidics technology allows for performing the library prep
-reactions inside nanodroplets, in which single cells may be contained. Library prep occurs across all droplets simultaneously.
+5. Normalization 
+  5.1. Compute log-normalized counts 
+  5.2. Compute scaling factor to correct for differences in library size
 
-- Cost: the experiment costs around 6.5 cents (USD) per cell.
+6. Feature selection 
+  6.1. Genes with high variance 
+  6.2. Genes with high variance with respect to their mean expression 
+  6.3. Genes with high deviance 
+  6.4. Genes with high variance after variance-stabilizing transformation (VST)
 
-- Speed: The very large dataset that we will be working with today was 
-generated in an experiment that took only 4 days.
+7. Dimensionality reduction 
+  7.1. Based on two most variable genes from step 6.2. 
+  7.2. PCA 
+  7.3. GLM-PCA 
+  7.4. T-SNE 
+  7.5. UMAP
 
-In this particular experiment, Macosko *et al.* sequenced 49,300 cells from the
-mouse retina, identifying 39 transcriptionally distinct cell populations. The
-experiment was performed in 7 batches.
+# Load end-result after lab session 2
 
-# Data availability
-
-## SRA
-
-The [Sequence Read Archive (SRA)](https://www.ncbi.nlm.nih.gov/sra) is the 
-largest publicly available repository of high-throughput sequencing data.
-The data are stored by the National Center for Biotechnology Information (NCBI) 
-services and multiple cloud storage providers. From this website "raw" 
-sequencing data can be retrieved. In practice, these are usually `.sra` files,
-which can be downloaded and converted into FASTQ files using functions
-from the `sratoolkit` software. 
-
-For our dataset, the FASTQ data can be retrieved from this 
-[link](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA267857&o=acc_s%3Aa).
-The data are stored as one file per sequencing batch, with each file 
-approximately 20Gb. As such, it will be unfeasible to download and process these
-FASTQ files in this practical session.
-
-Instead, for demonstrative purposes, we have taken a subsample of the FASTQ
-file for the first sequencing batch for you to work with. On this subsample, 
-we may perform all the tasks that we would have performed on the full dataset.
-The steps that are required for downloading and quantifying drop-seq data
-can be found in [a Shell script on our companion GitHub repository](https://github.com/statOmics/singleCellCourse/blob/master/lab1_preprocessing/preprocessDropseq.sh).
-
-## GEO
-
-The dataset from Macosko *et al.* was also uploaded by the authors on the 
-Gene Expression Omnibus (GEO) platform under accession number 
-[GSE63472](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE63472), 
-from which raw and readily-processed data files may be retrieved, including:
-
-1. *GSE63472_RAW.tar*, a 90.6Gb object that contains the "raw data" for the
-experiment. In the scRNA-seq context, FASTQ files are often considered the raw
-data format.
-
-2. *GSE63472_P14Retina_merged_digital_expression.txt.gz*, a 50.7Mb matrix that
-stores the gene expression values for each cell. These values are integer 
-counts, that did not undergo any type of preprocessing or normalization.
-
-3. *GSE63472_mm10_reference_metadata.tar.gz*, a 862.9Mb compressed folder
-containing information on the reference genome to which the scRNA-seq reads
-were aligned (see theory slides).
-
-4. *GSE63472_P14Retina_logDGE.txt.gz*, a 316.8Mb compressed text file, not clear
-what it contains (results from a differential gene expression analysis, but
-with log-transformation, so log-fold changes maybe?).
-
-As such, by downloading *GSE63472_P14Retina_merged_digital_expression.txt.gz*,
-we avoid re-quantifying the data, i.e., the translation from reads from the
-FASTQ files into a gene-level expression values for each cell. 
-
-One issue that often arises from data downloaded from GEO, is that there is no
-strict requirements for which data should be included in the upload by the 
-authors. As such, from my personal experience, it can often be the case that
-important information like metadata are missing, or the content of the submitted
-files is unclear. Even if all the required data are available, as is the case 
-here, we would still need to piece all the information together from different 
-files and file formats before we can use them.
-
-## ExperimentHub
-
-The Bioconductor *ExperimentHub* web resource, which can be accessed using the 
-[ExperimentHub](https://bioconductor.org/packages/release/bioc/html/ExperimentHub.html) 
-R package, provides a central location where curated data from experiments, 
-publications or training courses can be accessed. While it contains far less
-datasets than the SRA or GEO (4965 records to date), these datasets all follow 
-the tidy data format of Bioconductor. Note that the ExperimentHub contains 
-several types of data, like bulk and single-cell transcriptomics data, 
-microarrays and more.
-
-The Macosko dataset is available from ExperimentHub and can be accessed as
-follows:
-
-```{r, message=FALSE, warning=FALSE}
-library(ExperimentHub)
-edb <- ExperimentHub()
-
-edb[grep("Macosko", edb$title)] # find accession number (can be inefficient)
-
-edb_counts <- edb[["EH2690"]]
-edb_counts[1:5,1:5]
-
-edb_coldata <- edb[["EH2691"]]
-edb_coldata[1:5,]
-
-rm(edb, edb_counts, edb_coldata)
-```
-
-## scRNASeq
-
-In addition to ExperimentHub, Bioconductor provides the package
-[scRNAseq](https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html).
-This package provides an even more user-friendly client to access (only) 
-scRNA-seq datasets from the ExperimentHub web resource. Data retrieved using the
-scRNAseq package are stored as user-friendly `SingleCellExperiment` objects, 
-with the expression data, gene-level information, cell-level information and 
-experiment metadata all in place in one data object. The scRNA-seq package
-currently holds 61 datasets, including the data from *Macosko et al.*:
-
-```{r, message=FALSE, warning=FALSE}
-library(scRNAseq)
-scRNAseq::MacoskoRetinaData()
-```
-
-# Import data
-
-The `scRNAseq` package provides convenient access to several datasets. See the [package Bioconductor page](http://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html) 
-for more information.
-
-```{r}
-# Code below might ask you to create an ExperimentHub directory. 
-# Type 'yes' and hit Enter, to allow this.
-suppressPackageStartupMessages(library(scRNAseq))
-sce <- MacoskoRetinaData()
-```
-
-# A `SingleCellExperiment` object
-
-```{r}
-sce
-```
-
-## Accessing data from a `SingleCellExperiment` object
-
-Please see [Figure 4.1 in OSCA](http://bioconductor.org/books/release/OSCA/data-infrastructure.html) 
-for an overview of a `SingleCellExperiment` object.
-
-```{r}
-# Data: assays
-assays(sce)
-assays(sce)$counts[1:5, 1:5]
-
-# Feature metadata: rowData
-rowData(sce) # empty for now
-
-# Cell metadata: colData
-colData(sce)
-
-# Reduced dimensions: reducedDims
-reducedDims(sce) # empty for now
-```
-
-## Creating a new `SingleCellExperiment` object
-
-```{r}
-sceNew <- SingleCellExperiment(assays = list(counts = assays(sce)$counts))
-sceNew
-
-rm(sceNew)
-```
-
-## Storing (meta)data in a `SingleCellExperiment` object
-
-```{r}
-fakeGeneNames <- paste0("gene", 1:nrow(sce))
-rowData(sce)$fakeName <- fakeGeneNames
-head(rowData(sce))
-# Remove again by setting to NULL
-rowData(sce)$fakeName <- NULL
-
-assays(sce)$logCounts <- log1p(assays(sce)$counts)
-assays(sce)
-assays(sce)$logCounts[1:5, 1:5]
-assays(sce)$logCounts <- NULL
-```
-
-# Obtaining and including rowData
-
-The `rowData` slot of a `SingleCellExperiment` object allows for storing 
-information on the features, i.e. the genes, in a dataset. In our object,
-the `rowData` slot is empty.
-
-```{r}
-rowData(sce)
-```
-
-As such, the only information we have on the genes are their names, which can
-be retrieved as the `rownames` of the expression matrix.
-
-```{r}
-head(rownames(sce))
-```
-
-These are the gene names (symbols). Note that it may be useful to include 
-additional information in the `rowData` slot. For instance, we may want to 
-store:
-
-- Unambiguous gene identifiers (e.g. from ENSEMBL)
-- On which chromosome the gene is located
-- Gene length (genomic start position and end position)
-- Others...
-
-```{r, message=FALSE, warning=FALSE}
-library("biomaRt")
-
-ensembl75 <- useEnsembl(biomart = 'genes', 
-                        dataset = 'mmusculus_gene_ensembl',
-                        version = 75)
-
-head(listAttributes(ensembl75)) # potential info to extract
-
-geneInfo <- getBM(attributes = c("ensembl_gene_id", # ENSEMBL unambiguous identifier
-                                 "mgi_symbol", # Gene symbol (to link with SCE rownames),
-                                 "chromosome_name", # On which chromosome
-                                 "start_position", # Start position
-                                 "end_position"),# End position
-                  mart = ensembl75)
-
-head(geneInfo)
-```
-
-```{r}
-geneInfo$mgi_symbol_upper <- toupper(geneInfo$mgi_symbol) 
-# match between gene info and rownames
-
-sum(rownames(sce) %in% geneInfo$mgi_symbol_upper)
-sum(!rownames(sce) %in% geneInfo$mgi_symbol_upper) # lost in conversion :(
-
-rowData(sce) <- geneInfo[match(rownames(sce),geneInfo$mgi_symbol_upper),]
-```
-
-```{r}
-head(rowData(sce))
-```
-
-# Filtering non-informative genes
-
-```{r}
-library(edgeR)
-
-# A very simple strategy: remove all genes that are expressed in less than 10
-# out of 49300 cells -> note that this a very lenient filtering criterium
-keep <- rowSums(assays(sce)$counts > 0) > 10
-table(keep)
-
-sce <- sce[keep,]
-```
-
-# Quality control
-
-In quality control (QC), we check the quality of our dataset. In particular, 
-we investigate undesirable oddities, such as low-quality cells, empty droplets
-or doublets.
-
-## Identifying and removing low-quality cells
-
-There are several distinguishing features of low-quality cells that can be used
-in order to identify them. [As described in the OSCA book](http://bioconductor.org/books/3.14/OSCA.basic/quality-control.html) 
-book):
-
-1. The library size is defined as the total sum of counts across all 
-relevant features for each cell. Here, we will consider the relevant features 
-to be the endogenous genes. Cells with small library sizes are of low quality 
-as the RNA has been lost at some point during library preparation, either due 
-to cell lysis or inefficient cDNA capture and amplification.
-
-2. The number of expressed features in each cell is defined as the number of 
-endogenous genes with non-zero counts for that cell. Any cell with very 
-few expressed genes is likely to be of poor quality as the diverse transcript 
-population has not been successfully captured.
-
-3. We sometimes have spike-in (ERCC) transcripts available.
-The proportion of reads mapped to spike-in transcripts is calculated relative 
-to the total count across all features (including spike-ins) for each cell. 
-As the same amount of spike-in RNA should have been added to each cell, 
-any enrichment in spike-in counts is symptomatic of loss of endogenous RNA.
-
-4. In the absence of spike-in transcripts, the proportion of reads mapped 
-to genes in the mitochondrial genome can be used. High proportions are 
-indicative of poor-quality cells (Islam et al. 2014; Ilicic et al. 2016), 
-presumably because of loss of cytoplasmic RNA from perforated cells. 
-The reasoning is that, in the presence of modest damage, the holes in the 
-cell membrane permit efflux of individual transcript molecules but are too 
-small to allow mitochondria to escape, leading to a relative enrichment of 
-mitochondrial transcripts. For single-nuclei RNA-seq experiments, high 
-proportions are also useful as they can mark cells where the cytoplasm has 
-not been successfully stripped.
-
-## Calculate QC variables
-
-This function calculates useful QC metrics for identification and removal of 
-potentially problematic cells. Default per-cell metrics are the sum of counts 
-(i.e., the library size) and the number of detected features. The percentage of 
-counts in the top features also provides a measure of library complexity.
-
-If subsets is specified, these statistics are also computed for each subset of 
-features. This is useful for investigating gene sets of interest, e.g., 
-mitochondrial genes.
-
-```{r, message=FALSE, warning=FALSE}
+```{r, mssage=FALSE, warning=FALSE}
+library(SingleCellExperiment)
 library(scater)
+library(scran)
+```
 
-# check ERCC spike-in transcripts
-sum(grepl("^ERCC-", rownames(sce))) # no spike-in transcripts available
+```{r}
+sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds") # 147Gb SCE object
+```
 
-# check mitochondrial genes
-sum(rowData(sce)$chromosome_name=="MT",na.rm = TRUE) # 28 mitochondrial genes
-sum(grepl("^MT-", rownames(sce))) # alternatively
-is.mito <- grepl("^MT-", rownames(sce))
-
-## calculate QC metrics
-df <- perCellQCMetrics(sce, subsets=list(Mito=is.mito))
-head(df)
-
-# add QC variables to sce object
-colData(sce) <- cbind(colData(sce), df)
-
-# the QC variables have now been added to the colData of our SCE object.
+```{r}
 head(colData(sce))
 ```
-
-## Exploratory data analysis
-
-In the figure below, we see that several cells have a very low number of 
-expressed genes, and where most of the molecules are derived from 
-mitochondrial genes. This indicates likely damaged cells, presumably because 
-of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
-the downstream analysis.
-
-```{r}
-# Number of genes vs library size
-plotColData(sce, x = "sum", y="detected", colour_by="cluster") 
-
-# Mitochondrial genes
-plotColData(sce, x = "detected", y="subsets_Mito_percent")
-```
-
-## QC using adaptive thresholds
-
-Below, we remove cells that are outlying with respect to
-
- 1. A low sequencing depth (number of UMIs);
- 2. A low number of genes detected;
- 3. A high percentage of reads from mitochondrial genes.
- 
- Here we will remove cells for QC based on **adaptive thresholds** related to
- the three points from above. Adaptive trhesholds are used as opposed to
- **fixed thresholds**. 
- 
-With fixed thresholds, we use fixed cut-off values for each cell to pass QC, 
-e.g., we might consider cells to be low quality if they have library sizes 
-below 100,000 reads; express fewer than 5,000 genes; have spike-in proportions
-above 10%; or have mitochondrial proportions above 10%.
-
-With adaptive thresholds, we assume that most of the dataset consists of 
-high-quality cells. We then identify cells that are outliers for the various 
-QC metrics, based on the median absolute deviation (MAD) from the median value
-of each metric across all cells. By default, we consider a value to be anoutlier 
-if it is more than 3 MADs from the median in the “problematic” direction. This 
-is loosely motivated by the fact that such a filter will retain 99% of 
-non-outlier values that follow a normal distribution. We demonstrate adopting
-adaptive thresholds on the Macosko dataset:
-
-```{r}
-lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
-lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
-highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
-
-table(lowLib)
-table(lowFeatures)
-table(highMito)
-
-discardCells <- (lowLib | lowFeatures | highMito)
-table(discardCells)
-colData(sce)$discardCells <- discardCells
-
-# visualize cells to be removed
-plotColData(sce, x = "sum", y="detected", colour_by="discardCells")
-plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discardCells")
-```
-
-We removed a total of $3423$ cells, most of which because of an outlyingly high 
-percentage of reads from mitochondrial genes.
-
-## Identifying and removing empty droplets
-
-Note that the removal of cells with low sequencing depth using the adaptive 
-threshold procedure above is a way of removing empty droplets. 
-Other approaches are possible, e.g., removing cells by statistical testing 
-using `emtpyDrops`. This does require us to specify a lower bound on the total 
-number of UMIs, below which all cells are considered to correspond to empty 
-droplets. This lower bound may not be trivial to derive, but the `barcodeRanks`
-function can be useful to identify an elbow/knee point.
-
-In brief, the steps taken by the `emtpyDrops` function can be summarized as 
-follows:
-
-1.	Define threshold T of total UMI counts (e.g. with the help of the 
-`barcodeRanks` function), below which cells may be considered to be from empty 
-droplets. Call this set of cells E.
-
-2.	Define $A_g$ as the total gene expression across all cells in E.
-
-3.	Define $pi_g$ as the relative contribution of gene g to the ambient profile.
-
-4.	Calculate p-value for each cell to have a transcriptional profile similar to
-the ambient solution. Intuitively, a p-value below the requested alpha level 
-would correspond to a cell for which the observed count profile strongly 
-deviates from the count profile observed in the cells with a library size 
-below threshold T, i.e., a non-empty droplet.
-
-```{r, message=FALSE, warning=FALSE}
-library(DropletUtils)
-bcrank <- barcodeRanks(counts(sce))
-
-# Only showing unique points for plotting speed. Duplicated ranks are a 
-# consequence of ties in the ranks, i.e., when cells have an equal library size.
-sum(duplicated(bcrank$rank))
-uniq <- !duplicated(bcrank$rank)
-
-plot(bcrank$rank[uniq], bcrank$total[uniq], log="xy",
-    xlab="Rank", ylab="Total UMI count", cex.lab=1.2)
-abline(h=metadata(bcrank)$inflection, col="darkgreen", lty=2)
-abline(h=metadata(bcrank)$knee, col="dodgerblue", lty=2)
-abline(h=350, col="orange", lty=2) # picked visually myself
-legend("topright", 
-       legend=c("Inflection", "Knee", "Empirical knee point"), 
-       col=c("darkgreen", "dodgerblue", "orange"), 
-       lty=2, 
-       cex=1.2)
-
-set.seed(100)
-limit <- 350   
-all.out <- emptyDrops(counts(sce), lower=limit, test.ambient=TRUE)
-# p-values for cells with total UMI count under the lower bound.
-hist(all.out$PValue[all.out$Total <= limit & all.out$Total > 0],
-    xlab="P-value", main="", col="grey80", breaks=20)
-
-# but note that it would remove a very high number of cells
-length(which(all.out$FDR <= 0.01)) # retained
-
-# so we stick to the more lenient adaptive filtering strategy
-# remove cells identified using adaptive thresholds
-sce <- sce[, !colData(sce)$discardCells]
-```
-
-## Identifying and removing doublets
-
-We will use 
-[scDblFinder](https://bioconductor.org/packages/3.14/bioc/html/scDblFinder.html) 
-to detect doublet cells.
-
-As discussed in the theory session of last week, the steps taken by 
-`scDblFinder` can be summarized as follows:
-
-1. Perform principal components analysis (PCA) on log-normalized expression 
-counts. This allows for projecting each cell in the dataset into a 2D space
-(for more details on PCA, see next weeks session).
-
-2. Randomly select two cells, sum their counts and normalize, and project 
-into PCA space from step 1. In other words, artificially generate doublets and
-see where they are located in the 2D space.
-
-3. Repeat step 2 many times (generate many artificial doublets).
-
-4. Generate neighbor network in the 2D space. The network is then used to 
-estimate a number of characteristics for each cell, in particular the proportion 
-f artificial doublets among the nearest neighbors.
-
-5. Use this information, along with other predictors, to train a classifier
-(gradient boosted tree) that allows for distinguishing doublets from singlets.
-
-Note: only classifies for identifying doublets for which the two cells
-are from different cell type clusters.
-
-
-```{r, message=FALSE, warning=FALSE}
-## perform doublet detection
-library(scDblFinder)
-```
-
-```{r}
-set.seed(211103)
-sampleID <- unlist(lapply(strsplit(colData(sce)$cell.id, split="_"), "[[", 1))
-table(sampleID)
-sce <- scDblFinder(sce, 
-                   returnType="table",
-                   samples = factor(sampleID))
-table(sce$scDblFinder.class)
-
-
-## visualize these scores
-## explore doublet score wrt original cluster labels
-boxplot(log1p(sce$scDblFinder.score) ~ factor(colData(sce)$cluster, exclude=NULL))
-
-tab <- table(sce$scDblFinder.class, sce$cluster, 
-      exclude=NULL)
-tab
-t(t(tab) / colSums(tab))
-
-barplot(t(t(tab) / colSums(tab))[2,],
-        xlab = "Cluster", ylab = "Fraction of doublets")
-
-range(sce$scDblFinder.score[sce$scDblFinder.class  == "doublet" & sampleID == "r1"])
-range(sce$scDblFinder.score[sce$scDblFinder.class  == "singlet" & sampleID == "r1"])
-```
-
-```{r}
-# remove doublets
-sce <- sce[,!sce$scDblFinder.class == "doublet"]
-```
-
-# Normalization
-
-Normalization aims to remove technical effects such as sequencing depth so that 
-comparisons between cells are not confounded by them. The most commonly used 
-normalization methods methods use scaling, where a scaling factor (also called 
-size factor, normalization factor) is estimated for each cell. These scaling 
-factors (e.g., the effective library size) can be included as an offset
-to downstream modeling procedures. This effectively allows for performing
-inference on the relative abundance of a gene in a cell, after accounting for 
-library size and RNA composition differences between cells, which is much more
-relevant than comparing raw counts
-
-Note that we always prefer the use of offsets over transformation of the data.
-In brief, such transformation would distort the mean-variance relationship
-in the data. For more details, we refer to the document that was discussed
-in theory session of last week
-([link](https://statomics.github.io/SGA21/sequencing_scalingNormalization.html))
-
-For normalization, the size factors $s_i$ computed here are simply scaled 
-library sizes:
-\[ N_i = \sum_g Y_{gi} \]
-\[ s_i = N_i / \bar{N}_i \]
-
-```{r}
-sce <- logNormCounts(sce)
-
-# note we also returned log counts: see the additional logcounts assay.
-sce
-
-# you can extract size factors using
-sf <- librarySizeFactors(sce)
-mean(sf) # equal to 1 due to scaling.
-plot(x= log(colSums(assays(sce)$counts)), 
-     y=sf)
-```
-
-From the OSCA book:
-Alternatively, we may use more sophisticated approaches for variance stabilizing 
-transformations in genomics data, e.g., `DESeq2` or `sctransform`. These aim 
-to remove the mean-variance trend more effectively than the simpler 
-transformations mentioned above, though it could be argued whether this is 
-actually desirable. For low-coverage scRNA-seq data, there will always be a 
-mean-variance trend under any transformation, for the simple reason that the 
-variance must be zero when the mean count is zero. These methods also face the 
-challenge of removing the mean-variance trend while preserving the interesting 
-component of variation, i.e., the log-fold changes between subpopulations; this 
-may or may not be done adequately, depending on the aggressiveness of 
-the algorithm.
-
-In practice, the log-transformation is a good default choice due to its 
-simplicity and interpretability, and is what we will be using for all 
-downstream analyses.
-
----
-
---- end lab session 1 ---
-
----
-
-# Feature selection
-
-As dimensions increase, shortest and farthest distances between points become
-nearly inseparable. In high-dimensional space, it is therefore extremely 
-difficult to separate signal from noise.
-
-In order to recover structure (e.g. setting up a dimensionality reduced
-space to help us find cell-type clusters in the data), we want to move to an
-informative, lower-dimensional space. We will select genes which we hope are
-informative for recovering the biological structure. But what defines an 
-informative gene?
-
-The simplest approach to quantifying per-gene variation is to compute the 
-variance of the log-normalized expression values (i.e., "log-counts") for 
-each gene across all cells. While calculation of the per-gene variance
-is simple, feature selection requires modelling of the mean-variance relationship. 
-The log-transformation is not a variance stabilizing
-transformation in most cases, which means that the total variance of a gene is
-driven more by its abundance than its underlying biological heterogeneity.
-
-A (rightly so) popular approach is to select genes that have a high variance
-with respect to their mean. Often, first an empirical mean-variance trend is
-fitted, upon which genes with the highest positive residuals are selected. 
-Being intuitive, reasonable and fairly straight-forward, this method is widely
-used.
-
-To account for the mean-variance effect, we use the `modelGeneVar` function of
-the `scran` package to fit a trend to the variance with respect to abundance
-across all genes (on log-normalized expression values of the sce object).
-
-```{r}
-library(scran)
-dec <- modelGeneVar(sce)
-head(dec)
-```
-
-The fitted value for each gene is used as a proxy for the technical component of
-variation for each gene, under the assumption that most genes exhibit a low
-baseline level of variation that is not biologically interesting. The biological
-component of variation for each gene is defined as the the residual from the
-trend. Ranking genes by the biological component enables identification of
-interesting genes for downstream analyses in a manner that accounts for the
-mean-variance relationship.
-
-```{r}
-fitRetina <- metadata(dec)
-plot(fitRetina$mean, fitRetina$var, 
-     xlab="Mean of log-expression",
-    ylab="Variance of log-expression")
-curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
-```
-
-We are interested in those genes for which the variance in expression is higher
-than what we would expect for that gene based on its mean expression.
-
-```{r}
-# get 10% highly variable genes
-hvg <- getTopHVGs(dec, 
-                  prop=0.1)
-head(hvg)
-
-# plot these 
-plot(fitRetina$mean, fitRetina$var, 
-     col = c("orange", "darkseagreen3")[(names(fitRetina$mean) %in% hvg)+1],
-     xlab="Mean of log-expression",
-    ylab="Variance of log-expression")
-curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
-legend("topleft", 
-       legend = c("Selected", "Not selected"), 
-       col = c("darkseagreen3", "orange"),
-       pch = 16,
-       bty='n')
-```
-
-# Dimensionality reduction
-
-Note that, below, we color the cells using the known, true cell type label as 
-defined in the metadata, to empirically evaluate the dimensionality reduction. 
-In reality, we don't know this yet at this stage.
-
-## PCA with feature selection
-
-A DR method is linear when the reduced dimensions are a linear function of the
-original variables. For example, in PCA, each principal component is a linear
-combination of genes, therefore the DR is a linear function of the original
-variables.
-
-Typically, PCA is performed on log-transformed normalized counts. The log-transformation helps  somewhat, but not completely, to account for the
-mean-variance relationship. PCA works well for bulk RNA-seq data. However, the
-structure of scRNA-seq data is often too complex to be visualized by a small 
-number of PCs.
-
-There are several R functions that allow you to perform PCA. Here, we make use
-of the `runPCA` function of the `scater` package, which has been specifically
-developed for performing PCA on SingleCellExperiment objects.
-
-### PCA 
-
-```{r}
-set.seed(1234)
-sce <- runPCA(sce, 
-              ncomponents=30, 
-              subset_row=hvg)
-```
-
-PCA has been performed. The PCA information has been automatically stored in the
-*reducedDim* slot of the SingleCellExperiment object.
 
 ```{r}
 reducedDimNames(sce)
 ```
 
-```{r}
-head(reducedDim(sce,
-           type="PCA"))
-```
-
-The `plotPCA` function of the `scater` package now allows us to visualize
-the cells in PCA space, based on the PCA information stored in our object:
+# Add cluster information from publication
 
 ```{r}
-plotPCA(sce, 
-        colour_by = "cluster")
+library(tidyverse)
+sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
+           "Horizontal_cells" = "1",
+           "Ganglion_cells" = "2",
+           "Amacrine" = "3",
+           "Amacrine" = "4",
+           "Amacrine" = "5",
+           "Amacrine" = "6",
+           "Amacrine" = "7",
+           "Amacrine" = "8",
+           "Amacrine" = "9",
+           "Amacrine" = "10",
+           "Amacrine" = "11",
+           "Amacrine" = "12",
+           "Amacrine" = "13",
+           "Amacrine" = "14",
+           "Amacrine" = "15",
+           "Amacrine" = "16",
+           "Amacrine" = "17",
+           "Amacrine" = "18",
+           "Amacrine" = "19",
+           "Amacrine" = "20",
+           "Amacrine" = "21",
+           "Amacrine" = "22",
+           "Amacrine" = "23",
+           "Rods" = "24",
+           "Cones" = "25",
+           "Bipolar" = "26",
+           "Bipolar" = "27",
+           "Bipolar" = "28",
+           "Bipolar" = "29",
+           "Bipolar" = "30",
+           "Bipolar" = "31",
+           "Bipolar" = "32",
+           "Bipolar" = "33",
+           "Muller_glia" = "34",
+           "Astrocytes" = "35",
+           "Fibroblast" = "36",
+           "Vascular_endothelium" = "37",
+           "Pericytes" = "38",
+           "Microglia" = "39")
+
+sce$cluster_highRes <- fct_recode(colData(sce)$cluster, 
+           "Horizontal_cells" = "1",
+           "Ganglion_cells" = "2",
+           "Amacrine_1" = "3",
+           "Amacrine_2" = "4",
+           "Amacrine_3" = "5",
+           "Amacrine_4" = "6",
+           "Amacrine_5" = "7",
+           "Amacrine_6" = "8",
+           "Amacrine_7" = "9",
+           "Amacrine_8" = "10",
+           "Amacrine_9" = "11",
+           "Amacrine_10" = "12",
+           "Amacrine_11" = "13",
+           "Amacrine_12" = "14",
+           "Amacrine_13" = "15",
+           "Amacrine_14" = "16",
+           "Amacrine_15" = "17",
+           "Amacrine_16" = "18",
+           "Amacrine_17" = "19",
+           "Amacrine_18" = "20",
+           "Amacrine_19" = "21",
+           "Amacrine_20" = "22",
+           "Amacrine_21" = "23",
+           "Rods" = "24",
+           "Cones" = "25",
+           "Bipolar_1" = "26",
+           "Bipolar_2" = "27",
+           "Bipolar_3" = "28",
+           "Bipolar_4" = "29",
+           "Bipolar_5" = "30",
+           "Bipolar_6" = "31",
+           "Bipolar_7" = "32",
+           "Bipolar_8" = "33",
+           "Muller_glia" = "34",
+           "Astrocytes" = "35",
+           "Fibroblast" = "36",
+           "Vascular_endothelium" = "37",
+           "Pericytes" = "38",
+           "Microglia" = "39")
 ```
 
-While the large number of clusters in this dataset makes it impossible to 
-distinguish between all the different colors, we can already see that PCA
-retrieves some, but not all of the structure in the data that was discovered
-by the original authors.
 
-How many of the top PCs should we retain for downstream analyses? The choice of
-the number of PCs is a decision that is analogous to the choice of the number of
-HVGs to use. Using more PCs will retain more biological signal at the cost of
-including more noise that might mask said signal. On the other hand, using fewer
-PCs will introduce competition between different factors of variation, where
-weaker (but still interesting) factors may be pushed down into lower PCs and
-inadvertently discarded from downstream analyses.
-
-Most analysts will simply aim to use a “reasonable” but arbitrary value,
-typically ranging from 10 to 50. This is often satisfactory as the later PCs
-explain so little variance that their inclusion or omission has no major effect.
-
-```{r}
-percent.var <- attr(reducedDim(sce), "percentVar")
-plot(percent.var, log="y", xlab="PC", ylab="Variance explained (%)")
-```
-
-Here, retaining ±15PCs seems reasonable. If you really prefer a more data-driven
-way for determining this, 
-
-```{r, eval = FALSE}
-library(PCAtools)
-chosen.elbow <- findElbowPoint(percent.var)
-chosen.elbow
-```
-
-Visualizations of reduced dimensions from linear dimensionality reduction
-methods are often "overcrowded", and it is hard to see structure (e.g., the PCA
-plot we just saw). Non-linear dimensionality reduction methods can overcome this
-problem. As the name suggests, the reduced dimensions are a non-linear function
-of the observed data. We will not go into detail as to how these work under the
-hood, but provide a few guidelines for the most popular methods. Often, the top
-(~10-50) PCs are provided as input.
-
-## Non-linear dimensionality reduction: T-SNE
-
-T-SNE focuses on preserving local rather than global distances. Therefore,
-distances on a t-SNE reduced dimension plot can only be interpreted locally,
-i.e., cells that are close together in reduced dimension will have a similar
-transcriptome, but cells that are far away may not necessarily have a very distinct transcriptome.
-
-Running a T-SNE on a SingleCellExperiment object can be achieved with the
-`runTSNE` function of the `scater` package. By default, this function will first
-perform PCA, and use the first 50 PCs as an input to the actual T-SNE
-algorithm. Since we already performed PCA, we may set `dimred = "PCA"` as
-argument to the function. As such we will be performing a T-SNE on the 30 PCs
-we compute before. I we would like to run T-SNE only on the 10 most informative
-PCs, we could set `n_dimred = 10`.
-
-In addition, we may wish to set `external_neighbors=TRUE`, which (without going
-into details how) increases the speed of the algorithm for large dataset by
-applying a heuristic.
-
-**Note:** for me this was the slowest function of the analysis (so far). If you
-feel like your PC/laptop had a lot of trouble with the previous step, you
-may consider not running this code, or running it on a subset of the data
-(e.g., for 5 patients in stead of 15, or randomly subsampling cells...) for
-demonstrational purposes. One final option is to reduce the input space for
-the T-SNE algorithm, e.g. by setting `n_dimred = 5`.
-
-```{r}
-# Do not run with slow PC/laptop
-sce <- runTSNE(sce, 
-               dimred = 'PCA',
-               n_dimred = 5,
-               external_neighbors=TRUE)
-plotTSNE(sce,
-         colour_by = "cluster")
-```
-
-## Non-linear dimensionality reduction: UMAP
-
-Claimed to be better than t-SNE on preserving global differences. Therefore,
-UMAP is also often used in analyses such as trajectory inference, where this is
-important.
-
-Running a UMAP on a SingleCellExperiment object can be achieved with the
-`runUMAP` function of the `scater` package.
-
-```{r}
-sce <- runUMAP(sce, 
-               dimred = 'PCA', 
-               external_neighbors = TRUE)
-plotUMAP(sce,
-         colour_by = "cluster")
-```
-
-# Clustering
+#Clustering
 
 ## Graph-based clustering
 
-First, we discuss graph-based clustering methods for scRNA-Seq data. This
-is very well explained in the
-[OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html).
+First, we discuss graph-based clustering methods for scRNA-Seq data.
+This is very well explained in the 
+[OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#clustering-graph).
 
-As written in the OSCA book:
-"Popularized by its use in Seurat, graph-based clustering is a flexible and 
-scalable technique for clustering large scRNA-seq datasets. We first build a 
-graph where each node is a cell that is connected to its nearest neighbors in 
-the high-dimensional space. Edges are weighted based on the similarity between 
-the cells involved, with higher weight given to cells that are more closely 
-related. We then apply algorithms to identify “communities” of cells that are 
-more connected to cells in the same community than they are to cells of 
-different communities. Each community represents a cluster that we can use for 
-downstream interpretation.
+As written in the OSCA book: “Popularized by its use in Seurat, graph-based 
+clustering is a flexible and scalable technique for clustering large scRNA-seq 
+datasets. We first build a graph where each node is a cell that is connected 
+to its nearest neighbors in the high-dimensional space. Edges are weighted 
+based on the similarity between the cells involved, with higher weight given 
+to cells that are more closely related. We then apply algorithms to identify 
+“communities” of cells that are more connected to cells in the same community 
+than they are to cells of different communities. Each community represents a 
+cluster that we can use for downstream interpretation.
 
 The major advantage of graph-based clustering lies in its scalability. It only 
 requires a k-nearest neighbor search that can be done in log-linear time on 
@@ -873,28 +200,28 @@ average, in contrast to hierachical clustering methods with runtimes that are
 quadratic with respect to the number of cells. Graph construction avoids making 
 strong assumptions about the shape of the clusters or the distribution of cells 
 within each cluster, compared to other methods like k-means (that favor 
-spherical clusters) or Gaussian mixture models (that require normality)."
+spherical clusters) or Gaussian mixture models (that require normality).”
 
-Several graph-based clustering algorithms are implemented in the `scran` 
-library. The most global wrapper-function in this package is the 
-`clusterCells` function. Typically, the input to this function is a 
-`SingleCellExperiment` object with pre-computed principal components; these
-are used to take advantage of data compression and denoising. If the default 
-settings are adopted, `clusterCells` will perform two steps under the hood:
+Several graph-based clustering algorithms are implemented in the `scran` library. 
+The most global wrapper-function in this package is the `clusterCells` function. 
+Typically, the input to this function is a `SingleCellExperiment` object with 
+pre-computed principal components; these are used to take advantage of data 
+compression and denoising. If the default settings are adopted, `clusterCells`
+will perform two steps under the hood:
 
- 1. Build a shared neighbors (SNN) graph of observations for downstream community
-detection. The SNN graph is closely related to the more common KNN graph.
-For each observation, its k-nearest neighbors are identified (k=10 by default), 
+1. Build a shared neighbors (SNN) graph of observations for downstream community 
+detection. The SNN graph is closely related to the more common KNN graph. For 
+each observation, its k-nearest neighbors are identified (k=10 by default), 
 based on distances between their expression profiles (Euclidean distances are 
-used by default). An edge is drawn between all pairs of observations that share 
+used by default). An edge is drawn between all pairs of observations that share
 at least one neighbor, weighted by the characteristics of the shared nearest 
 neighbors.
 
- 2. The `clusterCells` function next internally calls the `cluster_walktrap`
-function from the `igraph` library. Based on the SNN graph from step 1, this 
-function tries to find densely connected subgraphs, also called communities in 
-a graph via random walks. The idea is that short random walks tend to stay in 
-the same community.
+2. The `clusterCells` function next internally calls the `cluster_walktrap` function 
+from the `igraph` library. Based on the SNN graph from step 1, this function tries
+to find densely connected subgraphs, also called communities in a graph via 
+random walks. The idea is that short random walks tend to stay in the same 
+community.
 
 ```
 # Do not run; clusterCells function with default settings, i.e., building an
@@ -905,11 +232,12 @@ nn.clusters <- clusterCells(sce,
 table(nn.clusters)
 ```
 
-**The disadvantage of using `clusterCells` is that the default setting of the** 
-**second step, the `cluster_walktrap` function, is slow for large datasets.**
-Therefore, we here will not use `clusterCells` here, but break up the process in 
-two steps: building a graph and detect clusters in that graph. For this second 
-step, we may then adopt a faster algorithm.
+The disadvantage of using `clusterCells` is that the default setting of the 
+second step, the `cluster_walktrap` function, is slow for large datasets. While 
+it is possible to adjust the different arguments of the `clusterCells` function,
+it might be more clear and intuitive to simply break up the process in two steps:
+building a graph and detecting clusters in that graph. For this second step, 
+we may then adopt a faster algorithm.
 
 ### Build graph (SNN graph)
 
@@ -920,7 +248,8 @@ graph <- buildSNNGraph(sce,
 # alternative: buildKNNGraph()
 ```
 
-```{r}
+```
+# Slow and not really informative -> leave out?
 library(igraph)
 igraph::plot.igraph(
   graph, layout = layout_with_fr(graph),
@@ -931,7 +260,7 @@ igraph::plot.igraph(
 ### Detect clusters on the graph
 
 ```{r}
-# Walktrap community finding algorithmon the SNN graph
+# Walktrap community finding algorithm on the SNN graph
 # DO NOT RUN -> takes 20 minutes
 # cluster_walktrap <- factor(igraph::cluster_walktrap(g)$membership) #20min
 
@@ -951,113 +280,127 @@ nlevels(cluster_leiden) #1329 different clusters!
 cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
                                                  resolution_parameter = 0.01)$membership) #10sec
 nlevels(cluster_leiden2) #14 different clusters
-```
 
-
-```{r}
 # Add to sce and visualize
 colData(sce)$cluster_louvain <- cluster_louvain
 colData(sce)$cluster_leiden2 <- cluster_leiden2
-
-# Visualization. Add the cluster labels to the previously generated UMAP
-# coordinates
-plotUMAP(sce, 
-         colour_by="cluster_louvain")
-plotUMAP(sce, 
-         colour_by="cluster_leiden2")
-plotUMAP(sce, 
-         colour_by ="cluster") # original labels provided by the authors
 ```
 
 ### Comparing clustering strategies
 
+A direct comparison using a table of the cluster labels.
+
 ```{r}
 table(cluster_louvain, cluster_leiden2)
 ```
+
+First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t make much sense.
+
+Next, we see the following clear correspondences between the cluster labels:
+
+Louvain 1 -> Leiden 1
+Louvain 6 -> Leiden 2
+Louvain 3 -> Leiden 4
+Louvain 7 -> Leiden 6
+Louvain 8 -> Leiden 7
+Louvain 10 -> Leiden 8
+
+For the remain clusters, we see that 
+- Leiden cluster 3 contains almost cells of Louvain clusters 2, 9 and 11 
+- Leiden cluster 5 contains almost cells of Louvain clusters 4 and 5
+
+To make a visualization that gives us very similar information, we may use a 
+heathmap:
 
 ```{r}
 library(pheatmap)
 pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
 ```
 
+Alternatively, we may compute a clustering similarity score that captures …
+
 ```{r}
 library(mclust)
-mclust::adjustedRandIndex(cluster_louvain, cluster_leiden2)
+mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))], 
+                          cluster_leiden2[-which(cluster_leiden2 %in% c(9:14))])
 ```
 
-Comparison with original cluster labels:
+### Visualization
 
 ```{r}
-table(sce$cluster, cluster_louvain)
-pheatmap::pheatmap(table(sce$cluster, cluster_louvain))
-mclust::adjustedRandIndex(sce$cluster, cluster_louvain)
-```
+# Visualization. Add the cluster labels to the previously generated TSNE
+# coordinates
+plotTSNE(sce, 
+         colour_by="cluster_louvain")
 
-```{r}
-table(sce$cluster, cluster_leiden2)
-pheatmap::pheatmap(table(sce$cluster, cluster_leiden2))
-mclust::adjustedRandIndex(sce$cluster, cluster_leiden2)
+
+plotTSNE(sce, 
+         colour_by="cluster_leiden2")
 ```
 
 ## K-means clustering
 
-K-means is a clustering algorithm that has been used in many application
-areas. In `R`, it can be applied via the `kmeans` function. Typically, it is 
-applied to a reduced dimensional representation of the expression data (most 
-often PCA, because of the interpretability of the low-dimensional distances). 
-We need to define the number of clusters in advance. Since the results depend on
-the initialization of the cluster centers, it is typically recommended to run 
-k-means with multiple starting configurations (via the *nstart* argument).
+K-means is a clustering algorithm that has been used in many application areas. 
+In R, it can be applied via the `kmeans` function. Typically, it is applied to 
+a reduced dimensional representation of the expression data (most often PCA, 
+because of the interpretability of the low-dimensional distances). We need to 
+define the number of clusters in advance. Since the results depend on the 
+initialization of the cluster centers, it is typically recommended to run 
+k-means with multiple starting configurations (via the nstart argument).
 
 ```{r}
 set.seed(123)
+
+# k=10
 clust_kmeans_k10 <- kmeans(reducedDim(sce, "PCA"), centers = 10, nstart = 5)
 table(clust_kmeans_k10$cluster)
 colData(sce)$kmeans10 <- factor(clust_kmeans_k10$cluster)
-plotUMAP(sce, colour_by="kmeans10")
+plotTSNE(sce, colour_by="kmeans10")
+
+# k=39
 clust_kmeans_k39 <- kmeans(reducedDim(sce, "PCA"), centers = 39, nstart = 5)
 table(clust_kmeans_k39$cluster)
 colData(sce)$kmeans39 <- factor(clust_kmeans_k39$cluster)
-plotUMAP(sce, colour_by="kmeans39")
+plotTSNE(sce, colour_by="kmeans39")
 ```
 
-We here arbitrarily performed two k-means clustering analyses, once with k=10
-and once with k=39 (the number of clusters communicated by the authors). The
-choice of the number of clusters `k` can be guided by known biology, however, 
-it is arbitrary at least to some interval.
+We here arbitrarily performed two k-means clustering analyses, once with k=10 
+and once with k=39 (the number of clusters communicated by the authors). The 
+choice of the number of clusters k can be guided by known biology, however, it 
+is arbitrary at least to some interval.
 
 ## Hierarchical clustering
 
-From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html):
+From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#hierarchical-clustering):
 
-"Hierarchical clustering is an old technique that arranges samples into a 
-hierarchy based on their relative similarity to each other. Most implementations 
+“Hierarchical clustering is an old technique that arranges samples into a 
+hierarchy based on their relative similarity to each other. Most implementations
 do so by joining the most similar samples into a new cluster, then joining 
-similar clusters into larger clusters, and so on, until all samples belong to 
-a single cluster. This process yields a dendrogram that defines clusters
-with progressively increasing granularity. Variants of hierarchical clustering 
+similar clusters into larger clusters, and so on, until all samples belong to a 
+single cluster. This process yields a dendrogram that defines clusters with 
+progressively increasing granularity. Variants of hierarchical clustering 
 methods primarily differ in how they choose to perform the agglomerations. 
 For example, complete linkage aims to merge clusters with the smallest maximum 
 distance between their elements, while Ward’s method aims to minimize the 
 increase in within-cluster variance.
 
-In the context of scRNA-seq, the main advantage of hierarchical clustering 
-lies in the production of the dendrogram. This is a rich summary that 
-quantitatively captures the relationships between subpopulations at various 
-resolutions. Cutting the dendrogram at high resolution is also guaranteed to 
-yield clusters that are nested within those obtained at a low-resolution cut; 
-this can be helpful for interpretation." 
+In the context of scRNA-seq, the main advantage of hierarchical clustering lies
+in the production of the dendrogram. This is a rich summary that quantitatively
+captures the relationships between subpopulations at various resolutions. 
+Cutting the dendrogram at high resolution is also guaranteed to yield clusters 
+that are nested within those obtained at a low-resolution cut; this can be
+helpful for interpretation.”
 
-Indeed, low-resolution clusters can typically be interpreted as super-level 
-cell types, like immune cells, neuron cells or endothelial cells. Higher 
-resolution clusters correspond with a higher biological resolution:
-immune cell -> lymphocyte -> T-cell -> Th1 cell.
+Indeed, low-resolution clusters can typically be interpreted as super-level cell
+types, like immune cells, neuron cells or endothelial cells. Higher resolution
+clusters correspond with a higher biological resolution: immune cell -> 
+lymphocyte -> T-cell -> Th1 cell.
 
-However, note that we can also overcluster the data (splitting a homogenous
-set of cells in multiple clusters), resulting in spurious cell type
+However, note that we can also overcluster the data (splitting a homogenous 
+set of cells in multiple clusters), resulting in spurious cell type 
 identification.
 
-The `clusterCells` function of the `scran` library also allows for performing
+The `clusterCells` function of the `scran` library also allows for performing 
 hierarchical clustering. This can be implemented as follows:
 
 ```
@@ -1065,28 +408,26 @@ hierarchical clustering. This can be implemented as follows:
 library(bluster)
 hclust.sce <- clusterCells(x = sce, 
                             use.dimred = "PCA",
-                            BLUSPARAM = HclustParam(method="ward.D2"), 
-                            full = TRUE)
+                            BLUSPARAM = HclustParam(method="ward.D2"))
 ```
 
 Equivalently, we may again split the process in two steps:
 
-1. Compute the pairwise distances between all cells. These are by default
-Euclidean distances and, in order to reduce data complexity and increase signal
-to noise, we may perform this on the top (30) PC's. Calculating a dissimilarity
-matrix is implemented in the `dist` function.
+1. Compute the pairwise distances between all cells. These are by default Euclidean
+distances and, in order to reduce data complexity and increase signal to noise, 
+we may perform this on the top (30) PC’s. Calculating a dissimilarity matrix 
+is implemented in the `dist` function.
 
-2. Performs a hierarchical cluster analysis on the distances from 
-step 1. In an agglomerative procedure, each cell is first assigned to its own 
-cluster and then the algorithm proceeds iteratively, at each stage joining the 
-two most similar clusters, continuing until there is just a single cluster. 
-Implemented in the `hclust` function.
+2. Perform a hierarchical cluster analysis on the distances from step 1. In an 
+agglomerative procedure, each cell is first assigned to its own cluster and 
+then the algorithm proceeds iteratively, at each stage joining the two most 
+similar clusters, continuing until there is just a single cluster. Implemented 
+in the `hclust` function.
 
-Note that the `hclust` function allows for specifying a "method" argument.
-The differences between the different methods goes beyond the scope of this
-session, but a brief description is provided in the function help file.
-In the context of scRNA-seq, we recommend the use of the "ward.D2"
-method.
+Note that the `hclust` function allows for specifying a “method” argument. 
+The differences between the different methods goes beyond the scope of this 
+session, but a brief description is provided in the function help file. In 
+the context of scRNA-seq, we recommend the use of the "ward.D2" method.
 
 ```{r}
 distsce <- dist(reducedDim(sce, "PCA")) #1min
@@ -1094,202 +435,154 @@ hcl <- hclust(distsce, method = "ward.D2") #3min
 plot(hcl, labels = FALSE)
 ```
 
-Next, we need to "cut the tree", i.e., choose at which resolution we want to
+Next, we need to "cut the tree", i.e., choose at which resolution we want to 
 report the (cell-type) clusters. This can be achieved with the `cutree` 
-function. As an input, `cutree` takes the dendrogram from the `hclust` function
-and a threshold value for cutting the tree. This is either `k`, the number of
-clusters we want to report, or `h`, the height in the dendrogram at which
-we wan to cut the tree.
+function. As an input, `cutree` takes the dendrogram from the `hclust` function 
+and a threshold value for cutting the tree. This is either k, the number of 
+clusters we want to report, or h, the height in the dendrogram at which we wan to cut the tree.
 
 ```{r}
 clust_hcl_k10 <- cutree(hcl, k = 10)
 table(clust_hcl_k10)
 ```
 
-```{r}
-clust_hcl_h200 <- cutree(hcl, h = 200)
-table(clust_hcl_h200)
+````{r}
+clust_hcl_k39 <- cutree(hcl, k = 39)
+table(clust_hcl_k39)
 ```
 
-## Clustering in the original paper
-
-I will here mimic the strategy for clustering the cells that was adopted by
-the authors of the original Macosko publication. 
-
-**However, I will do this approximatively!** I will take similar steps/
-algorithms conceptually, but will remain within the current bioconductor 
-framework and the range of functions that we have seen in this session.
-
-### Downsampling
-
-To increase the power of unsupervised dimensionality reduction techniques for 
-discovering these types we first downsampled the 49,300-cell dataset to extract
-single-cell libraries where 900 or more genes were detected, resulting in a 
-13,155-cell "training set". 
-
 ```{r}
-sce_900 <- sce[,sce$detected > 900]
-sce_900
+sce$clust_hcl_k10 <- as.factor(clust_hcl_k10)
+sce$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+
+# Visualization. Add the cluster labels to the previously generated TSNE
+# coordinates
+plotTSNE(sce, 
+         colour_by="clust_hcl_k10")
+
+
+plotTSNE(sce, 
+         colour_by ="clust_hcl_k39")
 ```
 
-### Feature selection
+# Clustering in the original paper
 
-We first identified the set of genes that was most variable across our training 
-set, after controlling for the relationship between mean expression and
-variability. We calculated the mean and a dispersion measure (variance/mean) 
-for each gene across all 13,155 single cells, and placed genes into 20 bins
-based on their average expression. Within each bin, we then z-normalized the 
-dispersion measure of all genes within the bin, in order to identify outlier 
-genes whose expression values were highly variable even when compared to genes 
-with similar average expression. We used a z-score cutoff of 1.7 to identify 
-384 highly variable genes.
+When we compare our cluster labels with those from the original paper, we will
+see that the correspondence is not great. As demonstration, I make a table and 
+a heathmap comparing the low resolution cluster labels from the paper with our 
+Louvain, Leiden2 and hierarchical clustering (k=10) labels:
 
--> I will not use the exact same strategy, but the `modelGeneVar-getTopHVGs`
+```{r}
+table(sce$cluster_lowRes, sce$cluster_louvain)
+```
+
+```{r}
+table(sce$cluster_lowRes, sce$cluster_leiden2)
+```
+
+```{r}
+table(sce$cluster_lowRes, sce$clust_hcl_k10)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_louvain))
+
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_leiden2))
+
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$clust_hcl_k10))
+```
+
+The main reason for this is that the authors of the original paper used quite a 
+different strategy for performing the feature selection and dimension reduction 
+that we have performed in lab session 2.
+
+To demonstrate the pipeline of the original authors, and to make our results 
+more comparable to theirs, I will here mimic their strategy for feature 
+selection and clustering. **However, I will do this approximatively!** I will 
+take similar steps conceptually, but will remain within the current 
+bioconductor framework and the range of functions that we have seen in this 
+lecture series.
+
+The authors performed the following steps:
+
+1. **Downsampling:** In order to increase the power of unsupervised 
+dimensionality reduction techniques for discovering cell types, the authors 
+first downsampled the 49,300-cell dataset to extract single-cell libraries where
+900 or more genes were detected.
+
+2. **Feature selection:** We first identified the set of genes that was most 
+variable across our training set, after controlling for the relationship between
+mean expression and variability. To do this, the authors used a manual 
+implementation for this.
+
+-> I will not use the exact same strategy, but the `modelGeneVar-getTopHVGs` 
 strategy, which is conceptually similar in addressing the mean-variance 
-realtionship during feature selection.
+relationship during feature selection.
+
+3. **Principal components analysis:** The authors performed PCA after scaling 
+the data. They next performed a test to determine how many PCs contributed 
+significantly to explaining the variability in the data. Based on this test, 
+they continued the analysis pipeline with the top 32 PCs.
+
+4. **t-SNE:** Next, the authors performed a t-SNE on the top 32 PC’s, setting 
+the `perplexity` parameter of the t-SNE algorithm to 30.
+
+5. **Projection of remaining cells and clustering:** Finally, the authors 
+adopted a manually implemented, rather complex strategy to project the 
+remaining cells (where less than 900 different genes were detected) on the 
+t-SNE embedding obtained in step 4. Next, they cluster the cells using a 
+density clustering (DBSCAN algorith) that was not discussed in this lecture 
+series. Because this 5th step uses techniques beyond the scope of this course, 
+we will simply continue working with the downsampled dataset and perform 
+hierarchical clustering. However, I included some code that allows you do 
+something similar to what the authors did for your reference (not that running 
+this code requires installing the `snifter` R package, which requires a working
+Python and Conda installation).
 
 ```{r}
+# code for steps 1-4
+library(scater)
+library(genefilter)
+library(scran)
+
+# Step 1: Downsampling
+sce_900 <- sce[,sce$detected > 900]
+
+# Step 2: Feature selection
 sce_900 <- logNormCounts(sce_900)
 dec_900 <- modelGeneVar(sce_900)
-# get top 374 highly variable genes
 hvg_900 <- getTopHVGs(dec_900,
-                      n = 374)
-```
+                      n = 374) # same number of top features as original paper
 
-### PCA
-
-We ran Principal Components Analysis (PCA) on our training set as previously 
-described (Shalek et al.,2013), using the prcomp function in R, after scaling 
-and centering the data along each gene. We used only the previously 
-identified “highly variable” genes as input to the PCA in order to ensure robust
-identification of the primary structures in the data.
-
--> I will use `runPCA` and store the first 32 PC's, like Macosko et al.
-
-```{r}
+# Step 3: PCA
 set.seed(1234)
 sce_900 <- runPCA(sce_900, 
-                  ncomponents = 32, 
-                  subset_row = hvg_900)
-```
+                  ncomponents = 32, # same number of PCs as original paper
+                  subset_row = hvg_900,
+                  scale=TRUE) # scale the data like in original paper
 
-### T-SNE
-
-We used these PC loadings as input for t-Distributed Stochastic Neighbor 
-Embedding (tSNE) (van der Maaten and Hinton, 2008), as implemented in the 
-tsne package in R with the “perplexity” parameter set to 30. The t-SNE procedure 
-returns a two-dimensional embedding of single cells.
-
--> We do the same, but using the `runTSNE` bioconductor function.
-
-```{r}
-# runs <1min
+# Step 4: T-SNE
+set.seed(484854)
 sce_900 <- runTSNE(sce_900, 
                dimred = 'PCA',
                n_dimred = 32,
-               perplexity = 30)
-plotTSNE(sce_900,
-         colour_by = "cluster")
+               perplexity = 30) # same perplexity as original paper
 ```
 
-```{r}
-library(ggplot2)
-gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
-                          y = reducedDim(sce_900, type = "TSNE")[,2],
-                          cluster = sce_900$cluster)
-gg_base <- ggplot(data = gg_hlp_data,
-                  aes(x = x, y = y)) +
-    geom_point(size=0.4) +
-    theme_bw() +
-    xlab("TSNE 1") +
-    ylab("TSNE 2")
-gg_base
-
-par(mfrow=c(4,10))
-for (clus in levels(sce_900$cluster)) {
-    select <- which(sce_900$cluster == clus)
-    gg_orig_clust <- gg_base + geom_point(data = gg_hlp_data[select, ],
-                                          aes(x = x, y = y), 
-                                          colour = "red", size=2)
-    print(gg_orig_clust)
-}
 ```
-
-When we project the cluster labels defined by the authors on the T-SNE plot
-that we constructed ourselves with the current bioconductor tools, we see
-that the vast majority of the results seems to correspond between the original
-and the new analysis. Obviously a perfect correspondence is not expected, as
-we did not aim to reproduce the original analysis exactly (which would be very
-challenging, given that it was performed 5 years ago with different R and
-R package versions).
-
-Next the authors continue with two additional steps, which go beyond the scope
-of this session:
-
-1. Projecting the other cells (#detected genes <= 900) onto the T-SNE map. They
-adopted a manually implemented technique that I am not familiar with, based
-on PC loadings.
-
-2. Use a clustering algorithm on the T-SNE map to define cell type clusters.
-The authors adopted a density clustering approach implemented in the DBSCAN R 
-package (Ester et al., 1996), which was not discussed in the course.
-
-Alternatively, we may perform a clustering strategy that we have seen in the
-course and compare to the original clustering.
-
-
-```{r}
-# Build a shared nearest-neighbor graph from PCA space
-graph_900_PCA <- buildSNNGraph(sce_900, 
-                       use.dimred = 'PCA')
-cluster_PCA_louvain <- factor(igraph::cluster_louvain(graph_900_PCA)$membership) #8sec
-nlevels(cluster_PCA_louvain)
-
-# Build a shared nearest-neighbor graph from T-SNE space
-graph_900_TSNE <- buildSNNGraph(sce_900, 
-                       use.dimred = 'TSNE')
-cluster_TSNE_louvain <- factor(igraph::cluster_louvain(graph_900_TSNE)$membership) #8sec
-nlevels(cluster_TSNE_louvain)
-```
-
-```{r}
-pheatmap::pheatmap(table(sce_900$cluster, cluster_PCA_louvain))
-mclust::adjustedRandIndex(sce_900$cluster, cluster_PCA_louvain)
-```
-
-```{r}
-pheatmap::pheatmap(table(sce_900$cluster, cluster_TSNE_louvain))
-mclust::adjustedRandIndex(sce_900$cluster, cluster_TSNE_louvain)
-```
-
-
-```{r}
-# get top 374 highly variable genes
-hvg <- getTopHVGs(sce,
-                  n = 374)
-
-sce <- runPCA(sce, 
-              ncomponents = 32,
-              subset_row = hvg)
-```
-
-```{r}
+# Step 5 authors (just for your reference): project new cells on t-SNE embedding
 #BiocManager::install("snifter")
 library(snifter)
-embedding <- reducedDim(sce[,sce$detected>900], type="PCA")
 tsne1 <- snifter::fitsne(reducedDim(sce_900, type="PCA"))
-```
+embedding <- reducedDim(sce[hvg_900,sce$detected>900], type="PCA")
 
-```{r}
 ggplot() +
   aes(tsne1[, 1], tsne1[, 2], colour = as.factor(sce[,sce$detected>900]$cluster)) +
   geom_point(pch = 19) +
   scale_colour_discrete(name = "Cluster") +
   labs(x = "t-SNE 1", y = "t-SNE 2") +
   theme_bw()
-```
 
-```{r}
 new_coords <- project(tsne1, 
                       new = reducedDim(sce[,sce$detected<=900], type="PCA"), 
                       old = reducedDim(sce[,sce$detected>900], type="PCA"))
@@ -1312,12 +605,306 @@ ggplot() +
     theme_bw()
 ```
 
+```{r}
+# Step 5 for us: perform hierarchical clustering
+distsce <- dist(reducedDim(sce_900, "PCA"))
+hcl <- hclust(distsce, method = "ward.D2")
+
+clust_hcl_k10 <- cutree(hcl, k = 10)
+clust_hcl_k39 <- cutree(hcl, k = 39)
+
+sce_900$clust_hcl_k10 <- as.factor(clust_hcl_k10)
+sce_900$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+```
+
+Visualize our labels and compare with original labels
+
+```{r}
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k10",
+         text_by = "clust_hcl_k10")
+
+plotTSNE(sce_900,
+         colour_by = "cluster_lowRes",
+         text_by = "cluster_lowRes")
+```
+
+```{r}
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k39",
+         text_by = "clust_hcl_k39")
 
 
+plotTSNE(sce_900,
+         colour_by = "cluster",
+         text_by = "cluster")
+```
+
+# Cell type annotation
+
+## Supervised: using a limited set of known markers
+
+```{r}
+markers <- c("LHX1", "SLC17A6","PAX6","GAD1","SLC6A9","OPN1MW","VSX2",
+             "RLBP1", "GFAP", "PECAM1", "KCNJ8","CX3CR1")
+```
+
+```{r}
+library(ggplot2)
+gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
+                          y = reducedDim(sce_900, type = "TSNE")[,2],
+                          cluster = sce_900$cluster)
+gg_base <- ggplot(data = gg_hlp_data[!is.na(sce_900$cluster),],
+                  aes(x = x, y = y,)) +
+    geom_point(size=0.4) +
+    theme_bw() +
+    xlab("TSNE 1") +
+    ylab("TSNE 2")
+gg_base
+```
+
+Get marker counts
+
+```{r}
+marker_counts <- assays(sce_900)$counts[markers,]
+marker_counts <- as.matrix(t(marker_counts))
+```
+
+Binary marker coloring
+
+```{r}
+marker_counts_binary <- marker_counts
+marker_counts_binary[which(marker_counts_binary > 0)] <- 1
+for (i in seq_along(markers)) {
+    gg <- ggplot(data = gg_hlp_data,
+                    aes(x = x, y = y)) +
+        geom_point(aes(color = as.factor(marker_counts_binary[,i])), size = 0.4) +
+        scale_color_manual(values=c("black","red")) +
+        xlab("TSNE 1") +
+        ylab("TSNE 2") +
+        ggtitle(colnames(marker_counts_binary)[i]) +
+        theme_bw() + 
+      theme(legend.title = element_blank())
+    print(gg)
+}
+```
+
+## Using marker genes detected from this data
+
+```{r}
+library(scran)
+marker.info <- scoreMarkers(sce_900, 
+                            sce_900$clust_hcl_k39)
+marker.info
+```
+
+```{r}
+colnames(marker.info[["1"]]) # statistics for cluster 1.
+```
+
+```{r}
+chosen <- marker.info[["1"]]
+ordered <- chosen[order(chosen$mean.AUC, decreasing=TRUE),]
+head(ordered[,1:4],n=10) # showing basic stats only, for brevity.
+```
+
+Note: the paper used the 9th gene (SLC17A6), which indeed is very specific!
+
+```{r}
+library(scater)
+plotExpression(sce_900, 
+               features=head(rownames(ordered),n=10), 
+               x="clust_hcl_k39", 
+               colour_by="clust_hcl_k39")
+```
+
+Find top markers in this data, compare to literature -> identify cells
+
+I need to still work this out, but will only do this for 1 of 2 clusters…
+
+## Semi-supervised using SingleR
+
+```{r}
+#BiocManager::install("SingleR")
+library(SingleR)
+```
+
+Import reference data
+
+```{r}
+library(scRNAseq)
+(ref.data <- scRNAseq::ShekharRetinaData())
+```
+
+Explore metadata of reference data
+
+```{r}
+head(colData(ref.data))
+levels(as.factor(ref.data$CLUSTER))
+```
+
+```{r}
+levels(as.factor(ref.data$`SUB-CLUSTER`))
+```
+
+```{r}
+# both have exactly the same info...
+all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
+```
+
+Process reference data
+
+Process reference data (1): Remove unlabeled cells
+
+```{r}
+sum(is.na(ref.data$CLUSTER))
+ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
+```
+
+Process reference data (2): remove doublets/contaminant cells
+
+The original authors already performed quality control; we have cells with cluster label “Doublets/Contaminants”. Let’s remove those:
+
+```{r}
+sum(ref.data$CLUSTER == "Doublets/Contaminants")
+ref.data <- ref.data[,-which(ref.data$CLUSTER == "Doublets/Contaminants")]
+```
+
+Process reference data (3): make lower resolution cell type levels (for easier 
+interpretation)
+
+```{r}
+ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER, 
+           "Amacrine_cells" = "AC (Amacrine cell)",
+           "Bipolar_cells" = "BC1A",
+           "Bipolar_cells" = "BC1B",
+           "Bipolar_cells" = "BC2",
+           "Bipolar_cells" = "BC3A",
+           "Bipolar_cells" = "BC3B",
+           "Bipolar_cells" = "BC4",
+           "Bipolar_cells" = "BC5A (Cone Bipolar cell 5A)",
+           "Bipolar_cells" = "BC5B",
+           "Bipolar_cells" = "BC5C",
+           "Bipolar_cells" = "BC5D",
+           "Bipolar_cells" = "BC6",
+           "Bipolar_cells" = "BC7 (Cone Bipolar cell 7)",
+           "Bipolar_cells" = "BC8/9 (mixture of BC8 and BC9)",
+           "Cones" = "Cone Photoreceptors",
+           "Muller_glia" = "MG (Mueller Glia)",
+           "Rod_Bipolar_cell" = "RBC (Rod Bipolar cell)",
+           "Rod Photoreceptors" = "Rod Photoreceptors")
+```
+
+Process reference data (4): remove lowly expressed genes
+
+```{r}
+keep <- rowSums(assays(ref.data)$counts > 0) > 10
+table(keep)
+ref.data <- ref.data[keep,]
+```
+
+Process reference data (5): obtain same gene ID format as in target data
+
+```{r}
+# TODO: maybe even better to use ENSEMBL
+rownames(ref.data) <- toupper(rownames(ref.data))
+sum(rownames(sce_900) %in% rownames(ref.data))
+```
+
+Process reference data (6): compute lognormcounts
+
+```{r}
+library(scuttle)
+ref.data <- logNormCounts(ref.data)
+```
+
+Use SingleR at low reference resolution:
+
+```{r}
+# runs 2min 30sec for me
+pred.lowRes <- SingleR(test = sce_900, 
+                     ref = ref.data, 
+                     labels = ref.data$CLUSTER_lowRes, 
+                     de.method = "wilcox")
+table(pred.lowRes$labels)
+```
+
+```{r}
+table(sce_900$cluster_lowRes, pred.lowRes$labels)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.lowRes$labels))
+```
+
+```{r}
+gg <- plotScoreHeatmap(pred.lowRes[1:20,])
+```
+
+```{r}
+summary(is.na(pred.lowRes$pruned.labels))
+table(sce_900$cluster_lowRes[!is.na(pred.lowRes$pruned.labels)], 
+      pred.lowRes$labels[!is.na(pred.lowRes$pruned.labels)])
+```
+
+Do the same but at high resolution of the reference label
+
+```{r}
+# Runs 3min 30sec for me
+pred.higRes <- SingleR(test = sce_900, 
+                     ref = ref.data, 
+                     labels = ref.data$CLUSTER, 
+                     de.method = "wilcox")
+table(pred.higRes$labels)
+```
+
+```{r}
+table(sce_900$cluster_lowRes, pred.higRes$labels)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.higRes$labels))
+```
+
+```{r}
+gg <- plotScoreHeatmap(pred.higRes[1:20,])
+```
+
+```{r}
+# low certainty labels: 751
+summary(is.na(pred.higRes$pruned.labels))
+table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)], 
+      pred.higRes$labels[!is.na(pred.higRes$pruned.labels)])
+```
+
+```{r}
+sce_900$SingleR_highRes <- pred.higRes$labels
+sce_900$SingleR_lowRes <- pred.lowRes$labels
+
+# our low resolution labels based on reference
+plotTSNE(sce_900,
+         colour_by = "SingleR_lowRes",
+         text_by = "SingleR_lowRes")
+
+# low resolution labels of the authors
+plotTSNE(sce_900,
+         colour_by = "cluster_lowRes",
+         text_by = "cluster_lowRes")
+```
+
+```{r}
+# our high resolution labels based on reference
+plotTSNE(sce_900,
+         colour_by = "SingleR_highRes",
+         text_by = "SingleR_highRes")
 
 
-
-
-
-
+# high resolution labels of the authors
+plotTSNE(sce_900,
+         colour_by = "cluster_highRes",
+         text_by = "cluster_highRes")
+# TODO: make labels more readable. However, I cant seem to find where to adapt
+# label font size directly in the TSNE call. A more manual implementation might
+# be needed...
+```
 
