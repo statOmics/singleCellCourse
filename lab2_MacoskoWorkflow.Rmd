@@ -790,7 +790,7 @@ The simplest approach to quantifying per-gene variation is to compute the
 variance of the log-normalized expression values (i.e., "log-counts") for 
 each gene across all cells. 
 
-```{r}
+```{r,eval=FALSE}
 # calculate variance of log-normalized counts for each gene
 geneVars <- genefilter::rowVars(assays(sce)$logcounts)
 # select top 1000 highly variable genes
@@ -866,7 +866,7 @@ legend("topleft",
 As a comparison, we could color the genes on this figure according to the 
 selection that was made purely by looking at the raw variance of each gene.
 
-```{r}
+```{r,eval=FALSE}
 plot(fitRetina$mean, fitRetina$var, 
      col = c("orange", "steelblue")[(names(fitRetina$mean) %in% highVarGenes)+1],
      xlab="Mean of log-expression",
