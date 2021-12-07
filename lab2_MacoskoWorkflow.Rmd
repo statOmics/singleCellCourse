@@ -16,7 +16,7 @@ session 1), which can be obtained in code lines 682-687 (where session 2 starts)
 
 # Preamble: installation of Bioconductor libraries
 
-```{r}
+```{r, eval=FALSE}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -932,7 +932,7 @@ for performing scRNA-seq data analysis is `Seurat`. However, functions from
 and vice versa. Fortunately, efforts have been made to increase the
 interoperability between the two toolboxes.
 
-```{r}
+```{r, eval=FALSE}
 library(Seurat)
 seurat_obj <- as.Seurat(sce)
 seurat_obj # notice the "0 variable features"
@@ -942,7 +942,7 @@ On this object, we may use functions from the `Seurat` toolbox.
 For instance, we may search for highly variable features using `Seurat`'s VST
 implementation:
 
-```{r}
+```{r, eval=FALSE}
 seurat_obj <- Seurat::NormalizeData(seurat_obj, 
                                     normalization.method = "LogNormalize", 
                                     scale.factor = 10000)
@@ -951,7 +951,7 @@ seurat_obj <-  FindVariableFeatures(object = seurat_obj,
                                     selection.method = "vst")
 ```
 
-```{r}
+```{r, eval=FALSE}
 seurat_obj  # notice the "2000 variable features" (default)
 head(VariableFeatures(seurat_obj)) # here they are
 ```
@@ -1093,7 +1093,7 @@ highly variable genes for each method.
 
 hvg1000 <- getTopHVGs(dec, n = 1000)
 hdg1000 <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:1000]
-vst1000 <- VariableFeatures(seurat_obj)[1:1000]
+# vst1000 <- VariableFeatures(seurat_obj)[1:1000]
 
 # HVG strategy
 plotPCA(
@@ -1112,13 +1112,13 @@ plotPCA(
   ggtitle("High-deviance genes")
 
 # VST strategy
-plotPCA(
-    runPCA(sce,
-           ncomponents = 2, 
-           subset_row = vst1000), 
-    colour_by = "cluster",
-    ) +
-  ggtitle("Seurat VST")
+# plotPCA(
+#     runPCA(sce,
+#            ncomponents = 2, 
+#            subset_row = vst1000), 
+#     colour_by = "cluster",
+#     ) +
+#   ggtitle("Seurat VST")
 ```
 
 Next, we assess the sensitivity on the number of top features for the highly
