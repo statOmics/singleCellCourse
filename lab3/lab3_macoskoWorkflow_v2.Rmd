@@ -1,0 +1,1107 @@
+---
+title: 'Lab3: Clustering, cell type annotation, differential expression'
+author: "Koen Van den Berge and Jeroen Gilis"
+date: "6/12/2021"
+output: 
+  html_document:
+    download: true
+    toc: true
+    toc_float: true
+---
+
+# Preamble: installation of Bioconductor libraries
+
+```{r}
+# install BiocManager package if not installed yet.
+# BiocManager is the package installer for Bioconductor software.
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# install packages if not yet installed.
+pkgs <- c("SingleCellExperiment",
+          "ExperimentHub",
+          "edgeR",
+          "DropletUtils", 
+          "scRNAseq", 
+          "scater", 
+          "scuttle", 
+          "scran", 
+          "BiocSingular", 
+          "scDblFinder")
+notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
+if(length(notInstalled) > 0){
+  BiocManager::install(notInstalled)
+}
+```
+
+Steps taken
+
+1. Import the Macosko dataset as `SingleCellExperiment` object from the 
+`scRNAseq` Bioconductor package.
+
+2. Include ENSEMBL gene identifiers in the `rowData`
+
+3. Remove very lowly expressed genes
+
+4. Remove low quality cells 
+  4.1. Cells with outlying library size 
+  4.2. Cells with outlying transcriptome complexity 
+  4.3. Cells with outlying percentage of mitochondrial reads 
+  4.4. Empty droplets 
+  4.5. Doublets
+
+5. Normalization 
+  5.1. Compute log-normalized counts 
+  5.2. Compute scaling factor to correct for differences in library size
+
+6. Feature selection 
+  6.1. Genes with high variance 
+  6.2. Genes with high variance with respect to their mean expression 
+  6.3. Genes with high deviance 
+  6.4. Genes with high variance after variance-stabilizing transformation (VST)
+
+7. Dimensionality reduction 
+  7.1. Based on two most variable genes from step 6.2. 
+  7.2. PCA 
+  7.3. GLM-PCA 
+  7.4. T-SNE 
+  7.5. UMAP
+
+# Load end-result after lab session 2
+
+```{r, mssage=FALSE, warning=FALSE}
+library(SingleCellExperiment)
+library(scater)
+library(scran)
+```
+
+```{r}
+sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds") # 147Mb SCE object
+```
+
+```{r}
+head(colData(sce))
+```
+
+```{r}
+reducedDimNames(sce)
+```
+
+# Add cluster information from publication
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
+           "Horizontal_cells" = "1",
+           "Ganglion_cells" = "2",
+           "Amacrine" = "3",
+           "Amacrine" = "4",
+           "Amacrine" = "5",
+           "Amacrine" = "6",
+           "Amacrine" = "7",
+           "Amacrine" = "8",
+           "Amacrine" = "9",
+           "Amacrine" = "10",
+           "Amacrine" = "11",
+           "Amacrine" = "12",
+           "Amacrine" = "13",
+           "Amacrine" = "14",
+           "Amacrine" = "15",
+           "Amacrine" = "16",
+           "Amacrine" = "17",
+           "Amacrine" = "18",
+           "Amacrine" = "19",
+           "Amacrine" = "20",
+           "Amacrine" = "21",
+           "Amacrine" = "22",
+           "Amacrine" = "23",
+           "Rods" = "24",
+           "Cones" = "25",
+           "Bipolar" = "26",
+           "Bipolar" = "27",
+           "Bipolar" = "28",
+           "Bipolar" = "29",
+           "Bipolar" = "30",
+           "Bipolar" = "31",
+           "Bipolar" = "32",
+           "Bipolar" = "33",
+           "Muller_glia" = "34",
+           "Astrocytes" = "35",
+           "Fibroblast" = "36",
+           "Vascular_endothelium" = "37",
+           "Pericytes" = "38",
+           "Microglia" = "39")
+
+sce$cluster_highRes <- fct_recode(colData(sce)$cluster, 
+           "Horizontal_cells" = "1",
+           "Ganglion_cells" = "2",
+           "Amacrine_1" = "3",
+           "Amacrine_2" = "4",
+           "Amacrine_3" = "5",
+           "Amacrine_4" = "6",
+           "Amacrine_5" = "7",
+           "Amacrine_6" = "8",
+           "Amacrine_7" = "9",
+           "Amacrine_8" = "10",
+           "Amacrine_9" = "11",
+           "Amacrine_10" = "12",
+           "Amacrine_11" = "13",
+           "Amacrine_12" = "14",
+           "Amacrine_13" = "15",
+           "Amacrine_14" = "16",
+           "Amacrine_15" = "17",
+           "Amacrine_16" = "18",
+           "Amacrine_17" = "19",
+           "Amacrine_18" = "20",
+           "Amacrine_19" = "21",
+           "Amacrine_20" = "22",
+           "Amacrine_21" = "23",
+           "Rods" = "24",
+           "Cones" = "25",
+           "Bipolar_1" = "26",
+           "Bipolar_2" = "27",
+           "Bipolar_3" = "28",
+           "Bipolar_4" = "29",
+           "Bipolar_5" = "30",
+           "Bipolar_6" = "31",
+           "Bipolar_7" = "32",
+           "Bipolar_8" = "33",
+           "Muller_glia" = "34",
+           "Astrocytes" = "35",
+           "Fibroblast" = "36",
+           "Vascular_endothelium" = "37",
+           "Pericytes" = "38",
+           "Microglia" = "39")
+```
+
+# Clustering
+
+## Graph-based clustering
+
+First, we discuss graph-based clustering methods for scRNA-Seq data.
+This is very well explained in the 
+[OSCA book chapter 5.2](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#clustering-graph).
+
+As written in the OSCA book: "Popularized by its use in Seurat, graph-based 
+clustering is a flexible and scalable technique for clustering large scRNA-seq 
+datasets. We first build a graph where each node is a cell that is connected 
+to its nearest neighbors in the high-dimensional space. Edges are weighted 
+based on the similarity between the cells involved, with higher weight given 
+to cells that are more closely related. We then apply algorithms to identify 
+“communities” of cells that are more connected to cells in the same community 
+than they are to cells of different communities. Each community represents a 
+cluster that we can use for downstream interpretation.
+
+The major advantage of graph-based clustering lies in its scalability. It only 
+requires a k-nearest neighbor search that can be done in log-linear time on 
+average, in contrast to hierarchical clustering methods with runtimes that are 
+quadratic with respect to the number of cells. Graph construction avoids making 
+strong assumptions about the shape of the clusters or the distribution of cells 
+within each cluster, compared to other methods like k-means (that favor 
+spherical clusters) or Gaussian mixture models (that require normality)."
+
+Several graph-based clustering algorithms are implemented in the `scran` library. 
+The most global wrapper-function in this package is the `clusterCells` function. 
+Typically, the input to this function is a `SingleCellExperiment` object with 
+pre-computed principal components; these are used to take advantage of data 
+compression and denoising. If the default settings are adopted, `clusterCells`
+will perform two steps under the hood:
+
+1. Build a shared nearest neighbors (SNN) graph of observations for downstream community 
+detection. The SNN graph is closely related to the more common KNN graph. For 
+each observation, its k-nearest neighbors are identified (k=10 by default), 
+based on distances between their expression profiles (Euclidean distances are 
+used by default) as observed in PCA space. An edge is drawn between all pairs 
+of observations that share at least one neighbor, weighted by the characteristics 
+of the shared nearest neighbors.
+
+2. The `clusterCells` function next internally calls the `cluster_walktrap` function 
+from the `igraph` library. Based on the SNN graph from step 1, this function tries
+to find densely connected subgraphs, also called communities in a graph via 
+random walks. The idea is that short random walks tend to stay in the same 
+community.
+
+```
+# Do not run; clusterCells function with default settings, i.e., building an
+# SNN graph and finding clusters with the walktrap algorithm.
+library(scran)
+nn.clusters <- clusterCells(sce, 
+                            use.dimred="PCA")
+table(nn.clusters)
+```
+
+The disadvantage of using `clusterCells` is that the default setting of the 
+second step, the `cluster_walktrap` function, is slow for large datasets. While 
+it is possible to adjust the different arguments of the `clusterCells` function,
+it might be more clear and intuitive to simply break up the process in two steps:
+building the graph and detecting clusters in that graph. For this second step, 
+we may then adopt a faster algorithm.
+
+### Build graph (SNN graph)
+
+```{r}
+# Build a shared nearest-neighbor graph from PCA space
+graph <- buildSNNGraph(sce, 
+                       use.dimred = 'PCA')
+# alternative: buildKNNGraph()
+```
+
+```
+# Slow and not really informative -> leave out?
+library(igraph)
+igraph::plot.igraph(
+  graph, layout = layout_with_fr(graph),
+  vertex.size = 5, vertex.label = NA
+)
+```
+
+### Detect clusters on the graph
+
+TODO: should we add some background on Leiden and Louvain?
+
+```{r}
+set.seed(464688)
+# Walktrap community finding algorithm on the SNN graph
+# DO NOT RUN -> takes 20 minutes
+# cluster_walktrap <- factor(igraph::cluster_walktrap(g)$membership) #20min
+
+# The `cluster_fast_greedy` function tries to find dense subgraph, also called 
+# communities in graphs via directly optimizing a modularity score
+# DO NOT RUN -> takes 4 minutes
+# cluster_fastGreedy <- factor(igraph::cluster_fast_greedy(graph)$membership) #4min
+
+# Louvain clustering on the SNN graph
+cluster_louvain <- factor(igraph::cluster_louvain(graph)$membership) #8sec
+nlevels(cluster_louvain) # 11 clusters
+
+# Leiden clustering on the SNN graph
+cluster_leiden <- factor(igraph::cluster_leiden(graph)$membership) #10sec
+nlevels(cluster_leiden) # 1326 different clusters!
+
+cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
+                                                 resolution_parameter = 0.01)$membership) #10sec
+nlevels(cluster_leiden2) #14 different clusters
+
+# Add to sce and visualize
+colData(sce)$cluster_louvain <- cluster_louvain
+colData(sce)$cluster_leiden2 <- cluster_leiden2
+```
+
+### Comparing clustering strategies
+
+A direct comparison of the Louvain and Leiden clustering results using a table 
+of the cluster labels, shows good agreement.
+
+```{r}
+table(cluster_louvain, cluster_leiden2)
+```
+             
+First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t 
+make much sense.
+
+Next, we see the following clear correspondences between the cluster labels:
+
+Louvain 1 -> Leiden 1
+Louvain 6 -> Leiden 2
+Louvain 3 -> Leiden 4
+Louvain 7 -> Leiden 6
+Louvain 8 -> Leiden 7
+Louvain 10 -> Leiden 8
+
+For the remaining clusters, we see that 
+- Leiden cluster 3 contains almost cells of Louvain clusters 2, 9 and 11 
+- Leiden cluster 5 contains almost cells of Louvain clusters 4 and 5
+
+To make a visualization that gives us very similar information, we may use a 
+heatmap:
+
+```{r}
+library(pheatmap)
+pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
+```
+
+Alternatively, we may compute a clustering similarity score that captures the 
+agreement between two sets of partitions. The Adjusted Rand Index (ARI) is often
+used in the literature for this purpose. The ARI is equal to 1 if the two 
+partitions agree perfectly, and it is zero if the two partitions are unrelated. 
+In some cases, the ARI may also be negative if the partitions are much more 
+different than what could be expected by chance.
+
+```{r}
+library(mclust)
+mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))], 
+                          cluster_leiden2[-which(cluster_leiden2 %in% c(9:14))])
+```
+
+### Visualization
+
+```{r}
+# Visualization. Add the cluster labels to the previously generated TSNE
+# coordinates
+plotTSNE(sce, 
+         colour_by="cluster_louvain")
+
+plotTSNE(sce, 
+         colour_by="cluster_leiden2")
+```
+
+## K-means clustering
+
+K-means is a clustering algorithm that has been used in many application areas. 
+In R, it can be applied via the `kmeans` function. Typically, it is applied to 
+a reduced dimensional representation of the expression data (most often PCA). 
+We need to define the number of clusters in advance. Since the results depend on 
+the initialization of the cluster centers, it is typically recommended to run 
+k-means with multiple starting configurations (via the `nstart` argument).
+For reproducibility, we also strongly advise to set a seed.
+
+```{r}
+set.seed(123)
+
+# k=10
+clust_kmeans_k10 <- kmeans(reducedDim(sce, "PCA"), centers = 10, nstart = 5)
+table(clust_kmeans_k10$cluster)
+colData(sce)$kmeans10 <- factor(clust_kmeans_k10$cluster)
+plotTSNE(sce, colour_by="kmeans10")
+
+# k=39
+clust_kmeans_k39 <- kmeans(reducedDim(sce, "PCA"), centers = 39, nstart = 5)
+table(clust_kmeans_k39$cluster)
+colData(sce)$kmeans39 <- factor(clust_kmeans_k39$cluster)
+plotTSNE(sce, colour_by="kmeans39")
+```
+
+We here arbitrarily performed two k-means clustering analyses, once with k=10 
+and once with k=39 (the number of clusters communicated by the authors). The 
+choice of the number of clusters k can be guided by known biology, however, it 
+is arbitrary at least to some interval.
+
+## Hierarchical clustering
+
+From [OSCA book chapter 5.4](http://bioconductor.org/books/3.14/OSCA.basic/clustering.html#hierarchical-clustering):
+
+"Hierarchical clustering is an old technique that arranges samples into a 
+hierarchy based on their relative similarity to each other. Most implementations
+do so by joining the most similar samples into a new cluster, then joining 
+similar clusters into larger clusters, and so on, until all samples belong to a 
+single cluster. This process yields a dendrogram that defines clusters with 
+progressively increasing granularity. Variants of hierarchical clustering 
+methods primarily differ in how they choose to perform the agglomerations. 
+For example, complete linkage aims to merge clusters with the smallest maximum 
+distance between their elements, while Ward’s method aims to minimize the 
+increase in within-cluster variance.
+
+In the context of scRNA-seq, the main advantage of hierarchical clustering lies
+in the production of the dendrogram. This is a rich summary that quantitatively
+captures the relationships between subpopulations at various resolutions. 
+Cutting the dendrogram at high resolution is also guaranteed to yield clusters 
+that are nested within those obtained at a low-resolution cut; this can be
+helpful for interpretation."
+
+Indeed, low-resolution clusters can typically be interpreted as super-level cell
+types, like immune cells, neuron cells or endothelial cells. Higher resolution
+clusters correspond with a higher biological resolution: immune cell -> 
+lymphocyte -> T-cell -> Th1 cell.
+
+However, note that we can also overcluster the data (splitting a homogenous 
+set of cells in multiple clusters), resulting in spurious cell type 
+identification.
+
+The `clusterCells` function of the `scran` library also allows for performing 
+hierarchical clustering. This can be implemented as follows:
+
+```
+# takes 4 minutes
+library(bluster)
+hclust.sce <- clusterCells(x = sce, 
+                            use.dimred = "PCA",
+                            BLUSPARAM = HclustParam(method="ward.D2"))
+```
+
+Equivalently, we may again split the process in two steps:
+
+1. Compute the pairwise distances between all cells. These are by default Euclidean
+distances and, in order to reduce data complexity and increase signal to noise, 
+we may perform this on the top (30) PC’s, just like we did when constructing 
+the SNN graph in graph-based clustering. Calculating a dissimilarity matrix 
+is implemented in the `dist` function.
+
+2. Perform a hierarchical clustering on the distances from step 1. In an 
+agglomerative procedure, each cell is first assigned to its own cluster and 
+then the algorithm proceeds iteratively, at each stage joining the two most 
+similar clusters, continuing until there is just a single cluster. Implemented 
+in the `hclust` function.
+
+Note that the `hclust` function allows for specifying a "method" argument. 
+The differences between the different methods goes beyond the scope of this 
+session, but a brief description is provided in the function help file. In 
+the context of scRNA-seq, we recommend the use of the `"ward.D2"` method.
+
+```{r}
+distsce <- dist(reducedDim(sce, "PCA")) #1min
+hcl <- hclust(distsce, method = "ward.D2") #3min
+plot(hcl, labels = FALSE)
+```
+
+Next, in order to derive a given set of cluster labels, we need to 
+"cut the tree", i.e., choose at which resolution we want to 
+report the (cell type) clusters. This can be achieved with the `cutree` 
+function. As an input, `cutree` takes the dendrogram from the `hclust` function 
+and a threshold value for cutting the tree. The latter may be either `k`, the 
+number of clusters we want to report, or `h`, the height of the dendrogram at 
+which we want to cut the tree.
+
+```{r}
+# cut to get 10 clusters
+clust_hcl_k10 <- cutree(hcl, k = 10)
+table(clust_hcl_k10)
+```
+
+````{r}
+# cut to get 39 clusters
+clust_hcl_k39 <- cutree(hcl, k = 39)
+table(clust_hcl_k39)
+```
+
+```{r}
+sce$clust_hcl_k10 <- as.factor(clust_hcl_k10)
+sce$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+
+# Visualization. Add the cluster labels to the previously generated TSNE
+# coordinates
+plotTSNE(sce, 
+         colour_by="clust_hcl_k10")
+
+plotTSNE(sce, 
+         colour_by ="clust_hcl_k39")
+```
+
+# Clustering in the original paper
+
+When we compare our cluster labels with those from the original paper, we'll
+see that the correspondence is not great. As a demonstration, I make a table and 
+a heatmap comparing the low-resolution cluster labels from the paper with our 
+Louvain, Leiden2 and hierarchical clustering (k=10) labels:
+
+```{r}
+table(sce$cluster_lowRes, sce$cluster_louvain)
+```
+
+```{r}
+table(sce$cluster_lowRes, sce$cluster_leiden2)
+```
+
+```{r}
+table(sce$cluster_lowRes, sce$clust_hcl_k10)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_louvain))
+
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_leiden2))
+
+pheatmap::pheatmap(table(sce$cluster_lowRes, sce$clust_hcl_k10))
+```
+
+The main reason for this is that the authors of the original paper used quite a 
+different strategy for performing the feature selection and dimension reduction 
+that we have performed in lab session 2.
+
+To demonstrate the pipeline of the original authors, and to make our results 
+more comparable to theirs, We will here mimic their strategy for feature 
+selection and clustering. **However, we will do this approximatively!** We will 
+take similar steps conceptually, but will remain within the current 
+Bioconductor framework and the range of functions that we have seen in this 
+lecture series.
+
+The authors performed the following steps:
+
+1. **Filtering:** The authors first filtered the 49,300-cell dataset to retain 
+only single-cell libraries where at least 900 genes were detected.
+
+2. **Feature selection:** The authors first identified the set of genes that 
+were most variable across the selected susbet of cells, after controlling for 
+the relationship between mean expression and variability. To do this, the 
+authors adopted a manual implementation.
+
+-> We will not use the exact same strategy, but the `modelGeneVar-getTopHVGs` 
+strategy, which is conceptually similar in addressing the mean-variance 
+relationship during feature selection.
+
+3. **Principal components analysis:** The authors performed PCA after scaling 
+the data. They next performed a test to determine how many PCs contributed 
+significantly to explaining the variability in the data. Based on this test, 
+they continued the analysis pipeline with the top 32 PCs.
+
+4. **t-SNE:** Next, the authors performed a t-SNE on the top 32 PC’s, setting 
+the `perplexity` parameter of the t-SNE algorithm to 30.
+
+5. **Projection of remaining cells and clustering:** Finally, the authors 
+adopted a manually implemented, rather complex strategy to project the 
+remaining cells (where less than 900 different genes were detected) on the 
+t-SNE embedding obtained in step 4. Next, they cluster the cells using a 
+density clustering (DBSCAN algorithm) that was not discussed in this lecture 
+series. Because this 5th step uses techniques beyond the scope of this course, 
+we will simply continue working with the filtered dataset and perform 
+hierarchical clustering. However, we included some code that allows you to do 
+something similar to what the authors did for your reference (note that running  
+this code requires installing the `snifter` R package, which requires a working
+Python and Conda installation).
+
+```{r, message=FALSE, warning=FALSE}
+# code for steps 1-4
+library(scater)
+library(genefilter)
+library(scran)
+
+# Step 1: Downsampling
+sce_900 <- sce[,sce$detected > 900]
+
+# Step 2: Feature selection
+sce_900 <- logNormCounts(sce_900)
+dec_900 <- modelGeneVar(sce_900)
+hvg_900 <- getTopHVGs(dec_900,
+                      n = 374) # same number of top features as original paper
+
+# Step 3: PCA
+set.seed(1234)
+sce_900 <- runPCA(sce_900, 
+                  ncomponents = 32, # same number of PCs as original paper
+                  subset_row = hvg_900,
+                  scale=TRUE) # scale the data like in original paper
+
+# Step 4: T-SNE
+set.seed(484854)
+sce_900 <- runTSNE(sce_900, 
+               dimred = 'PCA',
+               n_dimred = 32,
+               perplexity = 30) # same perplexity as original paper
+```
+
+```
+# Step 5 authors (just for your reference): project new cells on t-SNE embedding
+#BiocManager::install("snifter")
+library(snifter)
+tsne1 <- snifter::fitsne(reducedDim(sce_900, type="PCA"))
+embedding <- reducedDim(sce[hvg_900,sce$detected>900], type="PCA")
+
+ggplot() +
+  aes(tsne1[, 1], tsne1[, 2], colour = as.factor(sce[,sce$detected>900]$cluster)) +
+  geom_point(pch = 19) +
+  scale_colour_discrete(name = "Cluster") +
+  labs(x = "t-SNE 1", y = "t-SNE 2") +
+  theme_bw()
+
+new_coords <- project(tsne1, 
+                      new = reducedDim(sce[,sce$detected<=900], type="PCA"), 
+                      old = reducedDim(sce[,sce$detected>900], type="PCA"))
+ggplot() +
+    geom_point(
+        aes(tsne1[, 1], tsne1[, 2],
+            colour = as.factor(sce[,sce$detected>900]$cluster),
+            shape = "embedding"
+        )
+    ) +
+    geom_point(
+        aes(new_coords[, 1], new_coords[, 2], 
+            colour = as.factor(sce[,sce$detected<=900]$cluster),
+            shape = "projection"
+        )
+    ) +
+    scale_colour_discrete(name = "Cell type") +
+    scale_shape_discrete(name = NULL) +
+    labs(x = "t-SNE 1", y = "t-SNE 2") +
+    theme_bw()
+```
+
+```{r}
+# Step 5 for us: perform hierarchical clustering
+distsce <- dist(reducedDim(sce_900, "PCA"))
+hcl <- hclust(distsce, method = "ward.D2")
+
+clust_hcl_k10 <- cutree(hcl, k = 10)
+clust_hcl_k39 <- cutree(hcl, k = 39)
+
+sce_900$clust_hcl_k10 <- as.factor(clust_hcl_k10)
+sce_900$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+```
+
+Visualize our labels and compare with original labels
+
+```{r}
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k10",
+         text_by = "clust_hcl_k10")
+
+plotTSNE(sce_900,
+         colour_by = "cluster_lowRes",
+         text_by = "cluster_lowRes")
+```
+
+For the low resolution labels, we observe a strong correspondence between our
+clustering and that of the original authors. More specifically:
+
+- The original rods correspond with our group 5
+- The original cones correspond with our group 2
+- The original pericytes and vascular endothelium correspond with our group 7
+- The original muller glia, astrocytes, fibroblasts amd microglia (which are 
+similar cell types, see paper figure 5D) correspond with our group 8
+- The original ganglion and horizontal cells (which are similar cell types, 
+see paper figure 5D) correspond with our group 1
+- The original bipolar cells are split out between our groups 4 and 10
+- The original amacrine cells correspond with our groups 3, 6 and 9
+
+```{r}
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k39",
+         text_by = "clust_hcl_k39")
+
+plotTSNE(sce_900,
+         colour_by = "cluster",
+         text_by = "cluster")
+```
+
+I will not make an extensive comparison here. However, note that we see
+several scenarios:
+
+1. Clusters that correspond one-on-one (e.g., our cluster 19 with cluster 16 of
+the authors)
+
+2. We split up some clusters in multiple sets (e.g., our clusters 16, 18 and
+32) that are just 1 cluster in the analysis of the authors (cluster 34)
+
+3. We aggregate some clusters into 1 (e.g. cluster 14) that are split up in the
+original results (clusters 37 and 38)
+
+**Overall, we observe a rather strong correspondence between our clusters and**
+**those of the authors.**
+
+# Cell type annotation
+
+## Supervised: using a limited set of known markers
+
+In the publication, the authors aimed to identify the different clusters in the
+data by using a set of 12 well-known molecular markers; genes for which the
+expression profile is typically very specific, i.e., highly expressed only in
+one specific cell type. They used the following markers: 
+
+```{r}
+markers <- c("LHX1", "SLC17A6","PAX6","GAD1","SLC6A9","OPN1MW","VSX2",
+             "RLBP1", "GFAP", "PECAM1", "KCNJ8","CX3CR1")
+```
+
+We will here visualize the expression of these markers on our t-SNE space.
+First, we create a "baseline" figure, displaying each cell in 2D space, colored
+in black.
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
+                          y = reducedDim(sce_900, type = "TSNE")[,2],
+                          cluster = sce_900$cluster)
+gg_base <- ggplot(data = gg_hlp_data[!is.na(sce_900$cluster),],
+                  aes(x = x, y = y,)) +
+    geom_point(size=0.4) +
+    theme_bw() +
+    xlab("TSNE 1") +
+    ylab("TSNE 2")
+gg_base
+```
+
+Next, we obtain the counts of the 12 pre-selected marker genes for all cells.
+
+```{r}
+marker_counts <- assays(sce_900)$counts[markers,]
+marker_counts <- as.matrix(t(marker_counts))
+```
+
+Finally, we make one figure for each of the 12 marker genes. The idea is to
+give each cell that has a non-zero expression of the marker (i.e., for which
+the marker is expressed) a red coloring.
+
+```{r}
+marker_counts_binary <- marker_counts
+marker_counts_binary[which(marker_counts_binary > 0)] <- 1
+
+for (i in seq_along(markers)) {
+    gg <- ggplot(data = gg_hlp_data[!is.na(sce_900$cluster),],
+                    aes(x = x, y = y)) +
+        geom_point(aes(color = as.factor(marker_counts_binary[,i])[!is.na(sce_900$cluster)]), size = 0.4) +
+        scale_color_manual(values=c("black","red")) +
+        xlab("TSNE 1") +
+        ylab("TSNE 2") +
+        ggtitle(colnames(marker_counts_binary)[i]) +
+        theme_bw() + 
+      theme(legend.title = element_blank())
+    print(gg)
+}
+```
+
+```{r}
+# Visualize our clusters
+plotTSNE(sce_900,
+         colour_by = "clust_hcl_k39",
+         text_by = "clust_hcl_k39")
+```
+
+From figure 5D, we obtain the marker-cell type relationship, and draw the
+following conclusions.
+
+- The *LHX1* marker is specific for horizontal cells. As such, our **cluster 3**
+corresponds to **horizontal cells**.
+
+- The *SLC17A6* marker is specific for ganglion cells. As such, our **cluster 1**
+corresponds to **ganglion cells**.
+
+- The *PAX6* marker is not specific. It is expressed in horizontal cells, ganglion
+cells, amacrine cells (all subtypes), muller glia cells and fibroblasts. First,
+this reconfirms our previous statements about clusters 3 and 1, which indeed 
+should also express *PAX6*. Second, many clusters are potential candidates for 
+being any of the remaining cell types to express *PAX6*. The next marker should
+point us to their more exact identity.
+
+- The *GAD1* marker is specific for amacrine cells. In addition, it is only 
+expressed in "GABAergic" amacrine cells, which affect the neurotransmitter GABA.
+As such, **clusters 4, 5, 6, 8, 9, 11, 13, 29, 30 and 31 are GABAergic**
+**amacrine cells**. Conversely, the clusters that express *PAX6* but not *GAD1*
+(clusters 16, 18, 19, 22, 23, 24, 26, 32, 36) are either non-GABAergic 
+amacrine cells, muller glia cells or fibroblasts.
+
+- The *SLC6A9* marker is specific for glycinergic amacrine cells, i.e., 
+affecting the neurotransmitter glycine. As such, **clusters 19, 22, 23, 26 and 36**
+are the glycinergic amacrine cells. In addition, we have clusters 16, 18, 24 and
+32 that express *PAX6*, but not *GAD1* nor *SLC6A9*. As such, these cells 
+should be either muller glia cells or fibroblasts.
+
+- The *OPN1MW* marker is specific for cones. As such, our **clusters 2, 34 and 35**
+corresponds to **cones**.
+
+- The *VSX2* marker is strongly expressed in **bipolar cells**. In addition, it
+is lowly expressed in **muller glia cells** and **fibroblasts**. As such, 
+**clusters 7, 10, 15, 16, 18, 20, 21, 25, 27, 32, 33, 37 and 38** should belong
+to one of these cell types.
+
+- The *RLBP1* marker is specific for muller glia cells and astrocytes. Since
+clusters 16, 18 and 32 express *RLBP1* and *PAX6*, but not *GAD1* nor *SLC6A9*,
+we now have very strong evidence that these are muller glia cells.
+
+- The *GFAP* marker is specific for astrocytes. As such, our **clusters 24**,
+which also expresses *RLBP1*, should correspond to **astrocytes**.
+
+- The *PECAM1* marker is specific for pericytes As such, our **clusters 14**, 
+should correspond to **pericytes**.
+
+- The *PECAM1* marker is specific for vascular endothelium cells. As such, 
+our **clusters 14**, should correspond to **vascular endothelium cells**.
+
+- The *KCNJ8* marker is specific for pericytes. As such, our **clusters 14**, 
+should correspond to **pericytes**. Note that it thus appears that our 
+clustering procedure was not able to differentiate between vascular endothelium 
+cells and pericytes, which both are likely to be present in cluster 14!
+
+- The *CX3CR1* marker is specific for microglia. However, we do not seem to
+observe any cells that were identified as microglia by the original publication.
+
+## Supervised: Using marker genes detected from this data
+
+Sometimes it will be very difficult to set up a panel of known marker genes 
+that would allow us to distinguish between all cell types in our dataset.
+For instance, sometimes we may not know in advance which cell types to expect,
+or we may not have good information on relevant markers (if the studied system
+is not well known).
+
+An alternative strategy is to identify the genes that drive separation between 
+clusters. These marker genes allow us to assign biological meaning to each 
+cluster based on their functional annotation. This strategy is referred to as 
+**marker gene detection**. 
+
+The most straightforward approach to marker gene detection involves testing 
+for differential expression (DE) between clusters. If a gene is strongly DE 
+between clusters, it is likely to have driven the separation of cells in the 
+clustering algorithm. The general strategy is to compare each pair of clusters 
+and compute scores quantifying the differences in the expression distributions 
+between clusters. The scores for all pairwise comparisons involving a 
+particular cluster are then consolidated into a single dataframe for that 
+cluster. This approach is implemented in the `scoreMarkers` function of the
+`scran` package.
+
+```{r, message=FALSE, warning=FALSE}
+library(scran)
+marker.info <- scoreMarkers(sce_900, 
+                            sce_900$clust_hcl_k39)
+marker.info # one dataframe for each of the 39 clusters
+```
+
+```{r}
+colnames(marker.info[["1"]]) # statistics for cluster 1.
+```
+
+```{r}
+head(marker.info[["1"]])
+```
+
+We observe several summary statistics for each gene in the dataframe for
+cluster 1. We highlight a few:
+
+- `self.average`: the average log-normalized expression of the gene in the
+target cluster (cluster 1)
+
+- `other.average`: the average log-normalized expression of the gene in all the
+other clusters (clusters 2-39)
+
+- `self.detected`: the fraction of cells in which the gene was expressed in the
+target cluster (cluster 1)
+
+- `other.detected`: the fraction of cells in which the gene was expressed in all
+the other clusters (cluster 2-39)
+
+- `mean.AUC`: From the 
+[OSCA book chapter 6.3](http://bioconductor.org/books/3.14/OSCA.basic/marker-detection.html#effect-sizes-for-pairwise-comparisons): 
+"In the context of marker detection, the area under the curve (AUC) quantifies 
+our ability to distinguish between two distributions in a pairwise comparison. 
+The AUC represents the probability that a randomly chosen observation from our 
+cluster of interest is greater than a randomly chosen observation from the other
+cluster. A value of 1 corresponds to upregulation, where all values of our 
+cluster of interest are greater than any value from the other cluster; a 
+value of 0.5 means that there is no net difference in the location of the 
+distributions; and a value of 0 corresponds to downregulation. The AUC is 
+closely related to the U statistic in the Wilcoxon ranked sum test (a.k.a., 
+Mann-Whitney U-test)." As such, this a very interesting column to use for
+selecting marker genes.
+
+Based on the `mean.AUC` statistic, we may noww inspect the top10 markers to
+distinguish between cells of cluster 1 and cells of the other clusters:
+
+```{r}
+chosen <- marker.info[["1"]]
+ordered <- chosen[order(chosen$mean.AUC, decreasing=TRUE),]
+head(ordered[,c(1:4,10)],n=10) # showing basic stats only, for brevity.
+```
+
+We can also visualize the log-normalized expression of the top10 markers in 
+each cell, stratified on cluster label:
+
+```{r, message=FALSE, warning=FALSE}
+library(scater)
+plotExpression(sce_900, 
+               features=head(rownames(ordered),n=10), 
+               x="clust_hcl_k39", 
+               colour_by="clust_hcl_k39")
+```
+
+In my opinion, two genes pop up as extremely interesting for using as markers
+specific for cluster 1: *NRN1* and *SLC17A6*. These markers are highly expressed
+in cluster 1, but have almost no expression in any of the other clusters.
+
+Interestingly, *SLC17A6* is exactly the marker the original authors have used
+as a specific marker for ganglion cells! Note that if we would not know the
+system under study, i.e. we were unable to select the *SLC17A6* marker based
+on our prior biological knowledge, we would have successfully identified the
+marker using this strategy. In a next step, we could perform an internet search
+to see if this marker is known or not.
+
+For the record, *NRN1* also is a known marker for identifying ganglion cells.
+
+## Semi-supervised using SingleR
+
+Last but not least, ...
+
+...
+
+Assume a reference dataset with known cell type labels. For each test cell, 
+`singleR` will then:
+
+1. Compute Spearman correlation between the test cell and each reference cell. 
+To improve signal/noise, only marker genes identified using reference dataset 
+are used for this.
+
+2. For each label (cell type), set the score as the (default of) 80% quantile of
+Spearman correlations.
+
+3. The prediction is then the label with the highest score.
+
+
+```{r, message=FALSE, warning=FALSE}
+#BiocManager::install("SingleR")
+library(SingleR)
+```
+
+### Import reference data
+
+```{r, message=FALSE, warning=FALSE}
+library(scRNAseq)
+(ref.data <- scRNAseq::ShekharRetinaData())
+```
+
+### Explore metadata of reference data
+
+```{r}
+head(colData(ref.data))
+levels(as.factor(ref.data$CLUSTER))
+```
+
+```{r}
+levels(as.factor(ref.data$`SUB-CLUSTER`))
+```
+
+```{r}
+# both have exactly the same info...
+all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
+```
+
+### Process reference data
+
+1. Remove unlabeled cells
+
+```{r}
+sum(is.na(ref.data$CLUSTER))
+ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
+```
+
+2. Remove doublets/contaminant cells
+
+The original authors already performed quality control; we have cells with 
+cluster label "Doublets/Contaminants". Let’s remove those:
+
+```{r}
+sum(ref.data$CLUSTER == "Doublets/Contaminants")
+ref.data <- ref.data[,-which(ref.data$CLUSTER == "Doublets/Contaminants")]
+```
+
+3. Make lower resolution cell type levels (for easier interpretation)
+
+```{r}
+ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER, 
+           "Amacrine_cells" = "AC (Amacrine cell)",
+           "Bipolar_cells" = "BC1A",
+           "Bipolar_cells" = "BC1B",
+           "Bipolar_cells" = "BC2",
+           "Bipolar_cells" = "BC3A",
+           "Bipolar_cells" = "BC3B",
+           "Bipolar_cells" = "BC4",
+           "Bipolar_cells" = "BC5A (Cone Bipolar cell 5A)",
+           "Bipolar_cells" = "BC5B",
+           "Bipolar_cells" = "BC5C",
+           "Bipolar_cells" = "BC5D",
+           "Bipolar_cells" = "BC6",
+           "Bipolar_cells" = "BC7 (Cone Bipolar cell 7)",
+           "Bipolar_cells" = "BC8/9 (mixture of BC8 and BC9)",
+           "Cones" = "Cone Photoreceptors",
+           "Muller_glia" = "MG (Mueller Glia)",
+           "Rod_Bipolar_cell" = "RBC (Rod Bipolar cell)",
+           "Rod Photoreceptors" = "Rod Photoreceptors")
+```
+
+4. Remove lowly expressed genes
+
+```{r}
+keep <- rowSums(assays(ref.data)$counts > 0) > 10
+table(keep)
+ref.data <- ref.data[keep,]
+```
+
+5. Obtain same gene ID format as in target data
+
+```{r}
+# TODO: maybe even better to use ENSEMBL
+rownames(ref.data) <- toupper(rownames(ref.data))
+sum(rownames(sce_900) %in% rownames(ref.data))
+```
+
+6. Compute `logNormCounts`
+
+```{r, message=FALSE, warning=FALSE}
+library(scuttle)
+ref.data <- logNormCounts(ref.data)
+```
+
+### `SingleR` at low reference resolution:
+
+```{r}
+# runs 2min 30sec for me
+pred.lowRes <- SingleR(test = sce_900, 
+                     ref = ref.data, 
+                     labels = ref.data$CLUSTER_lowRes, 
+                     de.method = "wilcox")
+table(pred.lowRes$labels)
+```
+
+```{r}
+table(sce_900$cluster_lowRes, pred.lowRes$labels)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.lowRes$labels))
+```
+
+```{r}
+gg <- plotScoreHeatmap(pred.lowRes[1:20,])
+```
+
+```{r}
+summary(is.na(pred.lowRes$pruned.labels))
+table(sce_900$cluster_lowRes[!is.na(pred.lowRes$pruned.labels)], 
+      pred.lowRes$labels[!is.na(pred.lowRes$pruned.labels)])
+```
+
+### `SingleR` at high reference resolution:
+
+```{r}
+# Runs 3min 30sec for me
+pred.higRes <- SingleR(test = sce_900, 
+                     ref = ref.data, 
+                     labels = ref.data$CLUSTER, 
+                     de.method = "wilcox")
+table(pred.higRes$labels)
+```
+
+```{r}
+table(sce_900$cluster_lowRes, pred.higRes$labels)
+```
+
+```{r}
+pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.higRes$labels))
+```
+
+```{r}
+gg <- plotScoreHeatmap(pred.higRes[1:20,])
+```
+
+```{r}
+# low certainty labels: 751
+summary(is.na(pred.higRes$pruned.labels))
+table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)], 
+      pred.higRes$labels[!is.na(pred.higRes$pruned.labels)])
+```
+
+```{r}
+sce_900$SingleR_highRes <- pred.higRes$labels
+sce_900$SingleR_lowRes <- pred.lowRes$labels
+
+# our low resolution labels based on reference
+plotTSNE(sce_900,
+         colour_by = "SingleR_lowRes",
+         text_by = "SingleR_lowRes")
+
+# low resolution labels of the authors
+plotTSNE(sce_900,
+         colour_by = "cluster_lowRes",
+         text_by = "cluster_lowRes")
+```
+
+```{r}
+# our high resolution labels based on reference
+plotTSNE(sce_900,
+         colour_by = "SingleR_highRes",
+         text_by = "SingleR_highRes")
+
+
+# high resolution labels of the authors
+plotTSNE(sce_900,
+         colour_by = "cluster_highRes",
+         text_by = "cluster_highRes")
+# TODO: make labels more readable. However, I cant seem to find where to adapt
+# label font size directly in the TSNE call. A more manual implementation might
+# be needed...
+```
+
