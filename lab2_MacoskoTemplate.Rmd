@@ -515,7 +515,7 @@ would correspond to a cell for which the observed count profile strongly
 deviates from the count profile observed in the cells with a library size 
 below threshold T, i.e., a non-empty droplet.
 
-```{r, eval=FALSE, empty droplets, message=FALSE, warning=FALSE}
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
 library(DropletUtils)
 bcrank <- barcodeRanks(counts(sce))
 
