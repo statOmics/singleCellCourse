@@ -511,7 +511,7 @@ Also, when we look at the t-SNE from the original publication, we observe
 clearly distinct clusters:
 
 ```{r, echo=FALSE}
-knitr::include_graphics("macosko_figure_5B.jpeg")
+knitr::include_graphics("./../macosko_figure_5B.jpeg")
 ```
 
 The main reason for this is that the authors of the original paper used quite a 
@@ -685,7 +685,12 @@ the authors)
 original results (clusters 37 and 38)
 
 **Overall, we observe a rather strong correspondence between our clusters and**
-**those of the authors.**
+**those of the authors.** Also note that our t-SNE visualization now resembles
+the t-SNE map of the original authors much more closely:
+
+```{r}
+knitr::include_graphics("./../macosko_figure_5B.jpeg")
+```
 
 # Cell type annotation
 
@@ -755,8 +760,13 @@ plotTSNE(sce_900,
          text_by = "clust_hcl_k39")
 ```
 
-From figure 5D, we obtain the marker-cell type relationship, and draw the
-following conclusions.
+From figure 5D, we obtain the marker-cell type relationship, 
+
+```{r}
+knitr::include_graphics("./../macosko_figure_5D.jpeg")
+```
+
+and draw the following conclusions:
 
 - The *LHX1* marker is specific for horizontal cells. As such, our **cluster 3**
 corresponds to **horizontal cells**.
