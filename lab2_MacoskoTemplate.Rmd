@@ -467,7 +467,7 @@ is loosely motivated by the fact that such a filter will retain 99% of
 non-outlier values that follow a normal distribution. We demonstrate adopting
 adaptive thresholds on the Macosko dataset:
 
-```{r, eval=FALSE, quick QC}
+```{r, eval=FALSE}
 lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
