@@ -1,3 +1,4 @@
 *.rds filter=lfs diff=lfs merge=lfs -text
 data/sce_preprocessed.rds filter=lfs diff=lfs merge=lfs -text
 data/sce_after_labsession2.rds filter=lfs diff=lfs merge=lfs -text
+data/sce_15_cuomo.rds filter=lfs diff=lfs merge=lfs -text
