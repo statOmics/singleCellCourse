@@ -257,9 +257,20 @@ igraph::plot.igraph(
 
 ### Detect clusters on the graph
 
-Two popular graph-based clustering algorithm are the `leiden` and `louvain` algorithms, both referring to the location of its developers. A common implementation of the [`louvain` algorithm](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008) is to optimize the modularity, effectively attempting to maximize the difference between the observed number of edges in a community and the expected number of such edges.
+Two popular graph-based clustering algorithm are the `leiden` and `louvain` 
+algorithms, both referring to the location of its developers. A common 
+implementation of the 
+[`louvain`algorithm](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008) 
+is to optimize the modularity, effectively attempting to maximize the difference 
+between the observed number of edges in a community and the expected number of 
+such edges.
 
-However, additional evaluations found that modularity optimization using the `louvain` algorithm is confined to a [resolution limit](https://www.pnas.org/content/104/1/36), and in addition may result in communities that are not well connected. The [`leiden` algorithm](https://www.nature.com/articles/s41598-019-41695-z), instead, guarantees well-connected communities.
+However, additional evaluations found that modularity optimization using the 
+`louvain` algorithm is confined to a 
+[resolution limit](https://www.pnas.org/content/104/1/36), and in addition may 
+result in communities that are not well connected. 
+The [`leiden` algorithm](https://www.nature.com/articles/s41598-019-41695-z), 
+instead, guarantees well-connected communities.
 
 ```{r}
 set.seed(464688)
@@ -804,6 +815,10 @@ cells and pericytes, which both are likely to be present in cluster 14!
 - The *CX3CR1* marker is specific for microglia. However, we do not seem to
 observe any cells that were identified as microglia by the original publication.
 
+- Last but not least, the authors have identified the rod cells as cells that
+do not express any of the aforementioned markers. As such, we are able to
+identify our **clusters 12 and 17** as **rod cells**.
+
 ## Supervised: Using marker genes detected from this data
 
 Sometimes it will be very difficult to set up a panel of known marker genes 
@@ -906,29 +921,40 @@ For the record, *NRN1* also is a known marker for identifying ganglion cells.
 
 ## Semi-supervised using SingleR
 
-Last but not least, ...
+A conceptually straightforward annotation approach is to compare our current
+scRNA-seq dataset with a previously annotated reference dataset. Labels can 
+then be assigned to each cell in the Macosko dataset based on the 
+most similar reference cells, for some definition of "similar". This is a 
+standard classification challenge that can be tackled by standard machine 
+learning techniques such as random forests and support vector machines. Any 
+published and labeled RNA-seq dataset (bulk or single-cell) can be used as a 
+reference, though its reliability depends greatly on the expertise of the 
+original authors who assigned the labels in the first place.
 
-...
+In this section, we will perform such label transfer between the annotated
+reference dataset from 
+[Shekhar et al.](https://doi.org/10.1016/j.cell.2016.07.054), which also is 
+a scRNA-seq dataset that studied the mouse retina, and the Macosko dataset. 
 
-Assume a reference dataset with known cell type labels. For each test cell, 
-`singleR` will then:
+To perform the actual label transfer, will use the `SingleR` Bioconductor 
+package. For each "test" cell in the Macosko dataset, `singleR` will:
 
 1. Compute Spearman correlation between the test cell and each reference cell. 
-To improve signal/noise, only marker genes identified using reference dataset 
-are used for this.
+To improve signal/noise, only marker genes identified using the reference 
+dataset are used for this.
 
 2. For each label (cell type), set the score as the (default of) 80% quantile of
 Spearman correlations.
 
 3. The prediction is then the label with the highest score.
 
-
-```{r, message=FALSE, warning=FALSE}
-#BiocManager::install("SingleR")
-library(SingleR)
-```
+Before we can use `singleR` to perform label transfer, we will need to import,
+explore (brief) and wrangle the reference dataset by Shekhar *et al.*.
 
 ### Import reference data
+
+The dataset by Shekhar *et al.* can be conveniently imported using the 
+`scRNAseq` package.
 
 ```{r, message=FALSE, warning=FALSE}
 library(scRNAseq)
@@ -1017,9 +1043,12 @@ library(scuttle)
 ref.data <- logNormCounts(ref.data)
 ```
 
-### `SingleR` at low reference resolution:
+### `SingleR` at low reference resolution
 
 ```{r}
+#BiocManager::install("SingleR")
+library(SingleR)
+
 # runs 2min 30sec for me
 pred.lowRes <- SingleR(test = sce_900, 
                      ref = ref.data, 
@@ -1028,25 +1057,140 @@ pred.lowRes <- SingleR(test = sce_900,
 table(pred.lowRes$labels)
 ```
 
+Using the `SingleR` classifier that was trained on the reference dataset by
+Shekhar *et al.*, we have labeled 2731 cells from the Macosko dataset as
+amacrine cells, 1528 cells as bipolar cells, and so on. Again note that we
+predicted a label for each cell in the Macosko dataset based its similarity
+(in gene expression) with labeled cells from the Shekhar dataset.
+
+**Most importantly,** we want to compare our predicted cell labels with the
+labels that were obtained by Macokso *et al.*, which we *could* consider to be
+ground truth labels if we assume that the authors succeeded in their large 
+effort of annotating their cell clusters for their publication.
+
 ```{r}
 table(sce_900$cluster_lowRes, pred.lowRes$labels)
 ```
+
+By the naked eye, we immediately observe a strong correspondence between our
+predicted labels and the labels from the original publication (i.e., most
+amacrine cells being predicted as amacrine cells, most bipolar cells being
+predicted as bipolar cells, and so on). Before we delve deeper into this, we
+may visualize our result using a heatmap:
 
 ```{r}
 pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.lowRes$labels))
 ```
 
+where we also can observe the correspondence between the predicted (x-axis) and
+the original (y-axis) labels.
+
+One other visualization strategy is implemented in the `plotScoreHeatmap` of the
+`SingleR` package. Remember, the `SingleR` classifier assigns each target cell
+to a cell type label **with a certain probability**. The `plotScoreHeatmap`
+function then allow you to plot, for each cell (columns) the assignment score 
+(which can be thought of as a probability) of that cell belonging to each of 
+the reference label categories (rows).
+
 ```{r}
 gg <- plotScoreHeatmap(pred.lowRes[1:20,])
 ```
 
+For instance, when we look at the 20th cell (rightmost column), we see that 
+this cell was labeled as a rod photoreceptor (top row). This is because this
+was the label that was assigned to the cell with highest assignment score 
+(third row). We also see that the second most likely label for this cell is
+cones (fourth row).
+
+Finally, we can use these assignment score to filter out cells that could not be
+unambiguously assigned to one cell type, i.e., only report those cells that we
+were able to reliably assign:
+
 ```{r}
 summary(is.na(pred.lowRes$pruned.labels))
+
+range(rowMaxs(pred.lowRes$scores)) # all assignments
+range(rowMaxs(pred.lowRes$scores[!is.na(pred.lowRes$pruned.labels),])) # reliable assignments
+
 table(sce_900$cluster_lowRes[!is.na(pred.lowRes$pruned.labels)], 
       pred.lowRes$labels[!is.na(pred.lowRes$pruned.labels)])
 ```
 
-### `SingleR` at high reference resolution:
+We will do the interpretation of the concordance between the predicted and the
+original labels on this subset. We observe a strong correspondence between the 
+predicted labels and the labels from Macokso *et al.* We can read this table 
+as follows:
+
+- Almost all amacrine cells of the Macosko dataset are correctly predicted as
+amacrine cells (2036/(2036+7+1+41+1) ±= 98% correctly assigned).
+
+- All horizontal cells and all ganglion cells of the Macosko dataset are 
+predicted as amacrine cells. This makes perfect sense. Since the
+reference dataset did not contain horizontal/ganglion cell labels, it is 
+impossible to label the target cells with these labels. In stead, the cells
+were labeled as the cell type that is most closely related to horizontal/
+ganglion cells; the amacrine cell type (see figure 5D).
+
+- Most of the bipolar cells of the Macosko dataset were either predicted as
+bipolar cells or as rod bipolar cells. The authors of the Macosko paper were not
+able (in their low-resolution labeling) to distinguish between these two 
+subtypes of bipolar cells, but we succeeded in doing this (although we should
+in principle need to double-check with markers if this is a true biological 
+signal and not some spurious effect). 
+
+- 44% (279/(279+354)) of the cones in the Macosko dataset are correctly labeled 
+as cones. The remaining 56% of the cells were labeled as rods. This means that
+either the `SingleR` classifier wrongfully labeled these cones as rods, or the 
+original authors mislabeled these rods as cones. Since we do not really have 
+a ground truth here, the best idea is to check this using known markers to 
+distinguish between rods and cones. 
+
+- Almost all Muller glia cells of the Macosko dataset are correctly predicted as
+Muller glia cells (569/(569+2) ±= 100% correctly assigned). In addition, most of
+the astrocytes, fibroblast, vascular endothelium, pericytes and microglia cells
+also got labeled as Muller glia cells. This makes perfect sense. Since the
+reference dataset did not contain these cell labels, it was impossible to label 
+the target cells with these labels. In stead, the cells were labeled as the cell 
+type that is most closely related; the Muller glia cell type (see figure 5D).
+
+- Almost all rod cells of the Macosko dataset are correctly predicted as
+rod cells (1834/(1834+6+4+1) ±= 99% correctly assigned).
+
+We can now also visualize the predicted labels and the original labels on our
+t-SNE.
+
+```{r}
+sce_900$SingleR_lowRes <- pred.lowRes$labels
+
+# our low resolution labels based on reference
+plotTSNE(sce_900,
+         colour_by = "SingleR_lowRes",
+         text_by = "SingleR_lowRes")
+
+# low resolution labels of the authors
+plotTSNE(sce_900,
+         colour_by = "cluster_lowRes",
+         text_by = "cluster_lowRes")
+```
+
+Comparing these two figures, we come to the same conclusion as above based on 
+the table comparison.
+
+We see how some cells our classifier labeld more clusters as rods. Based on the 
+marker results from the first section of cell annotation, we known that our
+classifier as misclassified these (i.e., the original labels are correct).
+
+On the other hand, we were here nicely able to distinguish between bipolar cells
+and rod bipolar cells, which cluster separately.
+
+**Altogether, label-transfer was quite successfull, and we would have been able**
+**to very quickly get high-quality results using this very user-friendly and** 
+**fast approach implemented in the `SingleR` package.**
+
+### Addendum: `SingleR` at high reference resolution
+
+For the sake of completeness, we may also perform label transfer with `SingleR`
+using the more fine-grained labels from the reference dataset.
 
 ```{r}
 # Runs 3min 30sec for me
@@ -1076,22 +1220,11 @@ table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)],
       pred.higRes$labels[!is.na(pred.higRes$pruned.labels)])
 ```
 
+
+
 ```{r}
 sce_900$SingleR_highRes <- pred.higRes$labels
-sce_900$SingleR_lowRes <- pred.lowRes$labels
 
-# our low resolution labels based on reference
-plotTSNE(sce_900,
-         colour_by = "SingleR_lowRes",
-         text_by = "SingleR_lowRes")
-
-# low resolution labels of the authors
-plotTSNE(sce_900,
-         colour_by = "cluster_lowRes",
-         text_by = "cluster_lowRes")
-```
-
-```{r}
 # our high resolution labels based on reference
 plotTSNE(sce_900,
          colour_by = "SingleR_highRes",
