@@ -16,7 +16,7 @@ session 1), which can be obtained in code lines 682-687 (where session 2 starts)
 
 # Preamble: installation of Bioconductor libraries
 
-```{r,eval=FALSE}
+```{r}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -160,7 +160,7 @@ microarrays and more.
 The Macosko dataset is available from ExperimentHub and can be accessed as
 follows:
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(ExperimentHub)
 edb <- ExperimentHub()
 
@@ -186,7 +186,7 @@ with the expression data, gene-level information, cell-level information and
 experiment metadata all in place in one data object. The scRNA-seq package
 currently holds 61 datasets, including the data from *Macosko et al.*:
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(scRNAseq)
 scRNAseq::MacoskoRetinaData()
 ```
@@ -196,7 +196,7 @@ scRNAseq::MacoskoRetinaData()
 The `scRNAseq` package provides convenient access to several datasets. See the [package Bioconductor page](http://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html) 
 for more information.
 
-```{r,eval=FALSE}
+```{r}
 # Code below might ask you to create an ExperimentHub directory. 
 # Type 'yes' and hit Enter, to allow this.
 suppressPackageStartupMessages(library(scRNAseq))
@@ -205,7 +205,7 @@ sce <- MacoskoRetinaData()
 
 # A `SingleCellExperiment` object
 
-```{r,eval=FALSE}
+```{r}
 sce
 ```
 
@@ -214,7 +214,7 @@ sce
 Please see [Figure 4.1 in OSCA](http://bioconductor.org/books/release/OSCA/data-infrastructure.html) 
 for an overview of a `SingleCellExperiment` object.
 
-```{r,eval=FALSE}
+```{r}
 # Data: assays
 assays(sce)
 assays(sce)$counts[1:5, 1:5]
@@ -231,7 +231,7 @@ reducedDims(sce) # empty for now
 
 ## Creating a new `SingleCellExperiment` object
 
-```{r,eval=FALSE}
+```{r}
 sceNew <- SingleCellExperiment(assays = list(counts = assays(sce)$counts))
 sceNew
 
@@ -240,7 +240,7 @@ rm(sceNew)
 
 ## Storing (meta)data in a `SingleCellExperiment` object
 
-```{r,eval=FALSE}
+```{r}
 fakeGeneNames <- paste0("gene", 1:nrow(sce))
 rowData(sce)$fakeName <- fakeGeneNames
 head(rowData(sce))
@@ -259,14 +259,14 @@ The `rowData` slot of a `SingleCellExperiment` object allows for storing
 information on the features, i.e. the genes, in a dataset. In our object,
 the `rowData` slot is empty.
 
-```{r,eval=FALSE}
+```{r}
 rowData(sce)
 ```
 
 As such, the only information we have on the genes are their names, which can
 be retrieved as the `rownames` of the expression matrix.
 
-```{r,eval=FALSE}
+```{r}
 head(rownames(sce))
 ```
 
@@ -279,7 +279,7 @@ store:
 - Gene length (genomic start position and end position)
 - Others...
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library("biomaRt")
 
 ensembl75 <- useEnsembl(biomart = 'genes', 
@@ -298,7 +298,7 @@ geneInfo <- getBM(attributes = c("ensembl_gene_id", # ENSEMBL unambiguous identi
 head(geneInfo)
 ```
 
-```{r,eval=FALSE}
+```{r}
 geneInfo$mgi_symbol_upper <- toupper(geneInfo$mgi_symbol) 
 # match between gene info and rownames
 
@@ -308,13 +308,13 @@ sum(!rownames(sce) %in% geneInfo$mgi_symbol_upper) # lost in conversion :(
 rowData(sce) <- geneInfo[match(rownames(sce),geneInfo$mgi_symbol_upper),]
 ```
 
-```{r,eval=FALSE}
+```{r}
 head(rowData(sce))
 ```
 
 # Filtering non-informative genes
 
-```{r,eval=FALSE}
+```{r}
 library(edgeR)
 
 # A very simple strategy: remove all genes that are expressed in less than 10
@@ -351,7 +351,7 @@ filterByExpr function, which defaults to 10, then n will be taken as
 Note that all the group sizes will often be larger than the `large.n` in case
 of single-cell data.
 
-```{r,eval=FALSE}
+```{r}
 # Slow (more than 1min) -> do not run
 # keep2 <- filterByExpr(sce,
 #                       group = sce$cluster,
@@ -413,7 +413,7 @@ If subsets is specified, these statistics are also computed for each subset of
 features. This is useful for investigating gene sets of interest, e.g., 
 mitochondrial genes.
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(scater)
 
 # check ERCC spike-in transcripts
@@ -443,7 +443,7 @@ mitochondrial genes. This indicates likely damaged cells, presumably because
 of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
 the downstream analysis.
 
-```{r,eval=FALSE}
+```{r}
 # Number of genes vs library size
 plotColData(sce, x = "sum", y="detected", colour_by="cluster") 
 
@@ -477,7 +477,7 @@ is loosely motivated by the fact that such a filter will retain 99% of
 non-outlier values that follow a normal distribution. We demonstrate adopting
 adaptive thresholds on the Macosko dataset:
 
-```{r,eval=FALSE}
+```{r}
 lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
@@ -525,7 +525,7 @@ would correspond to a cell for which the observed count profile strongly
 deviates from the count profile observed in the cells with a library size 
 below threshold T, i.e., a non-empty droplet.
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(DropletUtils)
 bcrank <- barcodeRanks(counts(sce))
 
@@ -590,12 +590,12 @@ Note: only classifies for identifying doublets for which the two cells
 are from different cell type clusters.
 
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 ## perform doublet detection
 library(scDblFinder)
 ```
 
-```{r,eval=FALSE}
+```{r}
 set.seed(211103)
 sampleID <- unlist(lapply(strsplit(colData(sce)$cell.id, split="_"), "[[", 1))
 table(sampleID)
@@ -621,7 +621,7 @@ range(sce$scDblFinder.score[sce$scDblFinder.class  == "doublet" & sampleID == "r
 range(sce$scDblFinder.score[sce$scDblFinder.class  == "singlet" & sampleID == "r1"])
 ```
 
-```{r,eval=FALSE}
+```{r}
 # remove doublets
 sce <- sce[,!sce$scDblFinder.class == "doublet"]
 ```
@@ -643,7 +643,7 @@ library sizes:
 \[ N_i = \sum_g Y_{gi} \]
 \[ s_i = N_i / \bar{N}_i \]
 
-```{r,eval=FALSE}
+```{r}
 sce <- logNormCounts(sce)
 
 # note we also returned log counts: see the additional logcounts assay.
@@ -678,21 +678,6 @@ downstream analyses.
 --- end lab session 1 ---
 
 ---
-
-```{r}
-library(scRNAseq)
-library(SingleCellExperiment)
-library(scran)
-library(scater)
-```
-
-
-```{r}
-url <- "https://github.com/statOmics/singleCellCourse/blob/master/data/sce_preprocessed.rds?raw=true"
-download.file(url,destfile = "./sce_preprocessed.rds")
-sce <- readRDS("./sce_preprocessed.rds")
-sce
-```
 
 # Normalization (continued)
 

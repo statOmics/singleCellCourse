@@ -10,7 +10,7 @@ output:
 
 # Preamble: installation of Bioconductor libraries
 
-```{r}
+```{r,eval=FALSE}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -74,20 +74,15 @@ doing this during the lab session, to avoid overloading the system.
 First we read in the count matrix (change the path to the location where you
 downloaded data from the Belnet Filesender link):
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
 ```
 
-```{r}
-url <- "https://github.com/statOmics/singleCellCourse/blob/master/data/sce_15_cuomo.rds?raw=true"
-download.file(url,destfile = "./sce_15_cuomo.rds")
+```{r,eval=FALSE}
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds") # specify YOUR path!
 ```
 
-```{r}
-sce <- readRDS("./sce_15_cuomo.rds")
-```
-
-```{r}
+```{r,eval=FALSE}
 sce
 ```
 
@@ -96,7 +91,7 @@ sce
 Exploration of the metadata is essential to get a better idea of what the
 experiment was about and how it was organized.
 
-```{r}
+```{r,eval=FALSE}
 colData(sce)[1:5,1:10]
 colnames(colData(sce))
 ```
@@ -105,7 +100,7 @@ As stated in the paper, cells were sampled on 4 time points. Each of these
 time points is expected to correspond with different cell types (day0 = iPSC,
 day1 = mesendoderm, day2 = intermediate and day3 = endoderm).
 
-```{r}
+```{r,eval=FALSE}
 table(colData(sce)$day)
 ```
 
@@ -113,7 +108,7 @@ As stated in the paper, cells were harvested from 125 patients. Here, we are
 working on a subset with 15 patients. The number of cells harvested per patient 
 (over all time points) ranges from 31 to 637.
 
-```{r}
+```{r,eval=FALSE}
 length(table(colData(sce)$donor)) # number of donors
 range(table(colData(sce)$donor)) # cells per donor
 hist(table(colData(sce)$donor),breaks=100) # cells per donor
@@ -121,7 +116,7 @@ hist(table(colData(sce)$donor),breaks=100) # cells per donor
 
 Below, we look how many cells are harvest per patent and per time point.
 
-```{r}
+```{r,eval=FALSE}
 table(colData(sce)$donor,colData(sce)$day)
 ```
 
@@ -132,7 +127,7 @@ Practically, the cells were prepared in 28 batches. Since we here only look
 at a subset of the data, we see that only 14 of these batches are represented 
 here.
 
-```{r}
+```{r,eval=FALSE}
 length(table(colData(sce)$experiment))
 table(colData(sce)$experiment, colData(sce)$day)
 ```
@@ -143,7 +138,7 @@ The `rowData` slot of a `SingleCellExperiment` object allows for storing
 information on the features, i.e. the genes, in a dataset. In our object,
 the `rowData` slot currently contains the following:
 
-```{r}
+```{r,eval=FALSE}
 head(rowData(sce))
 ```
 
@@ -156,14 +151,14 @@ the gene symbol.
 
 Many more options are possible, but are not necessary for us right now.
 
-```{r}
+```{r,eval=FALSE}
 rowData(sce) <- data.frame(Ensembl = gsub("_.*", "", rowData(sce)$V1),
                            Symbol = gsub("^[^_]*_", "", rowData(sce)$V1))
 head(rowData(sce))
 ```
 
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library("biomaRt")
 ensembl75 <- useEnsembl(biomart = 'genes', 
                         dataset = 'hsapiens_gene_ensembl',
@@ -185,7 +180,7 @@ all(rowData(sce)$Ensembl == rowData(sce)$ensembl_gene_id)
 Let us first try the very simple and very lenient filtering criterion that we
 adopted for the Macosko dataset.
 
-```{r}
+```{r,eval=FALSE}
 keep <- rowSums(assays(sce)$counts > 0) > 10
 table(keep)
 
@@ -199,7 +194,7 @@ expression of 1 count in at least 10 cells is a very lenient criterion if we
 consider that we have 36.000 cells, we should consider adopting a more stringent
 filtering criterium, like the `filterByExpr` from `edgeR`:
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(edgeR)
 
 table(colData(sce)$day)
@@ -217,7 +212,7 @@ sce <- sce[keep2,]
 
 ## Calculate QC variables
 
-```{r}
+```{r,eval=FALSE}
 library(scater)
 
 # check ERCC spike-in transcripts
@@ -241,7 +236,7 @@ mitochondrial genes. This indicates likely damaged cells, presumably because
 of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
 the downstream analysis.
 
-```{r}
+```{r,eval=FALSE}
 # Number of genes vs library size
 plotColData(sce, x = "sum", y="detected", colour_by="day") 
 
@@ -260,7 +255,7 @@ Below, we remove cells that are outlying with respect to
 We remove a total of $301$ cells, mainly due to low sequencing depth and
 low number of genes detected.
 
-```{r}
+```{r,eval=FALSE}
 lowLib <- isOutlier(df$sum, type="lower", log=TRUE, nmads=4)
 lowFeatures <- isOutlier(df$detected, type="lower", log=TRUE)
 highMito <- isOutlier(df$subsets_Mito_percent, type="higher")
@@ -278,19 +273,19 @@ plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discardC
 plotColData(sce, x = "sum", y="detected", colour_by="discardCells")
 ```
 
-```{r}
+```{r,eval=FALSE}
 # visualize cells to be removed
 plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "donor")
 plotColData(sce, x = "sum", y="detected", colour_by="donor")
 ```
 
-```{r}
+```{r,eval=FALSE}
 # visualize cells to be removed
 plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "experiment")
 plotColData(sce, x = "sum", y="detected", colour_by="experiment")
 ```
 
-```{r}
+```{r,eval=FALSE}
 table(sce$donor, sce$discardCells)
 table(sce$donor, sce$discardCells)/rowSums(table(sce$donor, sce$discardCells))
 #fractions of removed cells per donor
@@ -298,7 +293,7 @@ table(sce$donor, sce$discardCells)/rowSums(table(sce$donor, sce$discardCells))
 
 Most removed cells (fraction) are from patients `dixh` and `babz`.
 
-```{r}
+```{r,eval=FALSE}
 table(sce$experiment, sce$discardCells)
 table(sce$experiment, sce$donor)
 ```
@@ -307,7 +302,7 @@ Most removed cells (fraction) are from patients `dixh` and `babz`.
 Most low library sizes seem to come from patient `dixh`; for patient `babz`
 the effect is less pronounced.
 
-```{r}
+```{r,eval=FALSE}
 plotColData(sce[,sce$donor=="dixh"], x = "sum", y="detected")
 plotColData(sce[,sce$donor=="babz"], x = "sum", y="detected")
 ```
@@ -324,7 +319,7 @@ little bit. When we think of how the adaptive threshold strategy works, we
 may want to remove cells that are 4MADs away from the center, rather than
 the default 3 MADs.
 
-```{r}
+```{r,eval=FALSE}
 # previously
 lowLib <- isOutlier(df$sum, type="lower", log=TRUE)
 table(lowLib)
@@ -344,7 +339,7 @@ we let appropriate exploratory figures guide us to make reasonable choices;
 i.e., we look at the data rather than blindly following a standardized pipeline
 that may work well in many cases, but maybe not our particular dataset.
 
-```{r}
+```{r,eval=FALSE}
 # remove cells identified using adaptive thresholds
 sce <- sce[, !colData(sce)$discardCells]
 ```
@@ -378,7 +373,7 @@ library sizes:
 \[ N_i = \sum_g Y_{gi} \]
 \[ s_i = N_i / \bar{N}_i \]
 
-```{r}
+```{r,eval=FALSE}
 sce <- logNormCounts(sce)
 
 # note we also returned log counts: see the additional logcounts assay.

@@ -69,29 +69,27 @@ Steps taken
 
 # Load end-result after lab session 2
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
 library(scater)
 library(scran)
 ```
 
-```{r}
-url <- "https://github.com/statOmics/singleCellCourse/blob/master/data/sce_after_labsession2.rds?raw=true"
-download.file(url,destfile = "./sce_after_labsession2.rds")
-sce <- readRDS("./sce_after_labsession2.rds") # 147Mb SCE object
+```{r,eval=FALSE}
+sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds")  # specify YOUR path!
 ```
 
-```{r}
+```{r,eval=FALSE}
 head(colData(sce))
 ```
 
-```{r}
+```{r,eval=FALSE}
 reducedDimNames(sce)
 ```
 
 # Add cluster information from publication
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 # install.packages("tidyverse") # if not yet installed
 library(tidyverse)
 sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 

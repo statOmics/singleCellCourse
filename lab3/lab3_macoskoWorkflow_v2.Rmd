@@ -461,7 +461,7 @@ clust_hcl_k10 <- cutree(hcl, k = 10)
 table(clust_hcl_k10)
 ```
 
-````{r}
+```{r}
 # cut to get 39 clusters
 clust_hcl_k39 <- cutree(hcl, k = 39)
 table(clust_hcl_k39)
