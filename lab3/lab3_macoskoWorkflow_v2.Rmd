@@ -960,7 +960,7 @@ The dataset by Shekhar *et al.* can be conveniently imported using the
 
 ```{r, message=FALSE, warning=FALSE}
 library(scRNAseq)
-(ref.data <- scRNAseq::ShekharRetinaData())
+(ref.data <- scRNAseq::ShekharRetinaData(ensembl = TRUE))
 ```
 
 ### Explore metadata of reference data
@@ -1032,8 +1032,11 @@ ref.data <- ref.data[keep,]
 
 5. Obtain same gene ID format as in target data
 
+To avoid problems with different version of gene symbols, it is good practice
+do work with unambiguous gene identifiers like those of ENSEMBL instead.
+
 ```{r}
-rownames(ref.data) <- toupper(rownames(ref.data))
+rownames(sce_900) <- rowData(sce_900)$ensembl_gene_id # use ENSEMBL identifiers instead
 sum(rownames(sce_900) %in% rownames(ref.data))
 ```
 
@@ -1085,7 +1088,12 @@ pheatmap::pheatmap(tab / rowSums(tab))
 ```
 
 where we also can observe the correspondence between the predicted (x-axis) and
-the original (y-axis) labels.
+the original (y-axis) labels. Note that we have normalized the values in the
+heatmap for each row, so that the coloring of the cells in the matrix can be
+interpreted as the fraction of the original cell types that got assigned to 
+each of the reference categories (e.g. for row 1, 80-90% of the cells got
+predicted as amacrine cells and the remaining 10% got predicted as rod
+photoreceptors).
 
 One other visualization strategy is implemented in the `plotScoreHeatmap` of the
 `SingleR` package. Remember, the `SingleR` classifier assigns each target cell
@@ -1241,4 +1249,5 @@ plotTSNE(sce_900,
 # label font size directly in the TSNE call. A more manual implementation might
 # be needed...
 ```
+
 
