@@ -835,10 +835,10 @@ cluster based on their functional annotation. This strategy is referred to as
 The most straightforward approach to marker gene detection involves testing 
 for differential expression (DE) between clusters. If a gene is strongly DE 
 between clusters, it is likely to have driven the separation of cells in the 
-clustering algorithm. The general strategy is to compare each pair of clusters 
+dimensionality reduction. The general strategy is to compare each pair of clusters 
 and compute scores quantifying the differences in the expression distributions 
 between clusters. The scores for all pairwise comparisons involving a 
-particular cluster are then consolidated into a single dataframe for that 
+particular cluster are then consolidated into a single data frame for that 
 cluster. This approach is implemented in the `scoreMarkers` function of the
 `scran` package.
 
@@ -886,7 +886,7 @@ closely related to the U statistic in the Wilcoxon ranked sum test (a.k.a.,
 Mann-Whitney U-test)." As such, this a very interesting column to use for
 selecting marker genes.
 
-Based on the `mean.AUC` statistic, we may noww inspect the top10 markers to
+Based on the `mean.AUC` statistic, we may now inspect the top10 markers to
 distinguish between cells of cluster 1 and cells of the other clusters:
 
 ```{r}
@@ -906,7 +906,7 @@ plotExpression(sce_900,
                colour_by="clust_hcl_k39")
 ```
 
-In my opinion, two genes pop up as extremely interesting for using as markers
+Two genes pop up as extremely interesting for using as markers
 specific for cluster 1: *NRN1* and *SLC17A6*. These markers are highly expressed
 in cluster 1, but have almost no expression in any of the other clusters.
 
@@ -929,7 +929,9 @@ standard classification challenge that can be tackled by standard machine
 learning techniques such as random forests and support vector machines. Any 
 published and labeled RNA-seq dataset (bulk or single-cell) can be used as a 
 reference, though its reliability depends greatly on the expertise of the 
-original authors who assigned the labels in the first place.
+original authors who assigned the labels in the first place and the closer
+the reference dataset is to the dataset we would like to annotate (e.g., 
+full-length vs UMI-based protocol), the more accurate the annotation will typically be.
 
 In this section, we will perform such label transfer between the annotated
 reference dataset from 
@@ -1031,7 +1033,6 @@ ref.data <- ref.data[keep,]
 5. Obtain same gene ID format as in target data
 
 ```{r}
-# TODO: maybe even better to use ENSEMBL
 rownames(ref.data) <- toupper(rownames(ref.data))
 sum(rownames(sce_900) %in% rownames(ref.data))
 ```
@@ -1069,17 +1070,18 @@ ground truth labels if we assume that the authors succeeded in their large
 effort of annotating their cell clusters for their publication.
 
 ```{r}
-table(sce_900$cluster_lowRes, pred.lowRes$labels)
+tab <- table(sce_900$cluster_lowRes, pred.lowRes$labels)
+tab
 ```
 
 By the naked eye, we immediately observe a strong correspondence between our
 predicted labels and the labels from the original publication (i.e., most
 amacrine cells being predicted as amacrine cells, most bipolar cells being
-predicted as bipolar cells, and so on). Before we delve deeper into this, we
+predicted as bipolar cells, and so on). Before we dive deeper into this, we
 may visualize our result using a heatmap:
 
 ```{r}
-pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.lowRes$labels))
+pheatmap::pheatmap(tab / rowSums(tab))
 ```
 
 where we also can observe the correspondence between the predicted (x-axis) and
@@ -1088,19 +1090,19 @@ the original (y-axis) labels.
 One other visualization strategy is implemented in the `plotScoreHeatmap` of the
 `SingleR` package. Remember, the `SingleR` classifier assigns each target cell
 to a cell type label **with a certain probability**. The `plotScoreHeatmap`
-function then allow you to plot, for each cell (columns) the assignment score 
+function then allows you to plot, for each cell (columns) the assignment score 
 (which can be thought of as a probability) of that cell belonging to each of 
 the reference label categories (rows).
 
 ```{r}
 gg <- plotScoreHeatmap(pred.lowRes[1:20,])
+gg
 ```
 
 For instance, when we look at the 20th cell (rightmost column), we see that 
-this cell was labeled as a rod photoreceptor (top row). This is because this
-was the label that was assigned to the cell with highest assignment score 
-(third row). We also see that the second most likely label for this cell is
-cones (fourth row).
+this cell was labeled as a rod photoreceptor. This is because this
+was the label that was assigned to the cell with highest assignment score. We also see that the second most likely label for this cell is
+cones.
 
 Finally, we can use these assignment score to filter out cells that could not be
 unambiguously assigned to one cell type, i.e., only report those cells that we
@@ -1116,7 +1118,7 @@ table(sce_900$cluster_lowRes[!is.na(pred.lowRes$pruned.labels)],
       pred.lowRes$labels[!is.na(pred.lowRes$pruned.labels)])
 ```
 
-We will do the interpretation of the concordance between the predicted and the
+We will interpret the concordance between the predicted and the
 original labels on this subset. We observe a strong correspondence between the 
 predicted labels and the labels from Macokso *et al.* We can read this table 
 as follows:
@@ -1135,7 +1137,7 @@ ganglion cells; the amacrine cell type (see figure 5D).
 bipolar cells or as rod bipolar cells. The authors of the Macosko paper were not
 able (in their low-resolution labeling) to distinguish between these two 
 subtypes of bipolar cells, but we succeeded in doing this (although we should
-in principle need to double-check with markers if this is a true biological 
+in principle need to double-check with markers whether this is a true biological 
 signal and not some spurious effect). 
 
 - 44% (279/(279+354)) of the cones in the Macosko dataset are correctly labeled 
