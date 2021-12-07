@@ -49,6 +49,9 @@ that you can fill out:
 
 [lab2_MacoskoTemplate](./lab2_MacoskoTemplate.html)
 
+Here, we provide you with a solution file for the exercise:
+
+[lab2_MacoskoWorkflow](./lab2_MacoskoWorkflow.html)
 
 # Cuomo dataset
 
@@ -71,4 +74,7 @@ We here provide you with a "solution" file for the analysis of last week's
 session, and some placeholders for the analysis of this session:
 
 [lab2_CuomoTemplate](./lab2_CuomoTemplate.html)
+
+
+---
 

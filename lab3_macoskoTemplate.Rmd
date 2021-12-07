@@ -1,5 +1,5 @@
 ---
-title: 'Lab3: Clustering, cell type annotation, differential expression'
+title: 'Lab3: Clustering, marker gene detection and cell type annotation'
 author: "Koen Van den Berge and Jeroen Gilis"
 date: "6/12/2021"
 output: 
@@ -11,7 +11,7 @@ output:
 
 # Preamble: installation of Bioconductor libraries
 
-```{r}
+```{r,eval=FALSE}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -69,14 +69,16 @@ Steps taken
 
 # Load end-result after lab session 2
 
-```{r, mssage=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
 library(scater)
 library(scran)
 ```
 
 ```{r}
-sce <- readRDS("/Users/jg/Desktop/sce_after_labsession2.rds") # 147Mb SCE object
+url <- "https://github.com/statOmics/singleCellCourse/blob/master/data/sce_after_labsession2.rds?raw=true"
+download.file(url,destfile = "./sce_after_labsession2.rds")
+sce <- readRDS("./sce_after_labsession2.rds") # 147Mb SCE object
 ```
 
 ```{r}
@@ -90,6 +92,7 @@ reducedDimNames(sce)
 # Add cluster information from publication
 
 ```{r, message=FALSE, warning=FALSE}
+# install.packages("tidyverse") # if not yet installed
 library(tidyverse)
 sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
            "Horizontal_cells" = "1",
@@ -239,10 +242,10 @@ we may then adopt a faster algorithm.
 
 ### Build graph (SNN graph)
 
-```{r}
+```{r,eval=FALSE}
 # Build a shared nearest-neighbor graph from PCA space
-graph <- buildSNNGraph(sce, 
-                       use.dimred = 'PCA')
+graph <- buildSNNGraph(x = ..., # our SCE object
+                       use.dimred = ...) # 	A string specifying which existing values in reducedDims(x) should be used.
 # alternative: buildKNNGraph()
 ```
 
@@ -263,7 +266,7 @@ result in communities that are not well connected.
 The [`leiden` algorithm](https://www.nature.com/articles/s41598-019-41695-z), 
 instead, guarantees well-connected communities.
 
-```{r}
+```{r,eval=FALSE}
 set.seed(464688)
 # Walktrap community finding algorithm on the SNN graph
 # DO NOT RUN -> takes 20 minutes
@@ -279,16 +282,17 @@ cluster_louvain <- factor(igraph::cluster_louvain(graph)$membership) #8sec
 nlevels(cluster_louvain) # 11 clusters
 
 # Leiden clustering on the SNN graph
-cluster_leiden <- factor(igraph::cluster_leiden(graph)$membership) #10sec
+cluster_leiden <- ... #10sec
 nlevels(cluster_leiden) # 1326 different clusters!
 
-cluster_leiden2 <- factor(igraph::cluster_leiden(graph = graph,
-                                                 resolution_parameter = 0.01)$membership) #10sec
+# obtain a less overly fine-grained clustering
+cluster_leiden2 <- factor(...(graph = ...,
+                              resolution_parameter = 0.01)$membership) #10sec
 nlevels(cluster_leiden2) #14 different clusters
 
-# Add to sce and visualize
-colData(sce)$cluster_louvain <- cluster_louvain
-colData(sce)$cluster_leiden2 <- cluster_leiden2
+# add clusterings to colData
+colData(sce)$cluster_louvain <- ...
+colData(sce)$cluster_leiden2 <- ...
 ```
 
 ### Comparing clustering strategies
@@ -296,33 +300,24 @@ colData(sce)$cluster_leiden2 <- cluster_leiden2
 A direct comparison of the Louvain and Leiden clustering results using a table 
 of the cluster labels, shows good agreement.
 
-```{r}
-table(cluster_louvain, cluster_leiden2)
+```{r,eval=FALSE}
+table(..., ...) # compare Louvain and Leiden2 clustering
 ```
              
-First, note that Leiden2 clusters 9-14 all contain only 1 cell, which doesn’t 
-make much sense.
-
-Next, we see the following clear correspondences between the cluster labels:
-
-Louvain 1 -> Leiden 1
-Louvain 6 -> Leiden 2
-Louvain 3 -> Leiden 4
-Louvain 7 -> Leiden 6
-Louvain 8 -> Leiden 7
-Louvain 10 -> Leiden 8
-
-For the remaining clusters, we see that 
-- Leiden cluster 3 contains almost cells of Louvain clusters 2, 9 and 11 
-- Leiden cluster 5 contains almost cells of Louvain clusters 4 and 5
+Interpret the result of the comparison between the two clustering strategies.
+Is there a strong correspondence between the strategies?
 
 To make a visualization that gives us very similar information, we may use a 
 heatmap:
 
-```{r}
+```{r,eval=FALSE,message=FALSE,warning=FALSE}
+#install.packages("pheatmap") # if not yet installed
 library(pheatmap)
-pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
+pheatmap::pheatmap(table(..., ...)) # heatmap to visualize the tabular comparison of above 
 ```
+
+Again, interpret the result of the comparison between the two clustering 
+strategies.
 
 Alternatively, we may compute a clustering similarity score that captures the 
 agreement between two sets of partitions. The Adjusted Rand Index (ARI) is often
@@ -331,15 +326,16 @@ partitions agree perfectly, and it is zero if the two partitions are unrelated.
 In some cases, the ARI may also be negative if the partitions are much more 
 different than what could be expected by chance.
 
-```{r}
+```{r,eval=FALSE,message=FALSE,warning=FALSE}
+#install.packages("mclust") # if not yet installed
 library(mclust)
-mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))], 
-                          cluster_leiden2[-which(cluster_leiden2 %in% c(9:14))])
+mclust::adjustedRandIndex(..., # Louvain 
+                          ... # Leiden)
 ```
 
 ### Visualization
 
-```{r}
+```{r,eval=FALSE}
 # Visualization. Add the cluster labels to the previously generated TSNE
 # coordinates
 plotTSNE(sce, 
@@ -359,20 +355,19 @@ the initialization of the cluster centers, it is typically recommended to run
 k-means with multiple starting configurations (via the `nstart` argument).
 For reproducibility, we also strongly advise to set a seed.
 
-```{r}
+```{r,eval=FALSE}
 set.seed(123)
 
 # k=10
-clust_kmeans_k10 <- kmeans(reducedDim(sce, "PCA"), centers = 10, nstart = 5)
-table(clust_kmeans_k10$cluster)
-colData(sce)$kmeans10 <- factor(clust_kmeans_k10$cluster)
-plotTSNE(sce, colour_by="kmeans10")
+clust_kmeans_k10 <- kmeans(reducedDim(...), # extract the principal components from the SCE object
+                           centers = ..., # choose k = 10
+                           nstart = ...)  # choose 5 different starting configurations
+table(clust_kmeans_k10$cluster) # inspect the number of cells in each kmeans cluster
+colData(sce)$kmeans10 <- ... # add to colData
+plotTSNE(object = ..., 
+         colour_by = ...) # color the observations according to the k-means clustering
 
-# k=39
-clust_kmeans_k39 <- kmeans(reducedDim(sce, "PCA"), centers = 39, nstart = 5)
-table(clust_kmeans_k39$cluster)
-colData(sce)$kmeans39 <- factor(clust_kmeans_k39$cluster)
-plotTSNE(sce, colour_by="kmeans39")
+# repeat for k=39
 ```
 
 We here arbitrarily performed two k-means clustering analyses, once with k=10 
@@ -441,10 +436,12 @@ The differences between the different methods goes beyond the scope of this
 session, but a brief description is provided in the function help file. In 
 the context of scRNA-seq, we recommend the use of the `"ward.D2"` method.
 
-```{r}
-distsce <- dist(reducedDim(sce, "PCA")) #1min
-hcl <- hclust(distsce, method = "ward.D2") #3min
-plot(hcl, labels = FALSE)
+```{r, eval=FALSE}
+distsce <- dist(...) # extract the principal components from the SCE object (runs 1min)
+hcl <- hclust(distsce, 
+              method = ...) # runs 3min
+plot(hcl, 
+     labels = FALSE) # visualize dendrogram
 ```
 
 Next, in order to derive a given set of cluster labels, we need to 
@@ -455,29 +452,29 @@ and a threshold value for cutting the tree. The latter may be either `k`, the
 number of clusters we want to report, or `h`, the height of the dendrogram at 
 which we want to cut the tree.
 
-```{r}
+```{r,eval=FALSE}
 # cut to get 10 clusters
-clust_hcl_k10 <- cutree(hcl, k = 10)
+clust_hcl_k10 <- cutree(tree = ..., # name of clustering tree
+                        k = ...) # desired number of groups
 table(clust_hcl_k10)
 ```
 
-````{r}
+```{r,eval=FALSE}
 # cut to get 39 clusters
-clust_hcl_k39 <- cutree(hcl, k = 39)
-table(clust_hcl_k39)
+...
 ```
 
-```{r}
-sce$clust_hcl_k10 <- as.factor(clust_hcl_k10)
-sce$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+```{r,eval=FALSE}
+sce$clust_hcl_k10 <- ... # add to colData
+sce$clust_hcl_k39 <- a... # add to colData
 
 # Visualization. Add the cluster labels to the previously generated TSNE
 # coordinates
-plotTSNE(sce, 
-         colour_by="clust_hcl_k10")
+plotTSNE(object = ..., 
+         colour_by = ...) # k=10
 
-plotTSNE(sce, 
-         colour_by ="clust_hcl_k39")
+plotTSNE(object = ..., 
+         colour_by = ...) # k=39
 ```
 
 # Clustering in the original paper
@@ -487,30 +484,31 @@ see that the correspondence is not great. As a demonstration, I make a table and
 a heatmap comparing the low-resolution cluster labels from the paper with our 
 Louvain, Leiden2 and hierarchical clustering (k=10) labels:
 
-```{r}
-table(sce$cluster_lowRes, sce$cluster_louvain)
+```{r,eval=FALSE}
+table(sce$cluster_lowRes, ...) # compare low resolution clusters of authors to our Louvain clustering
 ```
 
-```{r}
-table(sce$cluster_lowRes, sce$cluster_leiden2)
+```{r,eval=FALSE}
+... # compare low resolution clusters of authors to our Leiden2 clustering
 ```
 
-```{r}
-table(sce$cluster_lowRes, sce$clust_hcl_k10)
+```{r,eval=FALSE}
+... # compare low resolution clusters of authors to our hierarchical (k=10) clustering
 ```
 
-```{r}
-pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_louvain))
+```{r,eval=FALSE}
+# all three comparisons with heatmaps
+pheatmap::pheatmap(...)
 
-pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_leiden2))
+pheatmap::pheatmap(...)
 
-pheatmap::pheatmap(table(sce$cluster_lowRes, sce$clust_hcl_k10))
+pheatmap::pheatmap(...)
 ```
 
 Also, when we look at the t-SNE from the original publication, we observe
 clearly distinct clusters:
 
-```{r, echo=FALSE}
+```{r}
 knitr::include_graphics("macosko_figure_5B.jpeg")
 ```
 
@@ -559,7 +557,7 @@ something similar to what the authors did for your reference (note that running
 this code requires installing the `snifter` R package, which requires a working
 Python and Conda installation).
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 # code for steps 1-4
 library(scater)
 library(genefilter)
@@ -625,67 +623,50 @@ ggplot() +
     theme_bw()
 ```
 
-```{r}
+```{r,eval=FALSE}
 # Step 5 for us: perform hierarchical clustering
-distsce <- dist(reducedDim(sce_900, "PCA"))
-hcl <- hclust(distsce, method = "ward.D2")
+distsce <- dist(...)
+hcl <- hclust(tree = ..., 
+              method = ...)
 
-clust_hcl_k10 <- cutree(hcl, k = 10)
-clust_hcl_k39 <- cutree(hcl, k = 39)
+clust_hcl_k10 <- ...
+clust_hcl_k39 <- ...
 
-sce_900$clust_hcl_k10 <- as.factor(clust_hcl_k10)
-sce_900$clust_hcl_k39 <- as.factor(clust_hcl_k39)
+sce_900$clust_hcl_k10 <- ...
+sce_900$clust_hcl_k39 <- ...
 ```
 
-Visualize our labels and compare with original labels
+Visualize our labels and compare with original labels at the low resolution
 
-```{r}
-plotTSNE(sce_900,
-         colour_by = "clust_hcl_k10",
-         text_by = "clust_hcl_k10")
+```{r,eval=FALSE}
+# visualize our labels
+plotTSNE(object = ...,
+         colour_by = ...,
+         text_by = ...)
 
-plotTSNE(sce_900,
+# compare with original labels
+plotTSNE(object = sce_900,
          colour_by = "cluster_lowRes",
-         text_by = "cluster_lowRes")
+         text_by = "cluster_lowRes",
+         text_size = 3)
 ```
 
-For the low resolution labels, we observe a strong correspondence between our
-clustering and that of the original authors. More specifically:
+Carefully compare the two resulting figures!
 
-- The original rods correspond with our group 5
-- The original cones correspond with our group 2
-- The original pericytes and vascular endothelium correspond with our group 7
-- The original muller glia, astrocytes, fibroblasts and microglia (which are 
-similar cell types, see paper figure 5D) correspond with our group 8
-- The original ganglion and horizontal cells (which are similar cell types, 
-see paper figure 5D) correspond with our group 1
-- The original bipolar cells are split out between our groups 4 and 10
-- The original amacrine cells correspond with our groups 3, 6 and 9
-
-```{r}
-plotTSNE(sce_900,
-         colour_by = "clust_hcl_k39",
-         text_by = "clust_hcl_k39")
-
-plotTSNE(sce_900,
-         colour_by = "cluster",
-         text_by = "cluster")
+```{r,eval=FALSE}
+# repeat for high resolution labels (2 new t-SNE plots)
+...
 ```
 
-I will not make an extensive comparison here. However, note that we see
-several scenarios:
-
-1. Clusters that correspond one-on-one (e.g., our cluster 19 with cluster 16 of
-the authors)
-
-2. We split up some clusters in multiple sets (e.g., our clusters 16, 18 and
-32) that are just 1 cluster in the analysis of the authors (cluster 34)
-
-3. We aggregate some clusters into 1 (e.g. cluster 14) that are split up in the
-original results (clusters 37 and 38)
+Carefully compare the two resulting figures!
 
 **Overall, we observe a rather strong correspondence between our clusters and**
-**those of the authors.**
+**those of the authors.** Also note that our t-SNE visualization now resembles
+the t-SNE map of the original authors much more closely:
+
+```{r}
+knitr::include_graphics("./macosko_figure_5B.jpeg")
+```
 
 # Cell type annotation
 
@@ -696,7 +677,7 @@ data by using a set of 12 well-known molecular markers; genes for which the
 expression profile is typically very specific, i.e., highly expressed only in
 one specific cell type. They used the following markers: 
 
-```{r}
+```{r,eval=FALSE}
 markers <- c("LHX1", "SLC17A6","PAX6","GAD1","SLC6A9","OPN1MW","VSX2",
              "RLBP1", "GFAP", "PECAM1", "KCNJ8","CX3CR1")
 ```
@@ -705,7 +686,7 @@ We will here visualize the expression of these markers in t-SNE space.
 First, we create a "baseline" figure, displaying each cell in 2D space, colored
 in black.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
                           y = reducedDim(sce_900, type = "TSNE")[,2],
@@ -721,7 +702,7 @@ gg_base
 
 Next, we obtain the counts of the 12 pre-selected marker genes for all cells.
 
-```{r}
+```{r, eval=FALSE}
 marker_counts <- assays(sce_900)$counts[markers,]
 marker_counts <- as.matrix(t(marker_counts))
 ```
@@ -730,7 +711,7 @@ Finally, we make one figure for each of the 12 marker genes. The idea is to
 give each cell that has a non-zero expression of the marker (i.e., for which
 the marker is expressed) a red coloring.
 
-```{r}
+```{r,eval=FALSE}
 marker_counts_binary <- marker_counts
 marker_counts_binary[which(marker_counts_binary > 0)] <- 1
 
@@ -748,74 +729,34 @@ for (i in seq_along(markers)) {
 }
 ```
 
-```{r}
+```{r,eval=FALSE}
 # Visualize our clusters
 plotTSNE(sce_900,
          colour_by = "clust_hcl_k39",
          text_by = "clust_hcl_k39")
 ```
 
-From figure 5D, we obtain the marker-cell type relationship, and draw the
-following conclusions.
+From figure 5D, we obtain the marker-cell type relationship:
+
+```{r}
+knitr::include_graphics("macosko_figure_5D.jpeg")
+```
+
+Try to go back and forth between 
+
+1. the visualization of marker expression on the t-SNE map,
+2. the visualization of our cluster labels on the t-SNE map, and
+3. the marker-cell type relationship from figure 5D.
+
+This should allow you to obtain a low-resolution annotation for most of the
+clusters we have manually obtained ourselves! We give away one of the easiest
+annotations:
 
 - The *LHX1* marker is specific for horizontal cells. As such, our **cluster 3**
 corresponds to **horizontal cells**.
 
-- The *SLC17A6* marker is specific for ganglion cells. As such, our **cluster 1**
-corresponds to **ganglion cells**.
-
-- The *PAX6* marker is not specific. It is expressed in horizontal cells, ganglion
-cells, amacrine cells (all subtypes), muller glia cells and fibroblasts. First,
-this reconfirms our previous statements about clusters 3 and 1, which indeed 
-should also express *PAX6*. Second, many clusters are potential candidates for 
-being any of the remaining cell types to express *PAX6*. The next marker should
-point us to their more exact identity.
-
-- The *GAD1* marker is specific for amacrine cells. In addition, it is only 
-expressed in "GABAergic" amacrine cells, which affect the neurotransmitter GABA.
-As such, **clusters 4, 5, 6, 8, 9, 11, 13, 29, 30 and 31 are GABAergic**
-**amacrine cells**. Conversely, the clusters that express *PAX6* but not *GAD1*
-(clusters 16, 18, 19, 22, 23, 24, 26, 32, 36) are either non-GABAergic 
-amacrine cells, muller glia cells or fibroblasts.
-
-- The *SLC6A9* marker is specific for glycinergic amacrine cells, i.e., 
-affecting the neurotransmitter glycine. As such, **clusters 19, 22, 23, 26 and 36**
-are the glycinergic amacrine cells. In addition, we have clusters 16, 18, 24 and
-32 that express *PAX6*, but not *GAD1* nor *SLC6A9*. As such, these cells 
-should be either muller glia cells or fibroblasts.
-
-- The *OPN1MW* marker is specific for cones. As such, our **clusters 2, 34 and 35**
-corresponds to **cones**.
-
-- The *VSX2* marker is strongly expressed in **bipolar cells**. In addition, it
-is lowly expressed in **muller glia cells** and **fibroblasts**. As such, 
-**clusters 7, 10, 15, 16, 18, 20, 21, 25, 27, 32, 33, 37 and 38** should belong
-to one of these cell types.
-
-- The *RLBP1* marker is specific for muller glia cells and astrocytes. Since
-clusters 16, 18 and 32 express *RLBP1* and *PAX6*, but not *GAD1* nor *SLC6A9*,
-we now have very strong evidence that these are muller glia cells.
-
-- The *GFAP* marker is specific for astrocytes. As such, our **clusters 24**,
-which also expresses *RLBP1*, should correspond to **astrocytes**.
-
-- The *PECAM1* marker is specific for pericytes As such, our **clusters 14**, 
-should correspond to **pericytes**.
-
-- The *PECAM1* marker is specific for vascular endothelium cells. As such, 
-our **clusters 14**, should correspond to **vascular endothelium cells**.
-
-- The *KCNJ8* marker is specific for pericytes. As such, our **clusters 14**, 
-should correspond to **pericytes**. Note that it thus appears that our 
-clustering procedure was not able to differentiate between vascular endothelium 
-cells and pericytes, which both are likely to be present in cluster 14!
-
-- The *CX3CR1* marker is specific for microglia. However, we do not seem to
-observe any cells that were identified as microglia by the original publication.
-
-- Last but not least, the authors have identified the rod cells as cells that
-do not express any of the aforementioned markers. As such, we are able to
-identify our **clusters 12 and 17** as **rod cells**.
+You can do this for the other markers/clusters (sometimes it will still be 
+ambiguous).
 
 ## Supervised: Using marker genes detected from this data
 
@@ -840,18 +781,18 @@ particular cluster are then consolidated into a single data frame for that
 cluster. This approach is implemented in the `scoreMarkers` function of the
 `scran` package.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scran)
-marker.info <- scoreMarkers(sce_900, 
-                            sce_900$clust_hcl_k39)
+marker.info <- scoreMarkers(x = ..., # the SCE object
+                            groups = ...) # our cluster identifiers
 marker.info # one dataframe for each of the 39 clusters
 ```
 
-```{r}
+```{r,eval=FALSE}
 colnames(marker.info[["1"]]) # statistics for cluster 1.
 ```
 
-```{r}
+```{r,eval=FALSE}
 head(marker.info[["1"]])
 ```
 
@@ -887,36 +828,28 @@ selecting marker genes.
 Based on the `mean.AUC` statistic, we may now inspect the top10 markers to
 distinguish between cells of cluster 1 and cells of the other clusters:
 
-```{r}
+```{r,eval=FALSE}
 chosen <- marker.info[["1"]]
 ordered <- chosen[order(chosen$mean.AUC, decreasing=TRUE),]
-head(ordered[,c(1:4,10)],n=10) # showing basic stats only, for brevity.
+head(ordered[,c(1:4,10)], n=10) # showing basic stats only, for brevity.
 ```
 
 We can also visualize the log-normalized expression of the top10 markers in 
 each cell, stratified on cluster label, using the `plotExpression` function
 of the `scater` package:
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scater)
-plotExpression(sce_900, 
-               features=head(rownames(ordered),n=10), 
-               x="clust_hcl_k39", 
-               colour_by="clust_hcl_k39")
+plotExpression(bject = ..., # the SCE object, 
+               features = ..., # top 10 features according to the `scoreMarkers` results
+               x = ..., # our cluster labels 
+               colour_by = ...) # our cluster labels 
 ```
 
-Two genes pop up as extremely interesting for using as markers
-specific for cluster 1: *NRN1* and *SLC17A6*. These markers are highly expressed
-in cluster 1, but have almost no expression in any of the other clusters.
+Based on these results, which markers would you choose to unambiguously 
+distinguish cells from cluster 1 from cells of the other clusters?
 
-Interestingly, *SLC17A6* is exactly the marker the original authors have used
-as a specific marker for ganglion cells! Note that if we would not know the
-system under study, i.e. we were unable to select the *SLC17A6* marker based
-on our prior biological knowledge, we would have successfully identified the
-marker using this strategy. In a next step, we could perform an internet search
-to see if this marker is known or not.
-
-For the record, *NRN1* also is a known marker for identifying ganglion cells.
+Does the name of the 9th marker gene ring any bells?
 
 ## Semi-supervised using SingleR
 
@@ -957,32 +890,21 @@ explore (brief) and wrangle the reference dataset by Shekhar *et al.*.
 The dataset by Shekhar *et al.* can be conveniently imported using the 
 `scRNAseq` package.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scRNAseq)
 (ref.data <- scRNAseq::ShekharRetinaData(ensembl = TRUE))
 ```
 
 ### Explore metadata of reference data
 
-```{r}
-head(colData(ref.data))
-levels(as.factor(ref.data$CLUSTER))
-```
-
-```{r}
-levels(as.factor(ref.data$`SUB-CLUSTER`))
-```
-
-```{r}
-# both have exactly the same info...
-all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
-```
+Inspect the colData for the Shekhar dataset. Compare the CLUSTER and SUBCLUSTER
+variables!
 
 ### Process reference data
 
 1. Remove unlabeled cells
 
-```{r}
+```{r,eval=FALSE}
 sum(is.na(ref.data$CLUSTER))
 ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
 ```
@@ -992,14 +914,14 @@ ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
 The original authors already performed quality control; we have cells with 
 cluster label "Doublets/Contaminants". Let’s remove those:
 
-```{r}
-sum(ref.data$CLUSTER == "Doublets/Contaminants")
-ref.data <- ref.data[,-which(ref.data$CLUSTER == "Doublets/Contaminants")]
+```{r,eval=FALSE}
+sum(ref.data$CLUSTER == ...)
+ref.data <- ...
 ```
 
 3. Make lower resolution cell type levels (for easier interpretation)
 
-```{r}
+```{r,eval=FALSE}
 ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER, 
            "Amacrine_cells" = "AC (Amacrine cell)",
            "Bipolar_cells" = "BC1A",
@@ -1023,7 +945,7 @@ ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER,
 
 4. Remove lowly expressed genes
 
-```{r}
+```{r,eval=FALSE}
 keep <- rowSums(assays(ref.data)$counts > 0) > 10
 table(keep)
 ref.data <- ref.data[keep,]
@@ -1034,29 +956,29 @@ ref.data <- ref.data[keep,]
 To avoid problems with different version of gene symbols, it is good practice
 do work with unambiguous gene identifiers like those of ENSEMBL instead.
 
-```{r}
+```{r,eval=FALSE}
 rownames(sce_900) <- rowData(sce_900)$ensembl_gene_id # use ENSEMBL identifiers instead
 sum(rownames(sce_900) %in% rownames(ref.data))
 ```
 
 6. Compute `logNormCounts`
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scuttle)
-ref.data <- logNormCounts(ref.data)
+ref.data <- logNormCounts(...)
 ```
 
 ### `SingleR` at low reference resolution
 
-```{r}
+```{r,eval=FALSE}
 #BiocManager::install("SingleR")
 library(SingleR)
 
 # runs 2min 30sec for me
-pred.lowRes <- SingleR(test = sce_900, 
-                     ref = ref.data, 
-                     labels = ref.data$CLUSTER_lowRes, 
-                     de.method = "wilcox")
+pred.lowRes <- SingleR(test = ..., # our dataset
+                       ref = ..., # the reference dataset 
+                       labels = ..., # vector of known labels for all cells in ref
+                       de.method = "wilcox") # most suitable method for sparse (droplet) data
 table(pred.lowRes$labels)
 ```
 
@@ -1071,28 +993,20 @@ labels that were obtained by Macokso *et al.*, which we *could* consider to be
 ground truth labels if we assume that the authors succeeded in their large 
 effort of annotating their cell clusters for their publication.
 
-```{r}
-tab <- table(sce_900$cluster_lowRes, pred.lowRes$labels)
+```{r,eval=FALSE}
+tab <- table(..., ...) # the original low-resolution labels versus our predicted low-resolution labels
 tab
 ```
 
-By the naked eye, we immediately observe a strong correspondence between our
-predicted labels and the labels from the original publication (i.e., most
-amacrine cells being predicted as amacrine cells, most bipolar cells being
-predicted as bipolar cells, and so on). Before we dive deeper into this, we
-may visualize our result using a heatmap:
+Inspect the results.
 
-```{r}
+Before we dive deeper into this, we may visualize our result using a heatmap:
+
+```{r,eval=FALSE}
 pheatmap::pheatmap(tab / rowSums(tab))
 ```
 
-where we also can observe the correspondence between the predicted (x-axis) and
-the original (y-axis) labels. Note that we have normalized the values in the
-heatmap for each row, so that the coloring of the cells in the matrix can be
-interpreted as the fraction of the original cell types that got assigned to 
-each of the reference categories (e.g. for row 1, 80-90% of the cells got
-predicted as amacrine cells and the remaining 10% got predicted as rod
-photoreceptors).
+Inspect the results.
 
 One other visualization strategy is implemented in the `plotScoreHeatmap` of the
 `SingleR` package. Remember, the `SingleR` classifier assigns each target cell
@@ -1101,21 +1015,18 @@ function then allows you to plot, for each cell (columns) the assignment score
 (which can be thought of as a probability) of that cell belonging to each of 
 the reference label categories (rows).
 
-```{r}
+```{r,eval=FALSE}
 gg <- plotScoreHeatmap(pred.lowRes[1:20,])
 gg
 ```
 
-For instance, when we look at the 20th cell (rightmost column), we see that 
-this cell was labeled as a rod photoreceptor. This is because this
-was the label that was assigned to the cell with highest assignment score. We also see that the second most likely label for this cell is
-cones.
+Inspect the results.
 
 Finally, we can use these assignment score to filter out cells that could not be
 unambiguously assigned to one cell type, i.e., only report those cells that we
 were able to reliably assign:
 
-```{r}
+```{r,eval=FALSE}
 summary(is.na(pred.lowRes$pruned.labels))
 
 range(rowMaxs(pred.lowRes$scores)) # all assignments
@@ -1133,66 +1044,28 @@ as follows:
 - Almost all amacrine cells of the Macosko dataset are correctly predicted as
 amacrine cells (2036/(2036+7+1+41+1) ±= 98% correctly assigned).
 
-- All horizontal cells and all ganglion cells of the Macosko dataset are 
-predicted as amacrine cells. This makes perfect sense. Since the
-reference dataset did not contain horizontal/ganglion cell labels, it is 
-impossible to label the target cells with these labels. In stead, the cells
-were labeled as the cell type that is most closely related to horizontal/
-ganglion cells; the amacrine cell type (see figure 5D).
-
-- Most of the bipolar cells of the Macosko dataset were either predicted as
-bipolar cells or as rod bipolar cells. The authors of the Macosko paper were not
-able (in their low-resolution labeling) to distinguish between these two 
-subtypes of bipolar cells, but we succeeded in doing this (although we should
-in principle need to double-check with markers whether this is a true biological 
-signal and not some spurious effect). 
-
-- 44% (279/(279+354)) of the cones in the Macosko dataset are correctly labeled 
-as cones. The remaining 56% of the cells were labeled as rods. This means that
-either the `SingleR` classifier wrongfully labeled these cones as rods, or the 
-original authors mislabeled these rods as cones. Since we do not really have 
-a ground truth here, the best idea is to check this using known markers to 
-distinguish between rods and cones. 
-
-- Almost all Muller glia cells of the Macosko dataset are correctly predicted as
-Muller glia cells (569/(569+2) ±= 100% correctly assigned). In addition, most of
-the astrocytes, fibroblast, vascular endothelium, pericytes and microglia cells
-also got labeled as Muller glia cells. This makes perfect sense. Since the
-reference dataset did not contain these cell labels, it was impossible to label 
-the target cells with these labels. In stead, the cells were labeled as the cell 
-type that is most closely related; the Muller glia cell type (see figure 5D).
-
-- Almost all rod cells of the Macosko dataset are correctly predicted as
-rod cells (1834/(1834+6+4+1) ±= 99% correctly assigned).
+Try to interpret the results for the other cell types.
 
 We can now also visualize the predicted labels and the original labels on our
 t-SNE.
 
-```{r}
+```{r,eval=FALSE}
 sce_900$SingleR_lowRes <- pred.lowRes$labels
 
 # our low resolution labels based on reference
-plotTSNE(sce_900,
-         colour_by = "SingleR_lowRes",
-         text_by = "SingleR_lowRes",
-         text_size = 3)
+plotTSNE(...,
+         colour_by = ...,
+         text_by = ...,
+         text_size = ...)
 
 # low resolution labels of the authors
-plotTSNE(sce_900,
-         colour_by = "cluster_lowRes",
-         text_by = "cluster_lowRes",
-         text_size = 3)
+plotTSNE(...,
+         colour_by = ...,
+         text_by = ...,
+         text_size = ...)
 ```
 
-Comparing these two figures, we come to the same conclusion as above based on 
-the table comparison.
-
-We see how some cells our classifier labeld more clusters as rods. Based on the 
-marker results from the first section of cell annotation, we known that our
-classifier as misclassified these (i.e., the original labels are correct).
-
-On the other hand, we were here nicely able to distinguish between bipolar cells
-and rod bipolar cells, which cluster separately.
+Interpret the visualizations.
 
 **Altogether, label-transfer was quite successful, and we would have been able**
 **to very quickly get high-quality results using this very user-friendly and** 
@@ -1203,54 +1076,7 @@ and rod bipolar cells, which cluster separately.
 For the sake of completeness, we may also perform label transfer with `SingleR`
 using the more fine-grained labels from the reference dataset.
 
-```{r}
-# Runs 3min 30sec for me
-pred.higRes <- SingleR(test = sce_900, 
-                     ref = ref.data, 
-                     labels = ref.data$CLUSTER, 
-                     de.method = "wilcox")
-table(pred.higRes$labels)
+```{r,eval=FALSE}
+...
 ```
-
-```{r}
-table(sce_900$cluster_lowRes, pred.higRes$labels)
-```
-
-```{r}
-pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.higRes$labels))
-```
-
-```{r}
-gg <- plotScoreHeatmap(pred.higRes[1:20,])
-```
-
-```{r}
-# low certainty labels: 751
-summary(is.na(pred.higRes$pruned.labels))
-table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)], 
-      pred.higRes$labels[!is.na(pred.higRes$pruned.labels)])
-```
-
-
-
-```{r}
-sce_900$SingleR_highRes <- pred.higRes$labels
-
-# our high resolution labels based on reference
-plotTSNE(sce_900,
-         colour_by = "SingleR_highRes",
-         text_by = "SingleR_highRes",
-         text_size = 2.5)
-
-
-# high resolution labels of the authors
-plotTSNE(sce_900,
-         colour_by = "cluster_highRes",
-         text_by = "cluster_highRes",
-         text_size = 2.5)
-# TODO: make labels more readable. However, I cant seem to find where to adapt
-# label font size directly in the TSNE call. A more manual implementation might
-# be needed...
-```
-
 

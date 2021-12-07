@@ -17,11 +17,11 @@ navbar:
       icon: fa-laptop
       menu:
       - text: "Lab 1"
-        href: labSession_1.html
+        href: lab1_session.html
       - text: "Lab 2"
-        href: lab2test.html
+        href: lab2_session.html
       - text: "Lab 3"
-        href: 
+        href: lab3_session.html
   right:
     - icon: fab fa-github
       href: https://github.com/statOmics/Rmd-website
