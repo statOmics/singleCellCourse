@@ -1088,7 +1088,12 @@ pheatmap::pheatmap(tab / rowSums(tab))
 ```
 
 where we also can observe the correspondence between the predicted (x-axis) and
-the original (y-axis) labels.
+the original (y-axis) labels. Note that we have normalized the values in the
+heatmap for each row, so that the coloring of the cells in the matrix can be
+interpreted as the fraction of the original cell types that got assigned to 
+each of the reference categories (e.g. for row 1, 80-90% of the cells got
+predicted as amacrine cells and the remaining 10% got predicted as rod
+photoreceptors).
 
 One other visualization strategy is implemented in the `plotScoreHeatmap` of the
 `SingleR` package. Remember, the `SingleR` classifier assigns each target cell

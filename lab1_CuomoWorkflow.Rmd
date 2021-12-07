@@ -8,6 +8,31 @@ output:
     toc_float: true
 ---
 
+# Preamble: installation of Bioconductor libraries
+
+```{r}
+# install BiocManager package if not installed yet.
+# BiocManager is the package installer for Bioconductor software.
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# install packages if not yet installed.
+pkgs <- c("SingleCellExperiment",
+          "ExperimentHub",
+          "edgeR",
+          "DropletUtils", 
+          "scRNAseq", 
+          "scater", 
+          "scuttle", 
+          "scran", 
+          "BiocSingular", 
+          "scDblFinder")
+notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
+if(length(notInstalled) > 0){
+  BiocManager::install(notInstalled)
+}
+```
+
 # Introduction
 
 We here make use of the publication of Anna Cuomo et al.
@@ -50,11 +75,19 @@ First we read in the count matrix (change the path to the location where you
 downloaded data from the Belnet Filesender link):
 
 ```{r, message=FALSE, warning=FALSE}
+library(SingleCellExperiment)
+```
+
+```{r}
 url <- "https://github.com/statOmics/singleCellCourse/blob/master/data/sce_15_cuomo.rds?raw=true"
 download.file(url,destfile = "./sce_15_cuomo.rds")
+```
 
+```{r}
 sce <- readRDS("./sce_15_cuomo.rds")
+```
 
+```{r}
 sce
 ```
 
