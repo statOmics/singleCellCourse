@@ -257,7 +257,9 @@ igraph::plot.igraph(
 
 ### Detect clusters on the graph
 
-TODO: should we add some background on Leiden and Louvain?
+Two popular graph-based clustering algorithm are the `leiden` and `louvain` algorithms, both referring to the location of its developers. A common implementation of the [`louvain` algorithm](https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008) is to optimize the modularity, effectively attempting to maximize the difference between the observed number of edges in a community and the expected number of such edges.
+
+However, additional evaluations found that modularity optimization using the `louvain` algorithm is confined to a [resolution limit](https://www.pnas.org/content/104/1/36), and in addition may result in communities that are not well connected. The [`leiden` algorithm](https://www.nature.com/articles/s41598-019-41695-z), instead, guarantees well-connected communities.
 
 ```{r}
 set.seed(464688)
@@ -528,7 +530,7 @@ authors adopted a manual implementation.
 strategy, which is conceptually similar in addressing the mean-variance 
 relationship during feature selection.
 
-3. **Principal components analysis:** The authors performed PCA after scaling 
+3. **Principal component analysis:** The authors performed PCA after scaling 
 the data. They next performed a test to determine how many PCs contributed 
 significantly to explaining the variability in the data. Based on this test, 
 they continued the analysis pipeline with the top 32 PCs.
