@@ -103,8 +103,8 @@ fucntions explained for the Macosko analysis!
 Here, we provide a "solution" file for the analysis of the Cuomo dataset for
 the first lab session:
 
-[lab1_CuomoWorkflow_html](./lab1_preprocessing/lab1_CuomoWorkflow.html)
-[lab1_CuomoWorkflow_rmd](./lab1_preprocessing/lab1_CuomoWorkflow.Rmd)
+[lab1_CuomoWorkflow_html](./lab1_CuomoWorkflow.html)
+[lab1_CuomoWorkflow_rmd](./lab1_CuomoWorkflow.Rmd)
 
 ---
 
