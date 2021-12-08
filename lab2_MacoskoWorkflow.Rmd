@@ -895,7 +895,7 @@ fraction varies significantly across the cells in our datasets.Genes with a
 high deviance will thus most poorly fit a null model where the relative
 abundance is equal for all cells, which therefore are informative.
 
-```{r}
+```{r,eval=FALSE}
 #BiocManager::install("scry")
 library(scry)
 sce <- devianceFeatureSelection(object = sce, 
@@ -1087,13 +1087,13 @@ signal-to-noise ratio!
 First, we compare the different feature selection criteria, using the top 1000
 highly variable genes for each method.
 
-```{r}
+```{r,eval=FALSE}
 # Get top 1000 highly variable features using the highly variable genes
 # (w.r.t. mean), high deviance genes and the VST strategy of Seurat
 
 hvg1000 <- getTopHVGs(dec, n = 1000)
 hdg1000 <- names(sort(rowData(sce)$binomial_deviance, decreasing = TRUE))[1:1000]
-# vst1000 <- VariableFeatures(seurat_obj)[1:1000]
+vst1000 <- VariableFeatures(seurat_obj)[1:1000]
 
 # HVG strategy
 plotPCA(
@@ -1112,13 +1112,13 @@ plotPCA(
   ggtitle("High-deviance genes")
 
 # VST strategy
-# plotPCA(
-#     runPCA(sce,
-#            ncomponents = 2, 
-#            subset_row = vst1000), 
-#     colour_by = "cluster",
-#     ) +
-#   ggtitle("Seurat VST")
+plotPCA(
+    runPCA(sce,
+           ncomponents = 2,
+           subset_row = vst1000),
+    colour_by = "cluster",
+    ) +
+  ggtitle("Seurat VST")
 ```
 
 Next, we assess the sensitivity on the number of top features for the highly
@@ -1219,7 +1219,7 @@ plotReducedDim(sce,
 Alternatively, we could adopt the GLM-PCA strategy using only the genes with 
 high deviance.
 
-```{r}
+```{r,eval=FALSE}
 # Based on the diagnostic plot from the feature selection, we would select the 
 # top 2000 genes with highest deviance. However, to reduce the running time of
 # the function, I here select the top 500 (which still is quite slow - 5min).
