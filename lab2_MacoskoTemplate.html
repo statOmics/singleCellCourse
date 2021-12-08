@@ -512,39 +512,49 @@ div.tocify {
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># install BiocManager package if not installed yet.</span></span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="co"># BiocManager is the package installer for Bioconductor software.</span></span>
 <span id="cb1-3"><a href="#cb1-3"></a><span class="cf">if</span> (<span class="op">!</span><span class="kw">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>))</span>
-<span id="cb1-4"><a href="#cb1-4"></a>    <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
-<span id="cb1-5"><a href="#cb1-5"></a></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># install packages if not yet installed.</span></span>
-<span id="cb1-7"><a href="#cb1-7"></a>pkgs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;SingleCellExperiment&quot;</span>,</span>
-<span id="cb1-8"><a href="#cb1-8"></a>          <span class="st">&quot;ExperimentHub&quot;</span>,</span>
-<span id="cb1-9"><a href="#cb1-9"></a>          <span class="st">&quot;edgeR&quot;</span>,</span>
-<span id="cb1-10"><a href="#cb1-10"></a>          <span class="st">&quot;biomaRt&quot;</span>,</span>
-<span id="cb1-11"><a href="#cb1-11"></a>          <span class="st">&quot;DropletUtils&quot;</span>, </span>
-<span id="cb1-12"><a href="#cb1-12"></a>          <span class="st">&quot;scRNAseq&quot;</span>, </span>
-<span id="cb1-13"><a href="#cb1-13"></a>          <span class="st">&quot;scater&quot;</span>, </span>
-<span id="cb1-14"><a href="#cb1-14"></a>          <span class="st">&quot;scuttle&quot;</span>, </span>
-<span id="cb1-15"><a href="#cb1-15"></a>          <span class="st">&quot;scran&quot;</span>,</span>
-<span id="cb1-16"><a href="#cb1-16"></a>          <span class="st">&quot;scry&quot;</span>,</span>
-<span id="cb1-17"><a href="#cb1-17"></a>          <span class="st">&quot;BiocSingular&quot;</span>, </span>
-<span id="cb1-18"><a href="#cb1-18"></a>          <span class="st">&quot;scDblFinder&quot;</span>,</span>
-<span id="cb1-19"><a href="#cb1-19"></a>          <span class="st">&quot;glmpca&quot;</span>,</span>
-<span id="cb1-20"><a href="#cb1-20"></a>          <span class="st">&quot;PCAtools&quot;</span>,</span>
-<span id="cb1-21"><a href="#cb1-21"></a>          <span class="st">&quot;Seurat&quot;</span>)</span>
-<span id="cb1-22"><a href="#cb1-22"></a>notInstalled &lt;-<span class="st"> </span>pkgs[<span class="op">!</span>pkgs <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="dv">1</span>]]</span>
-<span id="cb1-23"><a href="#cb1-23"></a><span class="cf">if</span>(<span class="kw">length</span>(notInstalled) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>){</span>
-<span id="cb1-24"><a href="#cb1-24"></a>  BiocManager<span class="op">::</span><span class="kw">install</span>(notInstalled)</span>
-<span id="cb1-25"><a href="#cb1-25"></a>}</span></code></pre></div>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span></code></pre></div>
+<pre><code>## Installing BiocManager [1.30.16] ...
+##  OK [linked cache]</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># install packages if not yet installed.</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>pkgs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;SingleCellExperiment&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3"></a>          <span class="st">&quot;ExperimentHub&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4"></a>          <span class="st">&quot;edgeR&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5"></a>          <span class="st">&quot;biomaRt&quot;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6"></a>          <span class="st">&quot;DropletUtils&quot;</span>, </span>
+<span id="cb3-7"><a href="#cb3-7"></a>          <span class="st">&quot;scRNAseq&quot;</span>, </span>
+<span id="cb3-8"><a href="#cb3-8"></a>          <span class="st">&quot;scater&quot;</span>, </span>
+<span id="cb3-9"><a href="#cb3-9"></a>          <span class="st">&quot;scuttle&quot;</span>, </span>
+<span id="cb3-10"><a href="#cb3-10"></a>          <span class="st">&quot;scran&quot;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11"></a>          <span class="st">&quot;scry&quot;</span>,</span>
+<span id="cb3-12"><a href="#cb3-12"></a>          <span class="st">&quot;BiocSingular&quot;</span>, </span>
+<span id="cb3-13"><a href="#cb3-13"></a>          <span class="st">&quot;scDblFinder&quot;</span>,</span>
+<span id="cb3-14"><a href="#cb3-14"></a>          <span class="st">&quot;glmpca&quot;</span>,</span>
+<span id="cb3-15"><a href="#cb3-15"></a>          <span class="st">&quot;PCAtools&quot;</span>,</span>
+<span id="cb3-16"><a href="#cb3-16"></a>          <span class="st">&quot;Seurat&quot;</span>)</span>
+<span id="cb3-17"><a href="#cb3-17"></a>notInstalled &lt;-<span class="st"> </span>pkgs[<span class="op">!</span>pkgs <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="dv">1</span>]]</span>
+<span id="cb3-18"><a href="#cb3-18"></a><span class="cf">if</span>(<span class="kw">length</span>(notInstalled) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>){</span>
+<span id="cb3-19"><a href="#cb3-19"></a>  BiocManager<span class="op">::</span><span class="kw">install</span>(notInstalled)</span>
+<span id="cb3-20"><a href="#cb3-20"></a>}</span></code></pre></div>
 <pre><code>## &#39;getOption(&quot;repos&quot;)&#39; replaces Bioconductor standard repositories, see
 ## &#39;?repositories&#39; for details
 ## 
 ## replacement repositories:
 ##     CRAN: https://cran.rstudio.com</code></pre>
 <pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
-<pre><code>## Installing package(s) &#39;scry&#39;, &#39;glmpca&#39;, &#39;PCAtools&#39;, &#39;Seurat&#39;</code></pre>
-<pre><code>## also installing the dependencies &#39;cpp11&#39;, &#39;rprojroot&#39;, &#39;gtools&#39;, &#39;caTools&#39;, &#39;plyr&#39;, &#39;globals&#39;, &#39;listenv&#39;, &#39;parallelly&#39;, &#39;zoo&#39;, &#39;tidyr&#39;, &#39;here&#39;, &#39;gplots&#39;, &#39;RcppArmadillo&#39;, &#39;spatstat.data&#39;, &#39;spatstat.utils&#39;, &#39;spatstat.sparse&#39;, &#39;abind&#39;, &#39;tensor&#39;, &#39;goftest&#39;, &#39;deldir&#39;, &#39;polyclip&#39;, &#39;FNN&#39;, &#39;RSpectra&#39;, &#39;cowplot&#39;, &#39;reshape2&#39;, &#39;fitdistrplus&#39;, &#39;future&#39;, &#39;future.apply&#39;, &#39;ggridges&#39;, &#39;ica&#39;, &#39;leiden&#39;, &#39;lmtest&#39;, &#39;miniUI&#39;, &#39;patchwork&#39;, &#39;pbapply&#39;, &#39;plotly&#39;, &#39;RANN&#39;, &#39;RcppAnnoy&#39;, &#39;reticulate&#39;, &#39;ROCR&#39;, &#39;scattermore&#39;, &#39;sctransform&#39;, &#39;SeuratObject&#39;, &#39;spatstat.core&#39;, &#39;spatstat.geom&#39;, &#39;uwot&#39;, &#39;RcppEigen&#39;, &#39;RcppProgress&#39;</code></pre>
+<pre><code>## Installing package(s) &#39;BiocVersion&#39;, &#39;SingleCellExperiment&#39;, &#39;ExperimentHub&#39;,
+##   &#39;edgeR&#39;, &#39;biomaRt&#39;, &#39;DropletUtils&#39;, &#39;scRNAseq&#39;, &#39;scater&#39;, &#39;scuttle&#39;, &#39;scran&#39;,
+##   &#39;scry&#39;, &#39;BiocSingular&#39;, &#39;scDblFinder&#39;, &#39;glmpca&#39;, &#39;PCAtools&#39;, &#39;Seurat&#39;</code></pre>
+<pre><code>## also installing the dependencies &#39;bit&#39;, &#39;sys&#39;, &#39;formatR&#39;, &#39;rjson&#39;, &#39;fs&#39;, &#39;GenomeInfoDbData&#39;, &#39;zlibbioc&#39;, &#39;bit64&#39;, &#39;blob&#39;, &#39;memoise&#39;, &#39;plogr&#39;, &#39;DT&#39;, &#39;generics&#39;, &#39;tidyselect&#39;, &#39;assertthat&#39;, &#39;askpass&#39;, &#39;lambda.r&#39;, &#39;futile.options&#39;, &#39;GenomicAlignments&#39;, &#39;restfulr&#39;, &#39;bitops&#39;, &#39;Rhtslib&#39;, &#39;cpp11&#39;, &#39;rprojroot&#39;, &#39;gtools&#39;, &#39;caTools&#39;, &#39;sass&#39;, &#39;jquerylib&#39;, &#39;MatrixGenerics&#39;, &#39;Biobase&#39;, &#39;GenomeInfoDb&#39;, &#39;XVector&#39;, &#39;RSQLite&#39;, &#39;interactiveDisplayBase&#39;, &#39;dplyr&#39;, &#39;dbplyr&#39;, &#39;DBI&#39;, &#39;filelock&#39;, &#39;KEGGREST&#39;, &#39;hms&#39;, &#39;prettyunits&#39;, &#39;openssl&#39;, &#39;futile.logger&#39;, &#39;snow&#39;, &#39;sparseMatrixStats&#39;, &#39;rhdf5filters&#39;, &#39;R.oo&#39;, &#39;R.methodsS3&#39;, &#39;sitmo&#39;, &#39;AnnotationFilter&#39;, &#39;rtracklayer&#39;, &#39;Rsamtools&#39;, &#39;ProtGenerics&#39;, &#39;Biostrings&#39;, &#39;RCurl&#39;, &#39;BiocIO&#39;, &#39;RcppHNSW&#39;, &#39;beeswarm&#39;, &#39;vipor&#39;, &#39;data.table&#39;, &#39;plyr&#39;, &#39;globals&#39;, &#39;listenv&#39;, &#39;parallelly&#39;, &#39;zoo&#39;, &#39;htmlwidgets&#39;, &#39;tidyr&#39;, &#39;lazyeval&#39;, &#39;crosstalk&#39;, &#39;purrr&#39;, &#39;promises&#39;, &#39;here&#39;, &#39;gplots&#39;, &#39;RcppArmadillo&#39;, &#39;httpuv&#39;, &#39;xtable&#39;, &#39;fontawesome&#39;, &#39;sourcetools&#39;, &#39;later&#39;, &#39;commonmark&#39;, &#39;bslib&#39;, &#39;cachem&#39;, &#39;spatstat.data&#39;, &#39;spatstat.utils&#39;, &#39;spatstat.sparse&#39;, &#39;abind&#39;, &#39;tensor&#39;, &#39;goftest&#39;, &#39;deldir&#39;, &#39;polyclip&#39;, &#39;FNN&#39;, &#39;RSpectra&#39;, &#39;SummarizedExperiment&#39;, &#39;S4Vectors&#39;, &#39;BiocGenerics&#39;, &#39;GenomicRanges&#39;, &#39;DelayedArray&#39;, &#39;AnnotationHub&#39;, &#39;BiocFileCache&#39;, &#39;curl&#39;, &#39;rappdirs&#39;, &#39;limma&#39;, &#39;locfit&#39;, &#39;Rcpp&#39;, &#39;XML&#39;, &#39;AnnotationDbi&#39;, &#39;progress&#39;, &#39;httr&#39;, &#39;xml2&#39;, &#39;IRanges&#39;, &#39;BiocParallel&#39;, &#39;DelayedMatrixStats&#39;, &#39;HDF5Array&#39;, &#39;rhdf5&#39;, &#39;R.utils&#39;, &#39;dqrng&#39;, &#39;beachmat&#39;, &#39;Rhdf5lib&#39;, &#39;BH&#39;, &#39;ensembldb&#39;, &#39;GenomicFeatures&#39;, &#39;gridExtra&#39;, &#39;BiocNeighbors&#39;, &#39;ggbeeswarm&#39;, &#39;viridis&#39;, &#39;Rtsne&#39;, &#39;ggrepel&#39;, &#39;igraph&#39;, &#39;statmod&#39;, &#39;bluster&#39;, &#39;metapod&#39;, &#39;ScaledMatrix&#39;, &#39;irlba&#39;, &#39;rsvd&#39;, &#39;xgboost&#39;, &#39;cowplot&#39;, &#39;reshape2&#39;, &#39;fitdistrplus&#39;, &#39;future&#39;, &#39;future.apply&#39;, &#39;ggridges&#39;, &#39;ica&#39;, &#39;leiden&#39;, &#39;lmtest&#39;, &#39;matrixStats&#39;, &#39;miniUI&#39;, &#39;patchwork&#39;, &#39;pbapply&#39;, &#39;plotly&#39;, &#39;png&#39;, &#39;RANN&#39;, &#39;RcppAnnoy&#39;, &#39;reticulate&#39;, &#39;ROCR&#39;, &#39;scattermore&#39;, &#39;sctransform&#39;, &#39;SeuratObject&#39;, &#39;shiny&#39;, &#39;spatstat.core&#39;, &#39;spatstat.geom&#39;, &#39;uwot&#39;, &#39;RcppEigen&#39;, &#39;RcppProgress&#39;</code></pre>
 <pre><code>## 
+##   There are binary versions available but the source versions are later:
+##         binary source needs_compilation
+## RSQLite  2.2.8  2.2.9              TRUE
+## irlba    2.3.4  2.3.5              TRUE
+## 
+## 
 ## The downloaded binary packages are in
-##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpX4yUGn/downloaded_packages</code></pre>
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpHjiUDv/downloaded_packages</code></pre>
+<pre><code>## installing the source packages &#39;GenomeInfoDbData&#39;, &#39;RSQLite&#39;, &#39;irlba&#39;, &#39;scRNAseq&#39;</code></pre>
 <pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
 ##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
 ##   &#39;tinytex&#39;, &#39;withr&#39;, &#39;xfun&#39;</code></pre>
@@ -587,80 +597,80 @@ div.tocify {
 <h2><span class="header-section-number">3.3</span> ExperimentHub</h2>
 <p>The Bioconductor <em>ExperimentHub</em> web resource, which can be accessed using the <a href="https://bioconductor.org/packages/release/bioc/html/ExperimentHub.html">ExperimentHub</a> R package, provides a central location where curated data from experiments, publications or training courses can be accessed. While it contains far less datasets than the SRA or GEO (4965 records to date), these datasets all follow the tidy data format of Bioconductor. Note that the ExperimentHub contains several types of data, like bulk and single-cell transcriptomics data, microarrays and more.</p>
 <p>The Macosko dataset is available from ExperimentHub and can be accessed as follows:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">library</span>(ExperimentHub)</span>
-<span id="cb9-2"><a href="#cb9-2"></a>edb &lt;-<span class="st"> </span><span class="kw">ExperimentHub</span>()</span>
-<span id="cb9-3"><a href="#cb9-3"></a></span>
-<span id="cb9-4"><a href="#cb9-4"></a>edb[<span class="kw">grep</span>(<span class="st">&quot;Macosko&quot;</span>, edb<span class="op">$</span>title)] <span class="co"># find accession number (can be inefficient)</span></span>
-<span id="cb9-5"><a href="#cb9-5"></a></span>
-<span id="cb9-6"><a href="#cb9-6"></a>edb_counts &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2690&quot;</span>]]</span>
-<span id="cb9-7"><a href="#cb9-7"></a>edb_counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
-<span id="cb9-8"><a href="#cb9-8"></a></span>
-<span id="cb9-9"><a href="#cb9-9"></a>edb_coldata &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2691&quot;</span>]]</span>
-<span id="cb9-10"><a href="#cb9-10"></a>edb_coldata[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,]</span>
-<span id="cb9-11"><a href="#cb9-11"></a></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="kw">rm</span>(edb, edb_counts, edb_coldata)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw">library</span>(ExperimentHub)</span>
+<span id="cb12-2"><a href="#cb12-2"></a>edb &lt;-<span class="st"> </span><span class="kw">ExperimentHub</span>()</span>
+<span id="cb12-3"><a href="#cb12-3"></a></span>
+<span id="cb12-4"><a href="#cb12-4"></a>edb[<span class="kw">grep</span>(<span class="st">&quot;Macosko&quot;</span>, edb<span class="op">$</span>title)] <span class="co"># find accession number (can be inefficient)</span></span>
+<span id="cb12-5"><a href="#cb12-5"></a></span>
+<span id="cb12-6"><a href="#cb12-6"></a>edb_counts &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2690&quot;</span>]]</span>
+<span id="cb12-7"><a href="#cb12-7"></a>edb_counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
+<span id="cb12-8"><a href="#cb12-8"></a></span>
+<span id="cb12-9"><a href="#cb12-9"></a>edb_coldata &lt;-<span class="st"> </span>edb[[<span class="st">&quot;EH2691&quot;</span>]]</span>
+<span id="cb12-10"><a href="#cb12-10"></a>edb_coldata[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,]</span>
+<span id="cb12-11"><a href="#cb12-11"></a></span>
+<span id="cb12-12"><a href="#cb12-12"></a><span class="kw">rm</span>(edb, edb_counts, edb_coldata)</span></code></pre></div>
 </div>
 <div id="scrnaseq" class="section level2">
 <h2><span class="header-section-number">3.4</span> scRNASeq</h2>
 <p>In addition to ExperimentHub, Bioconductor provides the package <a href="https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html">scRNAseq</a>. This package provides an even more user-friendly client to access (only) scRNA-seq datasets from the ExperimentHub web resource. Data retrieved using the scRNAseq package are stored as user-friendly <code>SingleCellExperiment</code> objects, with the expression data, gene-level information, cell-level information and experiment metadata all in place in one data object. The scRNA-seq package currently holds 61 datasets, including the data from <em>Macosko et al.</em>:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">library</span>(scRNAseq)</span>
-<span id="cb10-2"><a href="#cb10-2"></a>scRNAseq<span class="op">::</span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="kw">library</span>(scRNAseq)</span>
+<span id="cb13-2"><a href="#cb13-2"></a>scRNAseq<span class="op">::</span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
 </div>
 </div>
 <div id="import-data" class="section level1">
 <h1><span class="header-section-number">4</span> Import data</h1>
 <p>The <code>scRNAseq</code> package provides convenient access to several datasets. See the <a href="http://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html">package Bioconductor page</a> for more information.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Code below might ask you to create an ExperimentHub directory. </span></span>
-<span id="cb11-2"><a href="#cb11-2"></a><span class="co"># Type &#39;yes&#39; and hit Enter, to allow this.</span></span>
-<span id="cb11-3"><a href="#cb11-3"></a><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(scRNAseq))</span>
-<span id="cb11-4"><a href="#cb11-4"></a>sce &lt;-<span class="st"> </span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="co"># Code below might ask you to create an ExperimentHub directory. </span></span>
+<span id="cb14-2"><a href="#cb14-2"></a><span class="co"># Type &#39;yes&#39; and hit Enter, to allow this.</span></span>
+<span id="cb14-3"><a href="#cb14-3"></a><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(scRNAseq))</span>
+<span id="cb14-4"><a href="#cb14-4"></a>sce &lt;-<span class="st"> </span><span class="kw">MacoskoRetinaData</span>()</span></code></pre></div>
 </div>
 <div id="a-singlecellexperiment-object" class="section level1">
 <h1><span class="header-section-number">5</span> A <code>SingleCellExperiment</code> object</h1>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>sce</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>sce</span></code></pre></div>
 <div id="accessing-data-from-a-singlecellexperiment-object" class="section level2">
 <h2><span class="header-section-number">5.1</span> Accessing data from a <code>SingleCellExperiment</code> object</h2>
 <p>Please see <a href="http://bioconductor.org/books/release/OSCA/data-infrastructure.html">Figure 4.1 in OSCA</a> for an overview of a <code>SingleCellExperiment</code> object.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># Data: assays</span></span>
-<span id="cb13-2"><a href="#cb13-2"></a><span class="kw">assays</span>(sce)</span>
-<span id="cb13-3"><a href="#cb13-3"></a><span class="kw">assays</span>(sce)<span class="op">$</span>counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
-<span id="cb13-4"><a href="#cb13-4"></a></span>
-<span id="cb13-5"><a href="#cb13-5"></a><span class="co"># Feature metadata: rowData</span></span>
-<span id="cb13-6"><a href="#cb13-6"></a><span class="kw">rowData</span>(sce) <span class="co"># empty for now</span></span>
-<span id="cb13-7"><a href="#cb13-7"></a></span>
-<span id="cb13-8"><a href="#cb13-8"></a><span class="co"># Cell metadata: colData</span></span>
-<span id="cb13-9"><a href="#cb13-9"></a><span class="kw">colData</span>(sce)</span>
-<span id="cb13-10"><a href="#cb13-10"></a></span>
-<span id="cb13-11"><a href="#cb13-11"></a><span class="co"># Reduced dimensions: reducedDims</span></span>
-<span id="cb13-12"><a href="#cb13-12"></a><span class="kw">reducedDims</span>(sce) <span class="co"># empty for now</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co"># Data: assays</span></span>
+<span id="cb16-2"><a href="#cb16-2"></a><span class="kw">assays</span>(sce)</span>
+<span id="cb16-3"><a href="#cb16-3"></a><span class="kw">assays</span>(sce)<span class="op">$</span>counts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
+<span id="cb16-4"><a href="#cb16-4"></a></span>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="co"># Feature metadata: rowData</span></span>
+<span id="cb16-6"><a href="#cb16-6"></a><span class="kw">rowData</span>(sce) <span class="co"># empty for now</span></span>
+<span id="cb16-7"><a href="#cb16-7"></a></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co"># Cell metadata: colData</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a><span class="kw">colData</span>(sce)</span>
+<span id="cb16-10"><a href="#cb16-10"></a></span>
+<span id="cb16-11"><a href="#cb16-11"></a><span class="co"># Reduced dimensions: reducedDims</span></span>
+<span id="cb16-12"><a href="#cb16-12"></a><span class="kw">reducedDims</span>(sce) <span class="co"># empty for now</span></span></code></pre></div>
 </div>
 <div id="creating-a-new-singlecellexperiment-object" class="section level2">
 <h2><span class="header-section-number">5.2</span> Creating a new <code>SingleCellExperiment</code> object</h2>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>sceNew &lt;-<span class="st"> </span><span class="kw">SingleCellExperiment</span>(<span class="dt">assays =</span> <span class="kw">list</span>(<span class="dt">counts =</span> <span class="kw">assays</span>(sce)<span class="op">$</span>counts))</span>
-<span id="cb14-2"><a href="#cb14-2"></a>sceNew</span>
-<span id="cb14-3"><a href="#cb14-3"></a></span>
-<span id="cb14-4"><a href="#cb14-4"></a><span class="kw">rm</span>(sceNew)</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>sceNew &lt;-<span class="st"> </span><span class="kw">SingleCellExperiment</span>(<span class="dt">assays =</span> <span class="kw">list</span>(<span class="dt">counts =</span> <span class="kw">assays</span>(sce)<span class="op">$</span>counts))</span>
+<span id="cb17-2"><a href="#cb17-2"></a>sceNew</span>
+<span id="cb17-3"><a href="#cb17-3"></a></span>
+<span id="cb17-4"><a href="#cb17-4"></a><span class="kw">rm</span>(sceNew)</span></code></pre></div>
 </div>
 <div id="storing-metadata-in-a-singlecellexperiment-object" class="section level2">
 <h2><span class="header-section-number">5.3</span> Storing (meta)data in a <code>SingleCellExperiment</code> object</h2>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>fakeGeneNames &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;gene&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(sce))</span>
-<span id="cb15-2"><a href="#cb15-2"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span>fakeGeneNames</span>
-<span id="cb15-3"><a href="#cb15-3"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span>
-<span id="cb15-4"><a href="#cb15-4"></a><span class="co"># Remove again by setting to NULL</span></span>
-<span id="cb15-5"><a href="#cb15-5"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb15-6"><a href="#cb15-6"></a></span>
-<span id="cb15-7"><a href="#cb15-7"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="kw">log1p</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)</span>
-<span id="cb15-8"><a href="#cb15-8"></a><span class="kw">assays</span>(sce)</span>
-<span id="cb15-9"><a href="#cb15-9"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
-<span id="cb15-10"><a href="#cb15-10"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="ot">NULL</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>fakeGeneNames &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;gene&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(sce))</span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span>fakeGeneNames</span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span>
+<span id="cb18-4"><a href="#cb18-4"></a><span class="co"># Remove again by setting to NULL</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a><span class="kw">rowData</span>(sce)<span class="op">$</span>fakeName &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
+<span id="cb18-6"><a href="#cb18-6"></a></span>
+<span id="cb18-7"><a href="#cb18-7"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="kw">log1p</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)</span>
+<span id="cb18-8"><a href="#cb18-8"></a><span class="kw">assays</span>(sce)</span>
+<span id="cb18-9"><a href="#cb18-9"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</span>
+<span id="cb18-10"><a href="#cb18-10"></a><span class="kw">assays</span>(sce)<span class="op">$</span>logCounts &lt;-<span class="st"> </span><span class="ot">NULL</span></span></code></pre></div>
 </div>
 </div>
 <div id="obtaining-and-including-rowdata" class="section level1">
 <h1><span class="header-section-number">6</span> Obtaining and including rowData</h1>
 <p>The <code>rowData</code> slot of a <code>SingleCellExperiment</code> object allows for storing information on the features, i.e. the genes, in a dataset. In our object, the <code>rowData</code> slot is empty.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="kw">rowData</span>(sce)</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="kw">rowData</span>(sce)</span></code></pre></div>
 <p>As such, the only information we have on the genes are their names, which can be retrieved as the <code>rownames</code> of the expression matrix.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw">head</span>(<span class="kw">rownames</span>(sce))</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="kw">head</span>(<span class="kw">rownames</span>(sce))</span></code></pre></div>
 <p>These are the gene names (symbols). Note that it may be useful to include additional information in the <code>rowData</code> slot. For instance, we may want to store:</p>
 <ul>
 <li>Unambiguous gene identifiers (e.g. from ENSEMBL)</li>
@@ -668,54 +678,54 @@ div.tocify {
 <li>Gene length (genomic start position and end position)</li>
 <li>Others…</li>
 </ul>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="kw">library</span>(<span class="st">&quot;biomaRt&quot;</span>)</span>
-<span id="cb18-2"><a href="#cb18-2"></a></span>
-<span id="cb18-3"><a href="#cb18-3"></a>ensembl75 &lt;-<span class="st"> </span><span class="kw">useEnsembl</span>(<span class="dt">biomart =</span> <span class="st">&#39;genes&#39;</span>, </span>
-<span id="cb18-4"><a href="#cb18-4"></a>                        <span class="dt">dataset =</span> <span class="st">&#39;mmusculus_gene_ensembl&#39;</span>,</span>
-<span id="cb18-5"><a href="#cb18-5"></a>                        <span class="dt">version =</span> <span class="dv">75</span>)</span>
-<span id="cb18-6"><a href="#cb18-6"></a></span>
-<span id="cb18-7"><a href="#cb18-7"></a><span class="kw">head</span>(<span class="kw">listAttributes</span>(ensembl75)) <span class="co"># potential info to extract</span></span>
-<span id="cb18-8"><a href="#cb18-8"></a></span>
-<span id="cb18-9"><a href="#cb18-9"></a>geneInfo &lt;-<span class="st"> </span><span class="kw">getBM</span>(<span class="dt">attributes =</span> <span class="kw">c</span>(<span class="st">&quot;ensembl_gene_id&quot;</span>, <span class="co"># ENSEMBL unambiguous identifier</span></span>
-<span id="cb18-10"><a href="#cb18-10"></a>                                 <span class="st">&quot;mgi_symbol&quot;</span>, <span class="co"># Gene symbol (to link with SCE rownames),</span></span>
-<span id="cb18-11"><a href="#cb18-11"></a>                                 <span class="st">&quot;chromosome_name&quot;</span>, <span class="co"># On which chromosome</span></span>
-<span id="cb18-12"><a href="#cb18-12"></a>                                 <span class="st">&quot;start_position&quot;</span>, <span class="co"># Start position</span></span>
-<span id="cb18-13"><a href="#cb18-13"></a>                                 <span class="st">&quot;end_position&quot;</span>),<span class="co"># End position</span></span>
-<span id="cb18-14"><a href="#cb18-14"></a>                  <span class="dt">mart =</span> ensembl75)</span>
-<span id="cb18-15"><a href="#cb18-15"></a></span>
-<span id="cb18-16"><a href="#cb18-16"></a><span class="kw">head</span>(geneInfo)</span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>geneInfo<span class="op">$</span>mgi_symbol_upper &lt;-<span class="st"> </span><span class="kw">toupper</span>(geneInfo<span class="op">$</span>mgi_symbol) </span>
-<span id="cb19-2"><a href="#cb19-2"></a><span class="co"># match between gene info and rownames</span></span>
-<span id="cb19-3"><a href="#cb19-3"></a></span>
-<span id="cb19-4"><a href="#cb19-4"></a><span class="kw">sum</span>(<span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper)</span>
-<span id="cb19-5"><a href="#cb19-5"></a><span class="kw">sum</span>(<span class="op">!</span><span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper) <span class="co"># lost in conversion :(</span></span>
-<span id="cb19-6"><a href="#cb19-6"></a></span>
-<span id="cb19-7"><a href="#cb19-7"></a><span class="kw">rowData</span>(sce) &lt;-<span class="st"> </span>geneInfo[<span class="kw">match</span>(<span class="kw">rownames</span>(sce),geneInfo<span class="op">$</span>mgi_symbol_upper),]</span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">library</span>(<span class="st">&quot;biomaRt&quot;</span>)</span>
+<span id="cb21-2"><a href="#cb21-2"></a></span>
+<span id="cb21-3"><a href="#cb21-3"></a>ensembl75 &lt;-<span class="st"> </span><span class="kw">useEnsembl</span>(<span class="dt">biomart =</span> <span class="st">&#39;genes&#39;</span>, </span>
+<span id="cb21-4"><a href="#cb21-4"></a>                        <span class="dt">dataset =</span> <span class="st">&#39;mmusculus_gene_ensembl&#39;</span>,</span>
+<span id="cb21-5"><a href="#cb21-5"></a>                        <span class="dt">version =</span> <span class="dv">75</span>)</span>
+<span id="cb21-6"><a href="#cb21-6"></a></span>
+<span id="cb21-7"><a href="#cb21-7"></a><span class="kw">head</span>(<span class="kw">listAttributes</span>(ensembl75)) <span class="co"># potential info to extract</span></span>
+<span id="cb21-8"><a href="#cb21-8"></a></span>
+<span id="cb21-9"><a href="#cb21-9"></a>geneInfo &lt;-<span class="st"> </span><span class="kw">getBM</span>(<span class="dt">attributes =</span> <span class="kw">c</span>(<span class="st">&quot;ensembl_gene_id&quot;</span>, <span class="co"># ENSEMBL unambiguous identifier</span></span>
+<span id="cb21-10"><a href="#cb21-10"></a>                                 <span class="st">&quot;mgi_symbol&quot;</span>, <span class="co"># Gene symbol (to link with SCE rownames),</span></span>
+<span id="cb21-11"><a href="#cb21-11"></a>                                 <span class="st">&quot;chromosome_name&quot;</span>, <span class="co"># On which chromosome</span></span>
+<span id="cb21-12"><a href="#cb21-12"></a>                                 <span class="st">&quot;start_position&quot;</span>, <span class="co"># Start position</span></span>
+<span id="cb21-13"><a href="#cb21-13"></a>                                 <span class="st">&quot;end_position&quot;</span>),<span class="co"># End position</span></span>
+<span id="cb21-14"><a href="#cb21-14"></a>                  <span class="dt">mart =</span> ensembl75)</span>
+<span id="cb21-15"><a href="#cb21-15"></a></span>
+<span id="cb21-16"><a href="#cb21-16"></a><span class="kw">head</span>(geneInfo)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>geneInfo<span class="op">$</span>mgi_symbol_upper &lt;-<span class="st"> </span><span class="kw">toupper</span>(geneInfo<span class="op">$</span>mgi_symbol) </span>
+<span id="cb22-2"><a href="#cb22-2"></a><span class="co"># match between gene info and rownames</span></span>
+<span id="cb22-3"><a href="#cb22-3"></a></span>
+<span id="cb22-4"><a href="#cb22-4"></a><span class="kw">sum</span>(<span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper)</span>
+<span id="cb22-5"><a href="#cb22-5"></a><span class="kw">sum</span>(<span class="op">!</span><span class="kw">rownames</span>(sce) <span class="op">%in%</span><span class="st"> </span>geneInfo<span class="op">$</span>mgi_symbol_upper) <span class="co"># lost in conversion :(</span></span>
+<span id="cb22-6"><a href="#cb22-6"></a></span>
+<span id="cb22-7"><a href="#cb22-7"></a><span class="kw">rowData</span>(sce) &lt;-<span class="st"> </span>geneInfo[<span class="kw">match</span>(<span class="kw">rownames</span>(sce),geneInfo<span class="op">$</span>mgi_symbol_upper),]</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
 </div>
 <div id="filtering-non-informative-genes" class="section level1">
 <h1><span class="header-section-number">7</span> Filtering non-informative genes</h1>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">library</span>(edgeR)</span>
-<span id="cb21-2"><a href="#cb21-2"></a></span>
-<span id="cb21-3"><a href="#cb21-3"></a><span class="co"># A very simple strategy: remove all genes that are expressed in less than 10</span></span>
-<span id="cb21-4"><a href="#cb21-4"></a><span class="co"># out of 49300 cells -&gt; note that this a very lenient filtering criterium</span></span>
-<span id="cb21-5"><a href="#cb21-5"></a>keep &lt;-<span class="st"> </span><span class="kw">rowSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span></span>
-<span id="cb21-6"><a href="#cb21-6"></a><span class="kw">table</span>(keep)</span>
-<span id="cb21-7"><a href="#cb21-7"></a></span>
-<span id="cb21-8"><a href="#cb21-8"></a>sce &lt;-<span class="st"> </span>sce[keep,]</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="kw">library</span>(edgeR)</span>
+<span id="cb24-2"><a href="#cb24-2"></a></span>
+<span id="cb24-3"><a href="#cb24-3"></a><span class="co"># A very simple strategy: remove all genes that are expressed in less than 10</span></span>
+<span id="cb24-4"><a href="#cb24-4"></a><span class="co"># out of 49300 cells -&gt; note that this a very lenient filtering criterium</span></span>
+<span id="cb24-5"><a href="#cb24-5"></a>keep &lt;-<span class="st"> </span><span class="kw">rowSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span></span>
+<span id="cb24-6"><a href="#cb24-6"></a><span class="kw">table</span>(keep)</span>
+<span id="cb24-7"><a href="#cb24-7"></a></span>
+<span id="cb24-8"><a href="#cb24-8"></a>sce &lt;-<span class="st"> </span>sce[keep,]</span></code></pre></div>
 <p>Note that dedicated functions for filtering out lowly expressed genes exist. One such function is the <code>filterByExpr</code> function of the edgeR R package. In brief, the strategy keeps genes that have at least “min.count” reads in a worthwhile number samples.</p>
 <p>More precisely, the filtering keeps genes that have count-per-million (CPM) above k in n samples.</p>
 <p>k is determined by the min.count argument to the function, and by the sample library sizes.</p>
 <p>n is determined by the design matrix. n can be seen as the smallest group sample size. A <code>group</code> of samples/cells can be defined as cells that are more similar to one another, e.g., from the same sequencing batch, the same patient…. Here we could also use the cluster assignment (cell type) for each cell as the grouping variable; <em>note however, that this usually is not available until a</em> <em>later stage in the analysis pipeline</em> (i.e., after dimension reduction and clustering, topics we will cover next session.)</p>
 <p>If all the group sizes are larger than the <code>large.n</code> argument of the filterByExpr function, which defaults to 10, then n will be taken as <code>min.prop</code>* the the number of samples/cells in the smallest group.</p>
 <p>Note that all the group sizes will often be larger than the <code>large.n</code> in case of single-cell data.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="co"># Slow (more than 1min) -&gt; do not run</span></span>
-<span id="cb22-2"><a href="#cb22-2"></a><span class="co"># keep2 &lt;- filterByExpr(sce,</span></span>
-<span id="cb22-3"><a href="#cb22-3"></a><span class="co">#                       group = sce$cluster,</span></span>
-<span id="cb22-4"><a href="#cb22-4"></a><span class="co">#                       min.count = 1,</span></span>
-<span id="cb22-5"><a href="#cb22-5"></a><span class="co">#                       min.total.count = 15,</span></span>
-<span id="cb22-6"><a href="#cb22-6"></a><span class="co">#                       min.prop = 0.2)</span></span>
-<span id="cb22-7"><a href="#cb22-7"></a><span class="co"># table(keep2)</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="co"># Slow (more than 1min) -&gt; do not run</span></span>
+<span id="cb25-2"><a href="#cb25-2"></a><span class="co"># keep2 &lt;- filterByExpr(sce,</span></span>
+<span id="cb25-3"><a href="#cb25-3"></a><span class="co">#                       group = sce$cluster,</span></span>
+<span id="cb25-4"><a href="#cb25-4"></a><span class="co">#                       min.count = 1,</span></span>
+<span id="cb25-5"><a href="#cb25-5"></a><span class="co">#                       min.total.count = 15,</span></span>
+<span id="cb25-6"><a href="#cb25-6"></a><span class="co">#                       min.prop = 0.2)</span></span>
+<span id="cb25-7"><a href="#cb25-7"></a><span class="co"># table(keep2)</span></span></code></pre></div>
 </div>
 <div id="quality-control" class="section level1">
 <h1><span class="header-section-number">8</span> Quality control</h1>
@@ -734,34 +744,34 @@ div.tocify {
 <h2><span class="header-section-number">8.2</span> Calculate QC variables</h2>
 <p>This function calculates useful QC metrics for identification and removal of potentially problematic cells. Default per-cell metrics are the sum of counts (i.e., the library size) and the number of detected features. The percentage of counts in the top features also provides a measure of library complexity.</p>
 <p>If subsets is specified, these statistics are also computed for each subset of features. This is useful for investigating gene sets of interest, e.g., mitochondrial genes.</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="kw">library</span>(scater)</span>
-<span id="cb23-2"><a href="#cb23-2"></a></span>
-<span id="cb23-3"><a href="#cb23-3"></a><span class="co"># check ERCC spike-in transcripts</span></span>
-<span id="cb23-4"><a href="#cb23-4"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^ERCC-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># no spike-in transcripts available</span></span>
-<span id="cb23-5"><a href="#cb23-5"></a></span>
-<span id="cb23-6"><a href="#cb23-6"></a><span class="co"># check mitochondrial genes</span></span>
-<span id="cb23-7"><a href="#cb23-7"></a><span class="kw">sum</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>chromosome_name<span class="op">==</span><span class="st">&quot;MT&quot;</span>,<span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="co"># 28 mitochondrial genes</span></span>
-<span id="cb23-8"><a href="#cb23-8"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># alternatively</span></span>
-<span id="cb23-9"><a href="#cb23-9"></a>is.mito &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))</span>
-<span id="cb23-10"><a href="#cb23-10"></a></span>
-<span id="cb23-11"><a href="#cb23-11"></a><span class="co">## calculate QC metrics</span></span>
-<span id="cb23-12"><a href="#cb23-12"></a>df &lt;-<span class="st"> </span><span class="kw">perCellQCMetrics</span>(sce, <span class="dt">subsets=</span><span class="kw">list</span>(<span class="dt">Mito=</span>is.mito))</span>
-<span id="cb23-13"><a href="#cb23-13"></a><span class="kw">head</span>(df)</span>
-<span id="cb23-14"><a href="#cb23-14"></a></span>
-<span id="cb23-15"><a href="#cb23-15"></a><span class="co"># add QC variables to sce object</span></span>
-<span id="cb23-16"><a href="#cb23-16"></a><span class="kw">colData</span>(sce) &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">colData</span>(sce), df)</span>
-<span id="cb23-17"><a href="#cb23-17"></a></span>
-<span id="cb23-18"><a href="#cb23-18"></a><span class="co"># the QC variables have now been added to the colData of our SCE object.</span></span>
-<span id="cb23-19"><a href="#cb23-19"></a><span class="kw">head</span>(<span class="kw">colData</span>(sce))</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="kw">library</span>(scater)</span>
+<span id="cb26-2"><a href="#cb26-2"></a></span>
+<span id="cb26-3"><a href="#cb26-3"></a><span class="co"># check ERCC spike-in transcripts</span></span>
+<span id="cb26-4"><a href="#cb26-4"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^ERCC-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># no spike-in transcripts available</span></span>
+<span id="cb26-5"><a href="#cb26-5"></a></span>
+<span id="cb26-6"><a href="#cb26-6"></a><span class="co"># check mitochondrial genes</span></span>
+<span id="cb26-7"><a href="#cb26-7"></a><span class="kw">sum</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>chromosome_name<span class="op">==</span><span class="st">&quot;MT&quot;</span>,<span class="dt">na.rm =</span> <span class="ot">TRUE</span>) <span class="co"># 28 mitochondrial genes</span></span>
+<span id="cb26-8"><a href="#cb26-8"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))) <span class="co"># alternatively</span></span>
+<span id="cb26-9"><a href="#cb26-9"></a>is.mito &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;^MT-&quot;</span>, <span class="kw">rownames</span>(sce))</span>
+<span id="cb26-10"><a href="#cb26-10"></a></span>
+<span id="cb26-11"><a href="#cb26-11"></a><span class="co">## calculate QC metrics</span></span>
+<span id="cb26-12"><a href="#cb26-12"></a>df &lt;-<span class="st"> </span><span class="kw">perCellQCMetrics</span>(sce, <span class="dt">subsets=</span><span class="kw">list</span>(<span class="dt">Mito=</span>is.mito))</span>
+<span id="cb26-13"><a href="#cb26-13"></a><span class="kw">head</span>(df)</span>
+<span id="cb26-14"><a href="#cb26-14"></a></span>
+<span id="cb26-15"><a href="#cb26-15"></a><span class="co"># add QC variables to sce object</span></span>
+<span id="cb26-16"><a href="#cb26-16"></a><span class="kw">colData</span>(sce) &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">colData</span>(sce), df)</span>
+<span id="cb26-17"><a href="#cb26-17"></a></span>
+<span id="cb26-18"><a href="#cb26-18"></a><span class="co"># the QC variables have now been added to the colData of our SCE object.</span></span>
+<span id="cb26-19"><a href="#cb26-19"></a><span class="kw">head</span>(<span class="kw">colData</span>(sce))</span></code></pre></div>
 </div>
 <div id="exploratory-data-analysis" class="section level2">
 <h2><span class="header-section-number">8.3</span> Exploratory data analysis</h2>
 <p>In the figure below, we see that several cells have a very low number of expressed genes, and where most of the molecules are derived from mitochondrial genes. This indicates likely damaged cells, presumably because of loss of cytoplasmic RNA from perforated cells, so we should remove these for the downstream analysis.</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="co"># Number of genes vs library size</span></span>
-<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;cluster&quot;</span>) </span>
-<span id="cb24-3"><a href="#cb24-3"></a></span>
-<span id="cb24-4"><a href="#cb24-4"></a><span class="co"># Mitochondrial genes</span></span>
-<span id="cb24-5"><a href="#cb24-5"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="co"># Number of genes vs library size</span></span>
+<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;cluster&quot;</span>) </span>
+<span id="cb27-3"><a href="#cb27-3"></a></span>
+<span id="cb27-4"><a href="#cb27-4"></a><span class="co"># Mitochondrial genes</span></span>
+<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>)</span></code></pre></div>
 </div>
 <div id="qc-using-adaptive-thresholds" class="section level2">
 <h2><span class="header-section-number">8.4</span> QC using adaptive thresholds</h2>
@@ -774,21 +784,21 @@ div.tocify {
 <p>Here we will remove cells for QC based on <strong>adaptive thresholds</strong> related to the three points from above. Adaptive trhesholds are used as opposed to <strong>fixed thresholds</strong>.</p>
 <p>With fixed thresholds, we use fixed cut-off values for each cell to pass QC, e.g., we might consider cells to be low quality if they have library sizes below 100,000 reads; express fewer than 5,000 genes; have spike-in proportions above 10%; or have mitochondrial proportions above 10%.</p>
 <p>With adaptive thresholds, we assume that most of the dataset consists of high-quality cells. We then identify cells that are outliers for the various QC metrics, based on the median absolute deviation (MAD) from the median value of each metric across all cells. By default, we consider a value to be anoutlier if it is more than 3 MADs from the median in the “problematic” direction. This is loosely motivated by the fact that such a filter will retain 99% of non-outlier values that follow a normal distribution. We demonstrate adopting adaptive thresholds on the Macosko dataset:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
-<span id="cb25-2"><a href="#cb25-2"></a>lowFeatures &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>detected, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
-<span id="cb25-3"><a href="#cb25-3"></a>highMito &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>subsets_Mito_percent, <span class="dt">type=</span><span class="st">&quot;higher&quot;</span>)</span>
-<span id="cb25-4"><a href="#cb25-4"></a></span>
-<span id="cb25-5"><a href="#cb25-5"></a><span class="kw">table</span>(lowLib)</span>
-<span id="cb25-6"><a href="#cb25-6"></a><span class="kw">table</span>(lowFeatures)</span>
-<span id="cb25-7"><a href="#cb25-7"></a><span class="kw">table</span>(highMito)</span>
-<span id="cb25-8"><a href="#cb25-8"></a></span>
-<span id="cb25-9"><a href="#cb25-9"></a>discardCells &lt;-<span class="st"> </span>(lowLib <span class="op">|</span><span class="st"> </span>lowFeatures <span class="op">|</span><span class="st"> </span>highMito)</span>
-<span id="cb25-10"><a href="#cb25-10"></a><span class="kw">table</span>(discardCells)</span>
-<span id="cb25-11"><a href="#cb25-11"></a><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells &lt;-<span class="st"> </span>discardCells</span>
-<span id="cb25-12"><a href="#cb25-12"></a></span>
-<span id="cb25-13"><a href="#cb25-13"></a><span class="co"># visualize cells to be removed</span></span>
-<span id="cb25-14"><a href="#cb25-14"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;discardCells&quot;</span>)</span>
-<span id="cb25-15"><a href="#cb25-15"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;discardCells&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb28-2"><a href="#cb28-2"></a>lowFeatures &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>detected, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb28-3"><a href="#cb28-3"></a>highMito &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>subsets_Mito_percent, <span class="dt">type=</span><span class="st">&quot;higher&quot;</span>)</span>
+<span id="cb28-4"><a href="#cb28-4"></a></span>
+<span id="cb28-5"><a href="#cb28-5"></a><span class="kw">table</span>(lowLib)</span>
+<span id="cb28-6"><a href="#cb28-6"></a><span class="kw">table</span>(lowFeatures)</span>
+<span id="cb28-7"><a href="#cb28-7"></a><span class="kw">table</span>(highMito)</span>
+<span id="cb28-8"><a href="#cb28-8"></a></span>
+<span id="cb28-9"><a href="#cb28-9"></a>discardCells &lt;-<span class="st"> </span>(lowLib <span class="op">|</span><span class="st"> </span>lowFeatures <span class="op">|</span><span class="st"> </span>highMito)</span>
+<span id="cb28-10"><a href="#cb28-10"></a><span class="kw">table</span>(discardCells)</span>
+<span id="cb28-11"><a href="#cb28-11"></a><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells &lt;-<span class="st"> </span>discardCells</span>
+<span id="cb28-12"><a href="#cb28-12"></a></span>
+<span id="cb28-13"><a href="#cb28-13"></a><span class="co"># visualize cells to be removed</span></span>
+<span id="cb28-14"><a href="#cb28-14"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;discardCells&quot;</span>)</span>
+<span id="cb28-15"><a href="#cb28-15"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;discardCells&quot;</span>)</span></code></pre></div>
 <p>We removed a total of <span class="math inline">\(3423\)</span> cells, most of which because of an outlyingly high percentage of reads from mitochondrial genes.</p>
 </div>
 <div id="identifying-and-removing-empty-droplets" class="section level2">
@@ -801,38 +811,38 @@ div.tocify {
 <li><p>Define <span class="math inline">\(pi_g\)</span> as the relative contribution of gene g to the ambient profile.</p></li>
 <li><p>Calculate p-value for each cell to have a transcriptional profile similar to the ambient solution. Intuitively, a p-value below the requested alpha level would correspond to a cell for which the observed count profile strongly deviates from the count profile observed in the cells with a library size below threshold T, i.e., a non-empty droplet.</p></li>
 </ol>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="kw">library</span>(DropletUtils)</span>
-<span id="cb26-2"><a href="#cb26-2"></a>bcrank &lt;-<span class="st"> </span><span class="kw">barcodeRanks</span>(<span class="kw">counts</span>(sce))</span>
-<span id="cb26-3"><a href="#cb26-3"></a></span>
-<span id="cb26-4"><a href="#cb26-4"></a><span class="co"># Only showing unique points for plotting speed. Duplicated ranks are a </span></span>
-<span id="cb26-5"><a href="#cb26-5"></a><span class="co"># consequence of ties in the ranks, i.e., when cells have an equal library size.</span></span>
-<span id="cb26-6"><a href="#cb26-6"></a><span class="kw">sum</span>(<span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank))</span>
-<span id="cb26-7"><a href="#cb26-7"></a>uniq &lt;-<span class="st"> </span><span class="op">!</span><span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank)</span>
-<span id="cb26-8"><a href="#cb26-8"></a></span>
-<span id="cb26-9"><a href="#cb26-9"></a><span class="kw">plot</span>(bcrank<span class="op">$</span>rank[uniq], bcrank<span class="op">$</span>total[uniq], <span class="dt">log=</span><span class="st">&quot;xy&quot;</span>,</span>
-<span id="cb26-10"><a href="#cb26-10"></a>    <span class="dt">xlab=</span><span class="st">&quot;Rank&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Total UMI count&quot;</span>, <span class="dt">cex.lab=</span><span class="fl">1.2</span>)</span>
-<span id="cb26-11"><a href="#cb26-11"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>inflection, <span class="dt">col=</span><span class="st">&quot;darkgreen&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
-<span id="cb26-12"><a href="#cb26-12"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>knee, <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
-<span id="cb26-13"><a href="#cb26-13"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="dv">350</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>) <span class="co"># picked visually myself</span></span>
-<span id="cb26-14"><a href="#cb26-14"></a><span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, </span>
-<span id="cb26-15"><a href="#cb26-15"></a>       <span class="dt">legend=</span><span class="kw">c</span>(<span class="st">&quot;Inflection&quot;</span>, <span class="st">&quot;Knee&quot;</span>, <span class="st">&quot;Empirical knee point&quot;</span>), </span>
-<span id="cb26-16"><a href="#cb26-16"></a>       <span class="dt">col=</span><span class="kw">c</span>(<span class="st">&quot;darkgreen&quot;</span>, <span class="st">&quot;dodgerblue&quot;</span>, <span class="st">&quot;orange&quot;</span>), </span>
-<span id="cb26-17"><a href="#cb26-17"></a>       <span class="dt">lty=</span><span class="dv">2</span>, </span>
-<span id="cb26-18"><a href="#cb26-18"></a>       <span class="dt">cex=</span><span class="fl">1.2</span>)</span>
-<span id="cb26-19"><a href="#cb26-19"></a></span>
-<span id="cb26-20"><a href="#cb26-20"></a><span class="kw">set.seed</span>(<span class="dv">100</span>)</span>
-<span id="cb26-21"><a href="#cb26-21"></a>limit &lt;-<span class="st"> </span><span class="dv">350</span>   </span>
-<span id="cb26-22"><a href="#cb26-22"></a>all.out &lt;-<span class="st"> </span><span class="kw">emptyDrops</span>(<span class="kw">counts</span>(sce), <span class="dt">lower=</span>limit, <span class="dt">test.ambient=</span><span class="ot">TRUE</span>)</span>
-<span id="cb26-23"><a href="#cb26-23"></a><span class="co"># p-values for cells with total UMI count under the lower bound.</span></span>
-<span id="cb26-24"><a href="#cb26-24"></a><span class="kw">hist</span>(all.out<span class="op">$</span>PValue[all.out<span class="op">$</span>Total <span class="op">&lt;=</span><span class="st"> </span>limit <span class="op">&amp;</span><span class="st"> </span>all.out<span class="op">$</span>Total <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>],</span>
-<span id="cb26-25"><a href="#cb26-25"></a>    <span class="dt">xlab=</span><span class="st">&quot;P-value&quot;</span>, <span class="dt">main=</span><span class="st">&quot;&quot;</span>, <span class="dt">col=</span><span class="st">&quot;grey80&quot;</span>, <span class="dt">breaks=</span><span class="dv">20</span>)</span>
-<span id="cb26-26"><a href="#cb26-26"></a></span>
-<span id="cb26-27"><a href="#cb26-27"></a><span class="co"># but note that it would remove a very high number of cells</span></span>
-<span id="cb26-28"><a href="#cb26-28"></a><span class="kw">length</span>(<span class="kw">which</span>(all.out<span class="op">$</span>FDR <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.01</span>)) <span class="co"># retained</span></span>
-<span id="cb26-29"><a href="#cb26-29"></a></span>
-<span id="cb26-30"><a href="#cb26-30"></a><span class="co"># so we stick to the more lenient adaptive filtering strategy</span></span>
-<span id="cb26-31"><a href="#cb26-31"></a><span class="co"># remove cells identified using adaptive thresholds</span></span>
-<span id="cb26-32"><a href="#cb26-32"></a>sce &lt;-<span class="st"> </span>sce[, <span class="op">!</span><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells]</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="kw">library</span>(DropletUtils)</span>
+<span id="cb29-2"><a href="#cb29-2"></a>bcrank &lt;-<span class="st"> </span><span class="kw">barcodeRanks</span>(<span class="kw">counts</span>(sce))</span>
+<span id="cb29-3"><a href="#cb29-3"></a></span>
+<span id="cb29-4"><a href="#cb29-4"></a><span class="co"># Only showing unique points for plotting speed. Duplicated ranks are a </span></span>
+<span id="cb29-5"><a href="#cb29-5"></a><span class="co"># consequence of ties in the ranks, i.e., when cells have an equal library size.</span></span>
+<span id="cb29-6"><a href="#cb29-6"></a><span class="kw">sum</span>(<span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank))</span>
+<span id="cb29-7"><a href="#cb29-7"></a>uniq &lt;-<span class="st"> </span><span class="op">!</span><span class="kw">duplicated</span>(bcrank<span class="op">$</span>rank)</span>
+<span id="cb29-8"><a href="#cb29-8"></a></span>
+<span id="cb29-9"><a href="#cb29-9"></a><span class="kw">plot</span>(bcrank<span class="op">$</span>rank[uniq], bcrank<span class="op">$</span>total[uniq], <span class="dt">log=</span><span class="st">&quot;xy&quot;</span>,</span>
+<span id="cb29-10"><a href="#cb29-10"></a>    <span class="dt">xlab=</span><span class="st">&quot;Rank&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Total UMI count&quot;</span>, <span class="dt">cex.lab=</span><span class="fl">1.2</span>)</span>
+<span id="cb29-11"><a href="#cb29-11"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>inflection, <span class="dt">col=</span><span class="st">&quot;darkgreen&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
+<span id="cb29-12"><a href="#cb29-12"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="kw">metadata</span>(bcrank)<span class="op">$</span>knee, <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>)</span>
+<span id="cb29-13"><a href="#cb29-13"></a><span class="kw">abline</span>(<span class="dt">h=</span><span class="dv">350</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>) <span class="co"># picked visually myself</span></span>
+<span id="cb29-14"><a href="#cb29-14"></a><span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>, </span>
+<span id="cb29-15"><a href="#cb29-15"></a>       <span class="dt">legend=</span><span class="kw">c</span>(<span class="st">&quot;Inflection&quot;</span>, <span class="st">&quot;Knee&quot;</span>, <span class="st">&quot;Empirical knee point&quot;</span>), </span>
+<span id="cb29-16"><a href="#cb29-16"></a>       <span class="dt">col=</span><span class="kw">c</span>(<span class="st">&quot;darkgreen&quot;</span>, <span class="st">&quot;dodgerblue&quot;</span>, <span class="st">&quot;orange&quot;</span>), </span>
+<span id="cb29-17"><a href="#cb29-17"></a>       <span class="dt">lty=</span><span class="dv">2</span>, </span>
+<span id="cb29-18"><a href="#cb29-18"></a>       <span class="dt">cex=</span><span class="fl">1.2</span>)</span>
+<span id="cb29-19"><a href="#cb29-19"></a></span>
+<span id="cb29-20"><a href="#cb29-20"></a><span class="kw">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb29-21"><a href="#cb29-21"></a>limit &lt;-<span class="st"> </span><span class="dv">350</span>   </span>
+<span id="cb29-22"><a href="#cb29-22"></a>all.out &lt;-<span class="st"> </span><span class="kw">emptyDrops</span>(<span class="kw">counts</span>(sce), <span class="dt">lower=</span>limit, <span class="dt">test.ambient=</span><span class="ot">TRUE</span>)</span>
+<span id="cb29-23"><a href="#cb29-23"></a><span class="co"># p-values for cells with total UMI count under the lower bound.</span></span>
+<span id="cb29-24"><a href="#cb29-24"></a><span class="kw">hist</span>(all.out<span class="op">$</span>PValue[all.out<span class="op">$</span>Total <span class="op">&lt;=</span><span class="st"> </span>limit <span class="op">&amp;</span><span class="st"> </span>all.out<span class="op">$</span>Total <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>],</span>
+<span id="cb29-25"><a href="#cb29-25"></a>    <span class="dt">xlab=</span><span class="st">&quot;P-value&quot;</span>, <span class="dt">main=</span><span class="st">&quot;&quot;</span>, <span class="dt">col=</span><span class="st">&quot;grey80&quot;</span>, <span class="dt">breaks=</span><span class="dv">20</span>)</span>
+<span id="cb29-26"><a href="#cb29-26"></a></span>
+<span id="cb29-27"><a href="#cb29-27"></a><span class="co"># but note that it would remove a very high number of cells</span></span>
+<span id="cb29-28"><a href="#cb29-28"></a><span class="kw">length</span>(<span class="kw">which</span>(all.out<span class="op">$</span>FDR <span class="op">&lt;=</span><span class="st"> </span><span class="fl">0.01</span>)) <span class="co"># retained</span></span>
+<span id="cb29-29"><a href="#cb29-29"></a></span>
+<span id="cb29-30"><a href="#cb29-30"></a><span class="co"># so we stick to the more lenient adaptive filtering strategy</span></span>
+<span id="cb29-31"><a href="#cb29-31"></a><span class="co"># remove cells identified using adaptive thresholds</span></span>
+<span id="cb29-32"><a href="#cb29-32"></a>sce &lt;-<span class="st"> </span>sce[, <span class="op">!</span><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells]</span></code></pre></div>
 </div>
 <div id="identifying-and-removing-doublets" class="section level2">
 <h2><span class="header-section-number">8.6</span> Identifying and removing doublets</h2>
@@ -846,33 +856,33 @@ div.tocify {
 <li><p>Use this information, along with other predictors, to train a classifier (gradient boosted tree) that allows for distinguishing doublets from singlets.</p></li>
 </ol>
 <p>Note: only classifies for identifying doublets for which the two cells are from different cell type clusters.</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="co">## perform doublet detection</span></span>
-<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">library</span>(scDblFinder)</span></code></pre></div>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
-<span id="cb28-2"><a href="#cb28-2"></a>sampleID &lt;-<span class="st"> </span><span class="kw">unlist</span>(<span class="kw">lapply</span>(<span class="kw">strsplit</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cell.id, <span class="dt">split=</span><span class="st">&quot;_&quot;</span>), <span class="st">&quot;[[&quot;</span>, <span class="dv">1</span>))</span>
-<span id="cb28-3"><a href="#cb28-3"></a><span class="kw">table</span>(sampleID)</span>
-<span id="cb28-4"><a href="#cb28-4"></a>sce &lt;-<span class="st"> </span><span class="kw">scDblFinder</span>(sce, </span>
-<span id="cb28-5"><a href="#cb28-5"></a>                   <span class="dt">returnType=</span><span class="st">&quot;table&quot;</span>,</span>
-<span id="cb28-6"><a href="#cb28-6"></a>                   <span class="dt">samples =</span> <span class="kw">factor</span>(sampleID))</span>
-<span id="cb28-7"><a href="#cb28-7"></a><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class)</span>
-<span id="cb28-8"><a href="#cb28-8"></a></span>
-<span id="cb28-9"><a href="#cb28-9"></a></span>
-<span id="cb28-10"><a href="#cb28-10"></a><span class="co">## visualize these scores</span></span>
-<span id="cb28-11"><a href="#cb28-11"></a><span class="co">## explore doublet score wrt original cluster labels</span></span>
-<span id="cb28-12"><a href="#cb28-12"></a><span class="kw">boxplot</span>(<span class="kw">log1p</span>(sce<span class="op">$</span>scDblFinder.score) <span class="op">~</span><span class="st"> </span><span class="kw">factor</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cluster, <span class="dt">exclude=</span><span class="ot">NULL</span>))</span>
-<span id="cb28-13"><a href="#cb28-13"></a></span>
-<span id="cb28-14"><a href="#cb28-14"></a>tab &lt;-<span class="st"> </span><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class, sce<span class="op">$</span>cluster, </span>
-<span id="cb28-15"><a href="#cb28-15"></a>      <span class="dt">exclude=</span><span class="ot">NULL</span>)</span>
-<span id="cb28-16"><a href="#cb28-16"></a>tab</span>
-<span id="cb28-17"><a href="#cb28-17"></a><span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))</span>
-<span id="cb28-18"><a href="#cb28-18"></a></span>
-<span id="cb28-19"><a href="#cb28-19"></a><span class="kw">barplot</span>(<span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))[<span class="dv">2</span>,],</span>
-<span id="cb28-20"><a href="#cb28-20"></a>        <span class="dt">xlab =</span> <span class="st">&quot;Cluster&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Fraction of doublets&quot;</span>)</span>
-<span id="cb28-21"><a href="#cb28-21"></a></span>
-<span id="cb28-22"><a href="#cb28-22"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;doublet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span>
-<span id="cb28-23"><a href="#cb28-23"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;singlet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span></code></pre></div>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="co"># remove doublets</span></span>
-<span id="cb29-2"><a href="#cb29-2"></a>sce &lt;-<span class="st"> </span>sce[,<span class="op">!</span>sce<span class="op">$</span>scDblFinder.class <span class="op">==</span><span class="st"> &quot;doublet&quot;</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="co">## perform doublet detection</span></span>
+<span id="cb30-2"><a href="#cb30-2"></a><span class="kw">library</span>(scDblFinder)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
+<span id="cb31-2"><a href="#cb31-2"></a>sampleID &lt;-<span class="st"> </span><span class="kw">unlist</span>(<span class="kw">lapply</span>(<span class="kw">strsplit</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cell.id, <span class="dt">split=</span><span class="st">&quot;_&quot;</span>), <span class="st">&quot;[[&quot;</span>, <span class="dv">1</span>))</span>
+<span id="cb31-3"><a href="#cb31-3"></a><span class="kw">table</span>(sampleID)</span>
+<span id="cb31-4"><a href="#cb31-4"></a>sce &lt;-<span class="st"> </span><span class="kw">scDblFinder</span>(sce, </span>
+<span id="cb31-5"><a href="#cb31-5"></a>                   <span class="dt">returnType=</span><span class="st">&quot;table&quot;</span>,</span>
+<span id="cb31-6"><a href="#cb31-6"></a>                   <span class="dt">samples =</span> <span class="kw">factor</span>(sampleID))</span>
+<span id="cb31-7"><a href="#cb31-7"></a><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class)</span>
+<span id="cb31-8"><a href="#cb31-8"></a></span>
+<span id="cb31-9"><a href="#cb31-9"></a></span>
+<span id="cb31-10"><a href="#cb31-10"></a><span class="co">## visualize these scores</span></span>
+<span id="cb31-11"><a href="#cb31-11"></a><span class="co">## explore doublet score wrt original cluster labels</span></span>
+<span id="cb31-12"><a href="#cb31-12"></a><span class="kw">boxplot</span>(<span class="kw">log1p</span>(sce<span class="op">$</span>scDblFinder.score) <span class="op">~</span><span class="st"> </span><span class="kw">factor</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cluster, <span class="dt">exclude=</span><span class="ot">NULL</span>))</span>
+<span id="cb31-13"><a href="#cb31-13"></a></span>
+<span id="cb31-14"><a href="#cb31-14"></a>tab &lt;-<span class="st"> </span><span class="kw">table</span>(sce<span class="op">$</span>scDblFinder.class, sce<span class="op">$</span>cluster, </span>
+<span id="cb31-15"><a href="#cb31-15"></a>      <span class="dt">exclude=</span><span class="ot">NULL</span>)</span>
+<span id="cb31-16"><a href="#cb31-16"></a>tab</span>
+<span id="cb31-17"><a href="#cb31-17"></a><span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))</span>
+<span id="cb31-18"><a href="#cb31-18"></a></span>
+<span id="cb31-19"><a href="#cb31-19"></a><span class="kw">barplot</span>(<span class="kw">t</span>(<span class="kw">t</span>(tab) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(tab))[<span class="dv">2</span>,],</span>
+<span id="cb31-20"><a href="#cb31-20"></a>        <span class="dt">xlab =</span> <span class="st">&quot;Cluster&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Fraction of doublets&quot;</span>)</span>
+<span id="cb31-21"><a href="#cb31-21"></a></span>
+<span id="cb31-22"><a href="#cb31-22"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;doublet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span>
+<span id="cb31-23"><a href="#cb31-23"></a><span class="kw">range</span>(sce<span class="op">$</span>scDblFinder.score[sce<span class="op">$</span>scDblFinder.class  <span class="op">==</span><span class="st"> &quot;singlet&quot;</span> <span class="op">&amp;</span><span class="st"> </span>sampleID <span class="op">==</span><span class="st"> &quot;r1&quot;</span>])</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="co"># remove doublets</span></span>
+<span id="cb32-2"><a href="#cb32-2"></a>sce &lt;-<span class="st"> </span>sce[,<span class="op">!</span>sce<span class="op">$</span>scDblFinder.class <span class="op">==</span><span class="st"> &quot;doublet&quot;</span>]</span></code></pre></div>
 </div>
 </div>
 <div id="normalization" class="section level1">
@@ -880,16 +890,16 @@ div.tocify {
 <p>Normalization aims to remove technical effects such as sequencing depth so that comparisons between cells are not confounded by them. The most commonly used normalization methods methods use scaling, where a scaling factor (also called size factor, normalization factor) is estimated for each cell. These scaling factors (e.g., the effective library size) can be included as an offset to downstream modeling procedures. This effectively allows for performing inference on the relative abundance of a gene in a cell, after accounting for library size and RNA composition differences between cells, which is much more relevant than comparing raw counts</p>
 <p>Note that we always prefer the use of offsets over transformation of the data. In brief, such transformation would distort the mean-variance relationship in the data. For more details, we refer to the document that was discussed in theory session of last week (<a href="https://statomics.github.io/SGA21/sequencing_scalingNormalization.html">link</a>)</p>
 <p>For normalization, the size factors <span class="math inline">\(s_i\)</span> computed here are simply scaled library sizes: <span class="math display">\[ N_i = \sum_g Y_{gi} \]</span> <span class="math display">\[ s_i = N_i / \bar{N}_i \]</span></p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a>sce &lt;-<span class="st"> </span><span class="kw">logNormCounts</span>(sce)</span>
-<span id="cb30-2"><a href="#cb30-2"></a></span>
-<span id="cb30-3"><a href="#cb30-3"></a><span class="co"># note we also returned log counts: see the additional logcounts assay.</span></span>
-<span id="cb30-4"><a href="#cb30-4"></a>sce</span>
-<span id="cb30-5"><a href="#cb30-5"></a></span>
-<span id="cb30-6"><a href="#cb30-6"></a><span class="co"># you can extract size factors using</span></span>
-<span id="cb30-7"><a href="#cb30-7"></a>sf &lt;-<span class="st"> </span><span class="kw">librarySizeFactors</span>(sce)</span>
-<span id="cb30-8"><a href="#cb30-8"></a><span class="kw">mean</span>(sf) <span class="co"># equal to 1 due to scaling.</span></span>
-<span id="cb30-9"><a href="#cb30-9"></a><span class="kw">plot</span>(<span class="dt">x=</span> <span class="kw">log</span>(<span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)), </span>
-<span id="cb30-10"><a href="#cb30-10"></a>     <span class="dt">y=</span>sf)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a>sce &lt;-<span class="st"> </span><span class="kw">logNormCounts</span>(sce)</span>
+<span id="cb33-2"><a href="#cb33-2"></a></span>
+<span id="cb33-3"><a href="#cb33-3"></a><span class="co"># note we also returned log counts: see the additional logcounts assay.</span></span>
+<span id="cb33-4"><a href="#cb33-4"></a>sce</span>
+<span id="cb33-5"><a href="#cb33-5"></a></span>
+<span id="cb33-6"><a href="#cb33-6"></a><span class="co"># you can extract size factors using</span></span>
+<span id="cb33-7"><a href="#cb33-7"></a>sf &lt;-<span class="st"> </span><span class="kw">librarySizeFactors</span>(sce)</span>
+<span id="cb33-8"><a href="#cb33-8"></a><span class="kw">mean</span>(sf) <span class="co"># equal to 1 due to scaling.</span></span>
+<span id="cb33-9"><a href="#cb33-9"></a><span class="kw">plot</span>(<span class="dt">x=</span> <span class="kw">log</span>(<span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)), </span>
+<span id="cb33-10"><a href="#cb33-10"></a>     <span class="dt">y=</span>sf)</span></code></pre></div>
 <p>From the OSCA book: Alternatively, we may use more sophisticated approaches for variance stabilizing transformations in genomics data, e.g., <code>DESeq2</code> or <code>sctransform</code>. These aim to remove the mean-variance trend more effectively than the simpler transformations mentioned above, though it could be argued whether this is actually desirable. For low-coverage scRNA-seq data, there will always be a mean-variance trend under any transformation, for the simple reason that the variance must be zero when the mean count is zero. These methods also face the challenge of removing the mean-variance trend while preserving the interesting component of variation, i.e., the log-fold changes between subpopulations; this may or may not be done adequately, depending on the aggressiveness of the algorithm.</p>
 <p>In practice, the log-transformation is a good default choice due to its simplicity and interpretability, and is what we will be using for all downstream analyses.</p>
 <hr />
@@ -905,38 +915,38 @@ div.tocify {
 <li><strong>Differences in RNA population composition</strong> between samples. As an extreme example, suppose that two samples have been sequenced to the exact same depth. One sample is contaminated and has a very high concentration of the contaminant cDNA being sequenced, but otherwise the two samples are identical. Since the contaminant will be taking up a significant proportion of the reads being sequenced, the counts will not be directly comparable between the samples. Hence, we may also want to correct for differences in the composition of the RNA population of the samples (see <a href="https://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf">edgeR manual chapter 2.8</a>).</li>
 <li><strong>Other technical variation</strong> such as sample-specific GC-content or transcript length effects may also be accounted for.</li>
 </ul>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a><span class="kw">table</span>(sce<span class="op">$</span>cluster)</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="kw">table</span>(sce<span class="op">$</span>cluster)</span></code></pre></div>
 <p>Below, we will visualize the normalization occurring between two cells of the same cell type (which could be considered technical repeats):</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>select &lt;-<span class="st"> </span>sce<span class="op">$</span>cluster <span class="op">==</span><span class="st"> &quot;1&quot;</span></span>
-<span id="cb32-2"><a href="#cb32-2"></a>select[<span class="kw">is.na</span>(select)] &lt;-<span class="st"> </span><span class="ot">FALSE</span></span>
-<span id="cb32-3"><a href="#cb32-3"></a>cs &lt;-<span class="st"> </span><span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts[,select])</span>
-<span id="cb32-4"><a href="#cb32-4"></a>cs[<span class="kw">order</span>(cs, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)][<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)]</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a>select &lt;-<span class="st"> </span>sce<span class="op">$</span>cluster <span class="op">==</span><span class="st"> &quot;1&quot;</span></span>
+<span id="cb35-2"><a href="#cb35-2"></a>select[<span class="kw">is.na</span>(select)] &lt;-<span class="st"> </span><span class="ot">FALSE</span></span>
+<span id="cb35-3"><a href="#cb35-3"></a>cs &lt;-<span class="st"> </span><span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts[,select])</span>
+<span id="cb35-4"><a href="#cb35-4"></a>cs[<span class="kw">order</span>(cs, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)][<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)]</span></code></pre></div>
 <p>Let’s take a look at how comparable two cells (replicates) of cluster 1 are. We will compare the cell with the highest library size with the cell that has the 10th highest library size using MD-plots (mean-difference plots, as introduced by <a href="https://www.jstor.org/stable/24307038?seq=1#metadata_info_tab_contents">Dudoit et al. (2002)</a>), also sometimes referred to as MA-plots.</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a>targetCells &lt;-<span class="st"> </span><span class="kw">names</span>(cs[<span class="kw">order</span>(cs, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)][<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)])</span>
-<span id="cb33-2"><a href="#cb33-2"></a></span>
-<span id="cb33-3"><a href="#cb33-3"></a>M &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells])</span>
-<span id="cb33-4"><a href="#cb33-4"></a>D &lt;-<span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells[<span class="dv">2</span>]] <span class="op">/</span><span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells[<span class="dv">1</span>]]</span>
-<span id="cb33-5"><a href="#cb33-5"></a><span class="kw">plot</span>(<span class="dt">x =</span> <span class="kw">log</span>(M), <span class="dt">y =</span> <span class="kw">log2</span>(D),</span>
-<span id="cb33-6"><a href="#cb33-6"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex=</span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
-<span id="cb33-7"><a href="#cb33-7"></a>     <span class="dt">main =</span> <span class="kw">paste0</span>(<span class="st">&quot;Cell &quot;</span>, targetCells[<span class="dv">2</span>], <span class="st">&quot; vs cell &quot;</span>, targetCells[<span class="dv">1</span>]),</span>
-<span id="cb33-8"><a href="#cb33-8"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Log mean&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Log2 fold-change&quot;</span>,</span>
-<span id="cb33-9"><a href="#cb33-9"></a>     <span class="dt">bty =</span> <span class="st">&#39;l&#39;</span>)</span>
-<span id="cb33-10"><a href="#cb33-10"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">0</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>targetCells &lt;-<span class="st"> </span><span class="kw">names</span>(cs[<span class="kw">order</span>(cs, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)][<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">10</span>)])</span>
+<span id="cb36-2"><a href="#cb36-2"></a></span>
+<span id="cb36-3"><a href="#cb36-3"></a>M &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells])</span>
+<span id="cb36-4"><a href="#cb36-4"></a>D &lt;-<span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells[<span class="dv">2</span>]] <span class="op">/</span><span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>counts[,targetCells[<span class="dv">1</span>]]</span>
+<span id="cb36-5"><a href="#cb36-5"></a><span class="kw">plot</span>(<span class="dt">x =</span> <span class="kw">log</span>(M), <span class="dt">y =</span> <span class="kw">log2</span>(D),</span>
+<span id="cb36-6"><a href="#cb36-6"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex=</span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
+<span id="cb36-7"><a href="#cb36-7"></a>     <span class="dt">main =</span> <span class="kw">paste0</span>(<span class="st">&quot;Cell &quot;</span>, targetCells[<span class="dv">2</span>], <span class="st">&quot; vs cell &quot;</span>, targetCells[<span class="dv">1</span>]),</span>
+<span id="cb36-8"><a href="#cb36-8"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Log mean&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Log2 fold-change&quot;</span>,</span>
+<span id="cb36-9"><a href="#cb36-9"></a>     <span class="dt">bty =</span> <span class="st">&#39;l&#39;</span>)</span>
+<span id="cb36-10"><a href="#cb36-10"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">0</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
 <p>We see clear bias in the comparison of the 1st and 10th most deeply sequenced cell from cell cluster 1. We see that the log fold-changes are biased downwards. This means that, on average, a gene is higher expressed in cell 1 versus cell 10. Looking at the library sizes, we can indeed see that the library size for cell 1 is 20869 counts, while it is only 14719 counts for cell 10! This is a clear library size effect that we should take into account.</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="co"># normalize the count data using the previously computed &quot;size factors&quot;</span></span>
-<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">assay</span>(sce, <span class="st">&quot;normed&quot;</span>) &lt;-<span class="st"> </span><span class="kw">normalizeCounts</span>(sce, </span>
-<span id="cb34-3"><a href="#cb34-3"></a>                                        <span class="dt">log=</span><span class="ot">FALSE</span>,</span>
-<span id="cb34-4"><a href="#cb34-4"></a>                                        <span class="dt">size.factors=</span>sf, </span>
-<span id="cb34-5"><a href="#cb34-5"></a>                                        <span class="dt">pseudo.count=</span><span class="dv">0</span>)</span>
-<span id="cb34-6"><a href="#cb34-6"></a></span>
-<span id="cb34-7"><a href="#cb34-7"></a>M &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells])</span>
-<span id="cb34-8"><a href="#cb34-8"></a>D &lt;-<span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells[<span class="dv">2</span>]] <span class="op">/</span><span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells[<span class="dv">1</span>]]</span>
-<span id="cb34-9"><a href="#cb34-9"></a><span class="kw">plot</span>(<span class="dt">x =</span> <span class="kw">log</span>(M), <span class="dt">y =</span> <span class="kw">log2</span>(D),</span>
-<span id="cb34-10"><a href="#cb34-10"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex=</span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
-<span id="cb34-11"><a href="#cb34-11"></a>     <span class="dt">main =</span> <span class="kw">paste0</span>(<span class="st">&quot;Cell &quot;</span>, targetCells[<span class="dv">2</span>], <span class="st">&quot; vs cell &quot;</span>, targetCells[<span class="dv">1</span>]),</span>
-<span id="cb34-12"><a href="#cb34-12"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Log mean&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Log2 fold-change&quot;</span>,</span>
-<span id="cb34-13"><a href="#cb34-13"></a>     <span class="dt">bty =</span> <span class="st">&#39;l&#39;</span>)</span>
-<span id="cb34-14"><a href="#cb34-14"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">0</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a><span class="co"># normalize the count data using the previously computed &quot;size factors&quot;</span></span>
+<span id="cb37-2"><a href="#cb37-2"></a><span class="kw">assay</span>(sce, <span class="st">&quot;normed&quot;</span>) &lt;-<span class="st"> </span><span class="kw">normalizeCounts</span>(sce, </span>
+<span id="cb37-3"><a href="#cb37-3"></a>                                        <span class="dt">log=</span><span class="ot">FALSE</span>,</span>
+<span id="cb37-4"><a href="#cb37-4"></a>                                        <span class="dt">size.factors=</span>sf, </span>
+<span id="cb37-5"><a href="#cb37-5"></a>                                        <span class="dt">pseudo.count=</span><span class="dv">0</span>)</span>
+<span id="cb37-6"><a href="#cb37-6"></a></span>
+<span id="cb37-7"><a href="#cb37-7"></a>M &lt;-<span class="st"> </span><span class="kw">rowMeans</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells])</span>
+<span id="cb37-8"><a href="#cb37-8"></a>D &lt;-<span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells[<span class="dv">2</span>]] <span class="op">/</span><span class="st"> </span><span class="kw">assays</span>(sce)<span class="op">$</span>normed[,targetCells[<span class="dv">1</span>]]</span>
+<span id="cb37-9"><a href="#cb37-9"></a><span class="kw">plot</span>(<span class="dt">x =</span> <span class="kw">log</span>(M), <span class="dt">y =</span> <span class="kw">log2</span>(D),</span>
+<span id="cb37-10"><a href="#cb37-10"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex=</span><span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
+<span id="cb37-11"><a href="#cb37-11"></a>     <span class="dt">main =</span> <span class="kw">paste0</span>(<span class="st">&quot;Cell &quot;</span>, targetCells[<span class="dv">2</span>], <span class="st">&quot; vs cell &quot;</span>, targetCells[<span class="dv">1</span>]),</span>
+<span id="cb37-12"><a href="#cb37-12"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Log mean&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Log2 fold-change&quot;</span>,</span>
+<span id="cb37-13"><a href="#cb37-13"></a>     <span class="dt">bty =</span> <span class="st">&#39;l&#39;</span>)</span>
+<span id="cb37-14"><a href="#cb37-14"></a><span class="kw">abline</span>(<span class="dt">h =</span> <span class="dv">0</span>, <span class="dt">col=</span><span class="st">&quot;orange&quot;</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
 <p>Upon normalizing the data using size factors, we have removed bias as a consequence of differences in sequencing depth.</p>
 <p>Note that we computed the normalized count matrix only for demonstrating the effect of such normalization. In a typical workflow, the size factors are used as offsets in the downstream models rather than to perform data transformation. In brief, such transformation would distort the mean-variance relationship in the data. For more details, we refer to the document that was touched upon in the first theory session (<a href="https://statomics.github.io/SGA21/sequencing_scalingNormalization.html">link</a>)</p>
 </div>
@@ -947,72 +957,72 @@ div.tocify {
 <div id="selecting-genes-with-high-variance" class="section level2">
 <h2><span class="header-section-number">11.1</span> Selecting genes with high variance</h2>
 <p>The simplest approach to quantifying per-gene variation is to compute the variance of the log-normalized expression values (i.e., “log-counts”) for each gene across all cells.</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a><span class="co"># calculate variance of log-normalized counts for each gene</span></span>
-<span id="cb35-2"><a href="#cb35-2"></a>geneVars &lt;-<span class="st"> </span>genefilter<span class="op">::</span><span class="kw">rowVars</span>(...)</span>
-<span id="cb35-3"><a href="#cb35-3"></a><span class="co"># select top 1000 highly variable genes</span></span>
-<span id="cb35-4"><a href="#cb35-4"></a>highVarGenes &lt;-<span class="st"> </span><span class="kw">names</span>(geneVars)[<span class="kw">order</span>(geneVars, <span class="dt">decreasing=</span><span class="ot">TRUE</span>)[<span class="dv">1</span><span class="op">:</span><span class="fl">1e3</span>]]</span>
-<span id="cb35-5"><a href="#cb35-5"></a><span class="kw">head</span>(highVarGenes)</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="co"># calculate variance of log-normalized counts for each gene</span></span>
+<span id="cb38-2"><a href="#cb38-2"></a>geneVars &lt;-<span class="st"> </span>genefilter<span class="op">::</span><span class="kw">rowVars</span>(...)</span>
+<span id="cb38-3"><a href="#cb38-3"></a><span class="co"># select top 1000 highly variable genes</span></span>
+<span id="cb38-4"><a href="#cb38-4"></a>highVarGenes &lt;-<span class="st"> </span><span class="kw">names</span>(geneVars)[<span class="kw">order</span>(geneVars, <span class="dt">decreasing=</span><span class="ot">TRUE</span>)[<span class="dv">1</span><span class="op">:</span><span class="fl">1e3</span>]]</span>
+<span id="cb38-5"><a href="#cb38-5"></a><span class="kw">head</span>(highVarGenes)</span></code></pre></div>
 </div>
 <div id="selecting-genes-with-high-variation-with-respect-to-mean" class="section level2">
 <h2><span class="header-section-number">11.2</span> Selecting genes with high variation with respect to mean</h2>
 <p>While calculation of the per-gene variance is simple, feature selection requires modelling of the mean-variance relationship. Indeed, not accounting for the mean-variance structure while selecting highly variable genes will oftentimes boil down to selecting the most highly expressed genes. The log-transformation is a helpful variance stabilizing transformation, however, it is not perfect, meaning that the variance of a gene is not completely independent of its mean. Therefore, feature selection may still be driven by average expression rather than underlying biological heterogeneity.</p>
 <p>A (rightly so) popular approach is to select genes that have a high variance with respect to their mean. Often, first an empirical mean-variance trend is fitted, upon which genes with the highest positive residuals are selected. Being intuitive, reasonable and fairly straight-forward, this method is widely used.</p>
 <p>To account for the mean-variance effect, we use the <code>modelGeneVar</code> function of the <code>scran</code> package to fit a trend to the variance with respect to abundance across all genes (on log-normalized expression values of the sce object).</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a><span class="kw">library</span>(scran)</span>
-<span id="cb36-2"><a href="#cb36-2"></a><span class="co"># `modelGeneVar` function description: Model the variance of the log-expression </span></span>
-<span id="cb36-3"><a href="#cb36-3"></a><span class="co"># profiles for each gene, decomposing it into technical and biological </span></span>
-<span id="cb36-4"><a href="#cb36-4"></a><span class="co"># components based on a fitted mean-variance trend.</span></span>
-<span id="cb36-5"><a href="#cb36-5"></a>dec &lt;-<span class="st"> </span><span class="kw">modelGeneVar</span>(...) <span class="co"># input a sce object with precomputed logcounts assay</span></span>
-<span id="cb36-6"><a href="#cb36-6"></a><span class="kw">head</span>(dec)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a><span class="kw">library</span>(scran)</span>
+<span id="cb39-2"><a href="#cb39-2"></a><span class="co"># `modelGeneVar` function description: Model the variance of the log-expression </span></span>
+<span id="cb39-3"><a href="#cb39-3"></a><span class="co"># profiles for each gene, decomposing it into technical and biological </span></span>
+<span id="cb39-4"><a href="#cb39-4"></a><span class="co"># components based on a fitted mean-variance trend.</span></span>
+<span id="cb39-5"><a href="#cb39-5"></a>dec &lt;-<span class="st"> </span><span class="kw">modelGeneVar</span>(...) <span class="co"># input a sce object with precomputed logcounts assay</span></span>
+<span id="cb39-6"><a href="#cb39-6"></a><span class="kw">head</span>(dec)</span></code></pre></div>
 <p>The fitted value for each gene is used as a proxy for the technical component of variation for each gene, under the assumption that most genes exhibit a low baseline level of variation that is not biologically interesting. The biological component of variation for each gene is defined as the the residual from the trend. Ranking genes by the biological component enables identification of interesting genes for downstream analyses in a manner that accounts for the mean-variance relationship.</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a>fitRetina &lt;-<span class="st"> </span><span class="kw">metadata</span>(...)</span>
-<span id="cb37-2"><a href="#cb37-2"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># the fitted means on the x-axis </span></span>
-<span id="cb37-3"><a href="#cb37-3"></a>     <span class="dt">y =</span> ..., <span class="co"># the fitted variances on the y-axis</span></span>
-<span id="cb37-4"><a href="#cb37-4"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
-<span id="cb37-5"><a href="#cb37-5"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
-<span id="cb37-6"><a href="#cb37-6"></a><span class="kw">curve</span>(fitRetina<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>) <span class="co"># adds a trend line</span></span></code></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a>fitRetina &lt;-<span class="st"> </span><span class="kw">metadata</span>(...)</span>
+<span id="cb40-2"><a href="#cb40-2"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># the fitted means on the x-axis </span></span>
+<span id="cb40-3"><a href="#cb40-3"></a>     <span class="dt">y =</span> ..., <span class="co"># the fitted variances on the y-axis</span></span>
+<span id="cb40-4"><a href="#cb40-4"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
+<span id="cb40-5"><a href="#cb40-5"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
+<span id="cb40-6"><a href="#cb40-6"></a><span class="kw">curve</span>(fitRetina<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>) <span class="co"># adds a trend line</span></span></code></pre></div>
 <p>We are interested in those genes for which the variance in expression is higher than what we would expect for that gene based on its mean expression.</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="co"># get 10% most variable genes</span></span>
-<span id="cb38-2"><a href="#cb38-2"></a><span class="co"># Based on the output statistics of modelGeneVar, select the 10% most variable genes</span></span>
-<span id="cb38-3"><a href="#cb38-3"></a>hvg &lt;-<span class="st"> </span><span class="kw">getTopHVGs</span>(<span class="dt">stats =</span> ..., </span>
-<span id="cb38-4"><a href="#cb38-4"></a>                  <span class="dt">prop =</span> ...) <span class="co"># percentage of top variable genes. Alternatively,</span></span>
-<span id="cb38-5"><a href="#cb38-5"></a><span class="co"># n = ... could be used to select the top number of variable genes</span></span>
-<span id="cb38-6"><a href="#cb38-6"></a><span class="kw">head</span>(hvg)</span>
-<span id="cb38-7"><a href="#cb38-7"></a></span>
-<span id="cb38-8"><a href="#cb38-8"></a><span class="co"># plot these </span></span>
-<span id="cb38-9"><a href="#cb38-9"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># the fitted means on the x-axis </span></span>
-<span id="cb38-10"><a href="#cb38-10"></a>     <span class="dt">y =</span> ..., <span class="co"># the fitted variances on the y-axis</span></span>
-<span id="cb38-11"><a href="#cb38-11"></a>     <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;orange&quot;</span>, <span class="st">&quot;darkseagreen3&quot;</span>)[(<span class="kw">names</span>(fitRetina<span class="op">$</span>mean) <span class="op">%in%</span><span class="st"> </span>hvg)<span class="op">+</span><span class="dv">1</span>],</span>
-<span id="cb38-12"><a href="#cb38-12"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
-<span id="cb38-13"><a href="#cb38-13"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
-<span id="cb38-14"><a href="#cb38-14"></a><span class="kw">curve</span>(fitRetina<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span>
-<span id="cb38-15"><a href="#cb38-15"></a><span class="kw">legend</span>(<span class="st">&quot;topleft&quot;</span>, </span>
-<span id="cb38-16"><a href="#cb38-16"></a>       <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Selected&quot;</span>, <span class="st">&quot;Not selected&quot;</span>), </span>
-<span id="cb38-17"><a href="#cb38-17"></a>       <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;darkseagreen3&quot;</span>, <span class="st">&quot;orange&quot;</span>),</span>
-<span id="cb38-18"><a href="#cb38-18"></a>       <span class="dt">pch =</span> <span class="dv">16</span>,</span>
-<span id="cb38-19"><a href="#cb38-19"></a>       <span class="dt">bty=</span><span class="st">&#39;n&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a><span class="co"># get 10% most variable genes</span></span>
+<span id="cb41-2"><a href="#cb41-2"></a><span class="co"># Based on the output statistics of modelGeneVar, select the 10% most variable genes</span></span>
+<span id="cb41-3"><a href="#cb41-3"></a>hvg &lt;-<span class="st"> </span><span class="kw">getTopHVGs</span>(<span class="dt">stats =</span> ..., </span>
+<span id="cb41-4"><a href="#cb41-4"></a>                  <span class="dt">prop =</span> ...) <span class="co"># percentage of top variable genes. Alternatively,</span></span>
+<span id="cb41-5"><a href="#cb41-5"></a><span class="co"># n = ... could be used to select the top number of variable genes</span></span>
+<span id="cb41-6"><a href="#cb41-6"></a><span class="kw">head</span>(hvg)</span>
+<span id="cb41-7"><a href="#cb41-7"></a></span>
+<span id="cb41-8"><a href="#cb41-8"></a><span class="co"># plot these </span></span>
+<span id="cb41-9"><a href="#cb41-9"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># the fitted means on the x-axis </span></span>
+<span id="cb41-10"><a href="#cb41-10"></a>     <span class="dt">y =</span> ..., <span class="co"># the fitted variances on the y-axis</span></span>
+<span id="cb41-11"><a href="#cb41-11"></a>     <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;orange&quot;</span>, <span class="st">&quot;darkseagreen3&quot;</span>)[(<span class="kw">names</span>(fitRetina<span class="op">$</span>mean) <span class="op">%in%</span><span class="st"> </span>hvg)<span class="op">+</span><span class="dv">1</span>],</span>
+<span id="cb41-12"><a href="#cb41-12"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
+<span id="cb41-13"><a href="#cb41-13"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
+<span id="cb41-14"><a href="#cb41-14"></a><span class="kw">curve</span>(fitRetina<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span>
+<span id="cb41-15"><a href="#cb41-15"></a><span class="kw">legend</span>(<span class="st">&quot;topleft&quot;</span>, </span>
+<span id="cb41-16"><a href="#cb41-16"></a>       <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Selected&quot;</span>, <span class="st">&quot;Not selected&quot;</span>), </span>
+<span id="cb41-17"><a href="#cb41-17"></a>       <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;darkseagreen3&quot;</span>, <span class="st">&quot;orange&quot;</span>),</span>
+<span id="cb41-18"><a href="#cb41-18"></a>       <span class="dt">pch =</span> <span class="dv">16</span>,</span>
+<span id="cb41-19"><a href="#cb41-19"></a>       <span class="dt">bty=</span><span class="st">&#39;n&#39;</span>)</span></code></pre></div>
 <p>As a comparison, we could color the genes on this figure according to the selection that was made purely by looking at the raw variance of each gene.</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>...</span></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a>...</span></code></pre></div>
 <p>As expected, we here simply select genes with a high variance, without recognizing that a high variance is typically driven by a high mean.</p>
 </div>
 <div id="high-deviance-genes" class="section level2">
 <h2><span class="header-section-number">11.3</span> High deviance genes</h2>
 <p>Here, we will select genes with a high residual deviance. The idea is that we assume a null model of constant expression fraction (i.e., RNA concentration) across all cells. We subsequently calculate a goodness-of-fit statistic for each gene, assessing whether the model is a good approximation to the gene expression of the corresponding gene.</p>
 <p>If the model fits poorly, i.e., the gene has a high deviance, the expression fraction varies significantly across the cells in our datasets.Genes with a high deviance will thus most poorly fit a null model where the relative abundance is equal for all cells, which therefore are informative.</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a><span class="co">#BiocManager::install(&quot;scry&quot;)</span></span>
-<span id="cb40-2"><a href="#cb40-2"></a><span class="kw">library</span>(scry)</span>
-<span id="cb40-3"><a href="#cb40-3"></a><span class="co"># `devianceFeatureSelection` function description: Computes a deviance statistic </span></span>
-<span id="cb40-4"><a href="#cb40-4"></a><span class="co"># for each row feature (such as a gene) for count data based on a multinomial </span></span>
-<span id="cb40-5"><a href="#cb40-5"></a><span class="co"># null model [...]. </span></span>
-<span id="cb40-6"><a href="#cb40-6"></a>sce &lt;-<span class="st"> </span><span class="kw">devianceFeatureSelection</span>(<span class="dt">object =</span> ..., </span>
-<span id="cb40-7"><a href="#cb40-7"></a>                                <span class="dt">assay =</span> ...) <span class="co"># computed on raw counts</span></span>
-<span id="cb40-8"><a href="#cb40-8"></a></span>
-<span id="cb40-9"><a href="#cb40-9"></a><span class="kw">plot</span>(<span class="kw">sort</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>binomial_deviance, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>), </span>
-<span id="cb40-10"><a href="#cb40-10"></a>     <span class="dt">type=</span><span class="st">&quot;l&quot;</span>, </span>
-<span id="cb40-11"><a href="#cb40-11"></a>     <span class="dt">xlab=</span><span class="st">&quot;ranked genes&quot;</span>, </span>
-<span id="cb40-12"><a href="#cb40-12"></a>     <span class="dt">ylab=</span><span class="st">&quot;binomial deviance&quot;</span>, </span>
-<span id="cb40-13"><a href="#cb40-13"></a>     <span class="dt">main=</span><span class="st">&quot;Feature Selection with Deviance&quot;</span>)</span>
-<span id="cb40-14"><a href="#cb40-14"></a><span class="kw">abline</span>(<span class="dt">v=</span><span class="dv">2000</span>, <span class="dt">lty=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">&quot;red&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a><span class="co">#BiocManager::install(&quot;scry&quot;)</span></span>
+<span id="cb43-2"><a href="#cb43-2"></a><span class="kw">library</span>(scry)</span>
+<span id="cb43-3"><a href="#cb43-3"></a><span class="co"># `devianceFeatureSelection` function description: Computes a deviance statistic </span></span>
+<span id="cb43-4"><a href="#cb43-4"></a><span class="co"># for each row feature (such as a gene) for count data based on a multinomial </span></span>
+<span id="cb43-5"><a href="#cb43-5"></a><span class="co"># null model [...]. </span></span>
+<span id="cb43-6"><a href="#cb43-6"></a>sce &lt;-<span class="st"> </span><span class="kw">devianceFeatureSelection</span>(<span class="dt">object =</span> ..., </span>
+<span id="cb43-7"><a href="#cb43-7"></a>                                <span class="dt">assay =</span> ...) <span class="co"># computed on raw counts</span></span>
+<span id="cb43-8"><a href="#cb43-8"></a></span>
+<span id="cb43-9"><a href="#cb43-9"></a><span class="kw">plot</span>(<span class="kw">sort</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>binomial_deviance, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>), </span>
+<span id="cb43-10"><a href="#cb43-10"></a>     <span class="dt">type=</span><span class="st">&quot;l&quot;</span>, </span>
+<span id="cb43-11"><a href="#cb43-11"></a>     <span class="dt">xlab=</span><span class="st">&quot;ranked genes&quot;</span>, </span>
+<span id="cb43-12"><a href="#cb43-12"></a>     <span class="dt">ylab=</span><span class="st">&quot;binomial deviance&quot;</span>, </span>
+<span id="cb43-13"><a href="#cb43-13"></a>     <span class="dt">main=</span><span class="st">&quot;Feature Selection with Deviance&quot;</span>)</span>
+<span id="cb43-14"><a href="#cb43-14"></a><span class="kw">abline</span>(<span class="dt">v=</span><span class="dv">2000</span>, <span class="dt">lty=</span><span class="dv">2</span>, <span class="dt">col=</span><span class="st">&quot;red&quot;</span>)</span></code></pre></div>
 <p>Our plot looks similar to one displayed in the <a href="https://www.bioconductor.org/packages/release/bioc/vignettes/scry/inst/doc/scry.html">vignette of the scry package</a>. Based on that plot, the authors suggest retaining 2.000 genes (the top 2000 based on the deviance residuals) for downstream dimensionality reduction and clustering.</p>
 </div>
 <div id="seurat-vst" class="section level2">
@@ -1020,22 +1030,22 @@ div.tocify {
 <p>Another very common feature selection strategy is the variance-stabilizing transformation from the <code>Seurat</code> R package, which amounts to calculating Pearson residuals from a regularized negative binomial regression model, with sequencing depth as a covariate.</p>
 <p><strong>Intermezzo: interoperability between SingleCellExperiment and Seurat objects</strong></p>
 <p>In this lecture series, we always make use of the SingleCellExperiment object and the packages available from Bioconductor. Another very popular toolbox for performing scRNA-seq data analysis is <code>Seurat</code>. However, functions from <code>Seurat</code> cannot be used directly to manipulate <code>SingleCellExperiment</code> objects, and vice versa. Fortunately, efforts have been made to increase the interoperability between the two toolboxes.</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a><span class="kw">library</span>(Seurat)</span>
-<span id="cb41-2"><a href="#cb41-2"></a>seurat_obj &lt;-<span class="st"> </span><span class="kw">as.Seurat</span>(...) <span class="co"># sce object</span></span>
-<span id="cb41-3"><a href="#cb41-3"></a>seurat_obj <span class="co"># notice the &quot;0 variable features&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="kw">library</span>(Seurat)</span>
+<span id="cb44-2"><a href="#cb44-2"></a>seurat_obj &lt;-<span class="st"> </span><span class="kw">as.Seurat</span>(...) <span class="co"># sce object</span></span>
+<span id="cb44-3"><a href="#cb44-3"></a>seurat_obj <span class="co"># notice the &quot;0 variable features&quot;</span></span></code></pre></div>
 <p>On this object, we may use functions from the <code>Seurat</code> toolbox. For instance, we may search for highly variable features using <code>Seurat</code>’s VST implementation:</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a><span class="co"># Prior to detecting variable features using VST, Seurat normalizes the data.</span></span>
-<span id="cb42-2"><a href="#cb42-2"></a><span class="co"># The `NormalizeData` function takes as input the Seurat object, and uses </span></span>
-<span id="cb42-3"><a href="#cb42-3"></a><span class="co"># log normalization and a scale factor of 10000 as default (see help file).</span></span>
-<span id="cb42-4"><a href="#cb42-4"></a>seurat_obj &lt;-<span class="st"> </span>Seurat<span class="op">::</span><span class="kw">NormalizeData</span>(<span class="dt">object =</span> ..., </span>
-<span id="cb42-5"><a href="#cb42-5"></a>                                    <span class="dt">normalization.method =</span> ..., </span>
-<span id="cb42-6"><a href="#cb42-6"></a>                                    <span class="dt">scale.factor =</span> ...)</span>
-<span id="cb42-7"><a href="#cb42-7"></a></span>
-<span id="cb42-8"><a href="#cb42-8"></a><span class="co"># Next, perform feature selection based on VST</span></span>
-<span id="cb42-9"><a href="#cb42-9"></a>seurat_obj &lt;-<span class="st">  </span><span class="kw">FindVariableFeatures</span>(<span class="dt">object =</span> ...,</span>
-<span id="cb42-10"><a href="#cb42-10"></a>                                    <span class="dt">selection.method =</span> ...)</span></code></pre></div>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a>seurat_obj  <span class="co"># notice the &quot;2000 variable features&quot; (default)</span></span>
-<span id="cb43-2"><a href="#cb43-2"></a><span class="kw">head</span>(<span class="kw">VariableFeatures</span>(seurat_obj)) <span class="co"># here they are</span></span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Prior to detecting variable features using VST, Seurat normalizes the data.</span></span>
+<span id="cb45-2"><a href="#cb45-2"></a><span class="co"># The `NormalizeData` function takes as input the Seurat object, and uses </span></span>
+<span id="cb45-3"><a href="#cb45-3"></a><span class="co"># log normalization and a scale factor of 10000 as default (see help file).</span></span>
+<span id="cb45-4"><a href="#cb45-4"></a>seurat_obj &lt;-<span class="st"> </span>Seurat<span class="op">::</span><span class="kw">NormalizeData</span>(<span class="dt">object =</span> ..., </span>
+<span id="cb45-5"><a href="#cb45-5"></a>                                    <span class="dt">normalization.method =</span> ..., </span>
+<span id="cb45-6"><a href="#cb45-6"></a>                                    <span class="dt">scale.factor =</span> ...)</span>
+<span id="cb45-7"><a href="#cb45-7"></a></span>
+<span id="cb45-8"><a href="#cb45-8"></a><span class="co"># Next, perform feature selection based on VST</span></span>
+<span id="cb45-9"><a href="#cb45-9"></a>seurat_obj &lt;-<span class="st">  </span><span class="kw">FindVariableFeatures</span>(<span class="dt">object =</span> ...,</span>
+<span id="cb45-10"><a href="#cb45-10"></a>                                    <span class="dt">selection.method =</span> ...)</span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a>seurat_obj  <span class="co"># notice the &quot;2000 variable features&quot; (default)</span></span>
+<span id="cb46-2"><a href="#cb46-2"></a><span class="kw">head</span>(<span class="kw">VariableFeatures</span>(seurat_obj)) <span class="co"># here they are</span></span></code></pre></div>
 </div>
 </div>
 <div id="dimensionality-reduction" class="section level1">
@@ -1044,16 +1054,16 @@ div.tocify {
 <div id="the-most-basic-dr" class="section level2">
 <h2><span class="header-section-number">12.1</span> The most basic DR</h2>
 <p>Just by looking at the top two genes based on our feature selection criterion, we can already see some separation according to the cell type!</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="kw">colData</span>(sce)<span class="op">$</span>cluster &lt;-<span class="st"> </span><span class="kw">as.factor</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cluster)</span>
-<span id="cb44-2"><a href="#cb44-2"></a>cl &lt;-<span class="st"> </span><span class="kw">colData</span>(sce)<span class="op">$</span>cluster</span>
-<span id="cb44-3"><a href="#cb44-3"></a><span class="kw">par</span>(<span class="dt">bty=</span><span class="st">&#39;l&#39;</span>)</span>
-<span id="cb44-4"><a href="#cb44-4"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># extract the counts for the most variable gene</span></span>
-<span id="cb44-5"><a href="#cb44-5"></a>     <span class="dt">y =</span> ..., <span class="co"># extract the counts for the second most variable gene</span></span>
-<span id="cb44-6"><a href="#cb44-6"></a>     <span class="dt">col =</span> <span class="kw">as.numeric</span>(cl),</span>
-<span id="cb44-7"><a href="#cb44-7"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
-<span id="cb44-8"><a href="#cb44-8"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Most informative gene&quot;</span>,</span>
-<span id="cb44-9"><a href="#cb44-9"></a>     <span class="dt">ylab =</span> <span class="st">&quot;Second most informative gene&quot;</span>,</span>
-<span id="cb44-10"><a href="#cb44-10"></a>     <span class="dt">main =</span> <span class="st">&quot;Cells colored acc to cell type&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="kw">colData</span>(sce)<span class="op">$</span>cluster &lt;-<span class="st"> </span><span class="kw">as.factor</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>cluster)</span>
+<span id="cb47-2"><a href="#cb47-2"></a>cl &lt;-<span class="st"> </span><span class="kw">colData</span>(sce)<span class="op">$</span>cluster</span>
+<span id="cb47-3"><a href="#cb47-3"></a><span class="kw">par</span>(<span class="dt">bty=</span><span class="st">&#39;l&#39;</span>)</span>
+<span id="cb47-4"><a href="#cb47-4"></a><span class="kw">plot</span>(<span class="dt">x =</span> ..., <span class="co"># extract the counts for the most variable gene</span></span>
+<span id="cb47-5"><a href="#cb47-5"></a>     <span class="dt">y =</span> ..., <span class="co"># extract the counts for the second most variable gene</span></span>
+<span id="cb47-6"><a href="#cb47-6"></a>     <span class="dt">col =</span> <span class="kw">as.numeric</span>(cl),</span>
+<span id="cb47-7"><a href="#cb47-7"></a>     <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">3</span>,</span>
+<span id="cb47-8"><a href="#cb47-8"></a>     <span class="dt">xlab =</span> <span class="st">&quot;Most informative gene&quot;</span>,</span>
+<span id="cb47-9"><a href="#cb47-9"></a>     <span class="dt">ylab =</span> <span class="st">&quot;Second most informative gene&quot;</span>,</span>
+<span id="cb47-10"><a href="#cb47-10"></a>     <span class="dt">main =</span> <span class="st">&quot;Cells colored acc to cell type&quot;</span>)</span></code></pre></div>
 <p>We are able to recover quite some structure. However, many cell populations remain obscure, and the plot is overcrowded.</p>
 </div>
 <div id="linear-dimensionality-reduction-pca" class="section level2">
@@ -1063,122 +1073,122 @@ div.tocify {
 <p>There are several R functions that allow you to perform PCA. Here, we make use of the <code>runPCA</code> function of the <code>scater</code> package, which has been specifically developed for performing PCA on <code>SingleCellExperiment</code> objects. We calculate the top 30 principal components.</p>
 <div id="pca-with-feature-selection" class="section level3">
 <h3><span class="header-section-number">12.2.1</span> PCA with feature selection</h3>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Perform a PCA for our data. Compute the first 30 principal components, only</span></span>
-<span id="cb45-2"><a href="#cb45-2"></a><span class="co"># using the selected features with high variance with respect to the mean.</span></span>
-<span id="cb45-3"><a href="#cb45-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb45-4"><a href="#cb45-4"></a>sce &lt;-<span class="st"> </span><span class="kw">runPCA</span>(...) <span class="co"># you need three arguments</span></span></code></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a><span class="co"># Perform a PCA for our data. Compute the first 30 principal components, only</span></span>
+<span id="cb48-2"><a href="#cb48-2"></a><span class="co"># using the selected features with high variance with respect to the mean.</span></span>
+<span id="cb48-3"><a href="#cb48-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb48-4"><a href="#cb48-4"></a>sce &lt;-<span class="st"> </span><span class="kw">runPCA</span>(...) <span class="co"># you need three arguments</span></span></code></pre></div>
 <p>PCA has been performed. The PCA information has been automatically stored in the <em>reducedDim</em> slot of the SingleCellExperiment object.</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="kw">reducedDimNames</span>(sce)</span></code></pre></div>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="kw">head</span>(<span class="kw">reducedDim</span>(sce,</span>
-<span id="cb47-2"><a href="#cb47-2"></a>                <span class="dt">type=</span><span class="st">&quot;PCA&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a><span class="kw">reducedDimNames</span>(sce)</span></code></pre></div>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="kw">head</span>(<span class="kw">reducedDim</span>(sce,</span>
+<span id="cb50-2"><a href="#cb50-2"></a>                <span class="dt">type=</span><span class="st">&quot;PCA&quot;</span>))</span></code></pre></div>
 <p>The <code>plotPCA</code> function of the <code>scater</code> package now allows us to visualize the cells in PCA space, based on the PCA information stored in our object:</p>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a><span class="kw">plotPCA</span>(sce, </span>
-<span id="cb48-2"><a href="#cb48-2"></a>        <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a><span class="kw">plotPCA</span>(sce, </span>
+<span id="cb51-2"><a href="#cb51-2"></a>        <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
 <p>While the large number of clusters in this dataset makes it hard to distinguish between all the different colors, we can already see that PCA retrieves some, but not all, of the structure in the data that was discovered by the original authors.</p>
 <p>How many of the top PCs should we retain for downstream analyses? The choice of the number of PCs is a decision that is analogous to the choice of the number of HVGs to use. Using more PCs will retain more biological signal at the cost of including more noise that might mask said signal. On the other hand, using fewer PCs will introduce competition between different factors of variation, where weaker (but still interesting) factors may be pushed down into lower PCs and inadvertently discarded from downstream analyses.</p>
 <p>Most analysts will simply aim to use a “reasonable” but arbitrary value, typically ranging from 10 to 50. This is often satisfactory as the later PCs explain so little variance that their inclusion or omission has no major effect.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a>percent.var &lt;-<span class="st"> </span><span class="kw">attr</span>(<span class="kw">reducedDim</span>(sce), <span class="st">&quot;percentVar&quot;</span>)</span>
-<span id="cb49-2"><a href="#cb49-2"></a><span class="kw">plot</span>(percent.var, <span class="dt">log=</span><span class="st">&quot;y&quot;</span>, <span class="dt">xlab=</span><span class="st">&quot;PC&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Variance explained (%)&quot;</span>)</span>
-<span id="cb49-3"><a href="#cb49-3"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(percent.var), <span class="dt">xlab=</span><span class="st">&quot;PC&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Cumulative variance explained (%)&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a>percent.var &lt;-<span class="st"> </span><span class="kw">attr</span>(<span class="kw">reducedDim</span>(sce), <span class="st">&quot;percentVar&quot;</span>)</span>
+<span id="cb52-2"><a href="#cb52-2"></a><span class="kw">plot</span>(percent.var, <span class="dt">log=</span><span class="st">&quot;y&quot;</span>, <span class="dt">xlab=</span><span class="st">&quot;PC&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Variance explained (%)&quot;</span>)</span>
+<span id="cb52-3"><a href="#cb52-3"></a><span class="kw">plot</span>(<span class="kw">cumsum</span>(percent.var), <span class="dt">xlab=</span><span class="st">&quot;PC&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Cumulative variance explained (%)&quot;</span>)</span></code></pre></div>
 <p>Here, retaining ±15PCs seems reasonable. If you really prefer a more data-driven way for determining this, there are procedures available that aim to computationally identify the elbow/knee point in the variance explained per PC plot.</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="kw">library</span>(PCAtools)</span>
-<span id="cb50-2"><a href="#cb50-2"></a>chosen.elbow &lt;-<span class="st"> </span><span class="kw">findElbowPoint</span>(percent.var)</span>
-<span id="cb50-3"><a href="#cb50-3"></a>chosen.elbow</span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a><span class="kw">library</span>(PCAtools)</span>
+<span id="cb53-2"><a href="#cb53-2"></a>chosen.elbow &lt;-<span class="st"> </span><span class="kw">findElbowPoint</span>(percent.var)</span>
+<span id="cb53-3"><a href="#cb53-3"></a>chosen.elbow</span></code></pre></div>
 </div>
 <div id="pca-without-feature-selection" class="section level3">
 <h3><span class="header-section-number">12.2.2</span> PCA without feature selection</h3>
 <p>Note: more features -&gt; computationally more intensive!</p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb51-2"><a href="#cb51-2"></a>sceNoFS &lt;-<span class="st"> </span><span class="kw">runPCA</span>(<span class="dt">x =</span> ..., </span>
-<span id="cb51-3"><a href="#cb51-3"></a>                  <span class="dt">ncomponents =</span> ..., </span>
-<span id="cb51-4"><a href="#cb51-4"></a>                  <span class="dt">subset_row =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(sce))</span>
-<span id="cb51-5"><a href="#cb51-5"></a><span class="kw">plotPCA</span>(...)</span>
-<span id="cb51-6"><a href="#cb51-6"></a><span class="kw">rm</span>(sceNoFS) <span class="co"># remove the object, we don&#39;t need it anymore</span></span></code></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb54-2"><a href="#cb54-2"></a>sceNoFS &lt;-<span class="st"> </span><span class="kw">runPCA</span>(<span class="dt">x =</span> ..., </span>
+<span id="cb54-3"><a href="#cb54-3"></a>                  <span class="dt">ncomponents =</span> ..., </span>
+<span id="cb54-4"><a href="#cb54-4"></a>                  <span class="dt">subset_row =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(sce))</span>
+<span id="cb54-5"><a href="#cb54-5"></a><span class="kw">plotPCA</span>(...)</span>
+<span id="cb54-6"><a href="#cb54-6"></a><span class="kw">rm</span>(sceNoFS) <span class="co"># remove the object, we don&#39;t need it anymore</span></span></code></pre></div>
 <p>While we use more information to make this PCA plot (17.887 genes) as compared to the feature selected PCA plot (642 genes), we seem to retrieve less structure in the data. This is the power of feature selection, an increase in the signal-to-noise ratio!</p>
 </div>
 <div id="effect-of-feature-selection-on-pca" class="section level3">
 <h3><span class="header-section-number">12.2.3</span> Effect of feature selection on PCA</h3>
 <p>First, we compare the different feature selection criteria, using the top 1000 highly variable genes for each method.</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># Get top 1000 highly variable features using the highly variable genes</span></span>
-<span id="cb52-2"><a href="#cb52-2"></a><span class="co"># (w.r.t. mean), high deviance genes and the VST strategy of Seurat</span></span>
-<span id="cb52-3"><a href="#cb52-3"></a></span>
-<span id="cb52-4"><a href="#cb52-4"></a>hvg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 highly variable genes</span></span>
-<span id="cb52-5"><a href="#cb52-5"></a>hdg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 genes with high deviance</span></span>
-<span id="cb52-6"><a href="#cb52-6"></a>vst1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 genes based on VST analysis</span></span>
-<span id="cb52-7"><a href="#cb52-7"></a></span>
-<span id="cb52-8"><a href="#cb52-8"></a><span class="co"># HVG strategy</span></span>
-<span id="cb52-9"><a href="#cb52-9"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb52-10"><a href="#cb52-10"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb52-11"><a href="#cb52-11"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb52-12"><a href="#cb52-12"></a>           <span class="dt">subset_row =</span> hvg1000), </span>
-<span id="cb52-13"><a href="#cb52-13"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb52-14"><a href="#cb52-14"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Highly variable genes&quot;</span>)</span>
-<span id="cb52-15"><a href="#cb52-15"></a></span>
-<span id="cb52-16"><a href="#cb52-16"></a><span class="co"># HDG strategy</span></span>
-<span id="cb52-17"><a href="#cb52-17"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb52-18"><a href="#cb52-18"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb52-19"><a href="#cb52-19"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb52-20"><a href="#cb52-20"></a>           <span class="dt">subset_row =</span> hdg1000), </span>
-<span id="cb52-21"><a href="#cb52-21"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb52-22"><a href="#cb52-22"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;High-deviance genes&quot;</span>)</span>
-<span id="cb52-23"><a href="#cb52-23"></a></span>
-<span id="cb52-24"><a href="#cb52-24"></a><span class="co"># VST strategy</span></span>
-<span id="cb52-25"><a href="#cb52-25"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb52-26"><a href="#cb52-26"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb52-27"><a href="#cb52-27"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb52-28"><a href="#cb52-28"></a>           <span class="dt">subset_row =</span> vst1000), </span>
-<span id="cb52-29"><a href="#cb52-29"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>,</span>
-<span id="cb52-30"><a href="#cb52-30"></a>    ) <span class="op">+</span></span>
-<span id="cb52-31"><a href="#cb52-31"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Seurat VST&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a><span class="co"># Get top 1000 highly variable features using the highly variable genes</span></span>
+<span id="cb55-2"><a href="#cb55-2"></a><span class="co"># (w.r.t. mean), high deviance genes and the VST strategy of Seurat</span></span>
+<span id="cb55-3"><a href="#cb55-3"></a></span>
+<span id="cb55-4"><a href="#cb55-4"></a>hvg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 highly variable genes</span></span>
+<span id="cb55-5"><a href="#cb55-5"></a>hdg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 genes with high deviance</span></span>
+<span id="cb55-6"><a href="#cb55-6"></a>vst1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 genes based on VST analysis</span></span>
+<span id="cb55-7"><a href="#cb55-7"></a></span>
+<span id="cb55-8"><a href="#cb55-8"></a><span class="co"># HVG strategy</span></span>
+<span id="cb55-9"><a href="#cb55-9"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb55-10"><a href="#cb55-10"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb55-11"><a href="#cb55-11"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb55-12"><a href="#cb55-12"></a>           <span class="dt">subset_row =</span> hvg1000), </span>
+<span id="cb55-13"><a href="#cb55-13"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb55-14"><a href="#cb55-14"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Highly variable genes&quot;</span>)</span>
+<span id="cb55-15"><a href="#cb55-15"></a></span>
+<span id="cb55-16"><a href="#cb55-16"></a><span class="co"># HDG strategy</span></span>
+<span id="cb55-17"><a href="#cb55-17"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb55-18"><a href="#cb55-18"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb55-19"><a href="#cb55-19"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb55-20"><a href="#cb55-20"></a>           <span class="dt">subset_row =</span> hdg1000), </span>
+<span id="cb55-21"><a href="#cb55-21"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb55-22"><a href="#cb55-22"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;High-deviance genes&quot;</span>)</span>
+<span id="cb55-23"><a href="#cb55-23"></a></span>
+<span id="cb55-24"><a href="#cb55-24"></a><span class="co"># VST strategy</span></span>
+<span id="cb55-25"><a href="#cb55-25"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb55-26"><a href="#cb55-26"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb55-27"><a href="#cb55-27"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb55-28"><a href="#cb55-28"></a>           <span class="dt">subset_row =</span> vst1000), </span>
+<span id="cb55-29"><a href="#cb55-29"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>,</span>
+<span id="cb55-30"><a href="#cb55-30"></a>    ) <span class="op">+</span></span>
+<span id="cb55-31"><a href="#cb55-31"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Seurat VST&quot;</span>)</span></code></pre></div>
 <p>Next, we assess the sensitivity on the number of top features for the highly variable genes method;</p>
-<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a>hvg_all &lt;-<span class="st"> </span><span class="kw">getTopHVGs</span>(dec)</span>
-<span id="cb53-2"><a href="#cb53-2"></a></span>
-<span id="cb53-3"><a href="#cb53-3"></a>hvg2000 &lt;-<span class="st"> </span>... <span class="co"># extract top 2000 highly variable genes</span></span>
-<span id="cb53-4"><a href="#cb53-4"></a>hvg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 highly variable genes</span></span>
-<span id="cb53-5"><a href="#cb53-5"></a>hvg100 &lt;-<span class="st"> </span>... <span class="co"># extract top 100 highly variable genes</span></span>
-<span id="cb53-6"><a href="#cb53-6"></a>hvg10 &lt;-<span class="st"> </span>... <span class="co"># extract top 10 highly variable genes</span></span>
-<span id="cb53-7"><a href="#cb53-7"></a>hvg5 &lt;-<span class="st"> </span>... <span class="co"># extract top 5 highly variable genes</span></span>
-<span id="cb53-8"><a href="#cb53-8"></a></span>
-<span id="cb53-9"><a href="#cb53-9"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-10"><a href="#cb53-10"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-11"><a href="#cb53-11"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>), </span>
-<span id="cb53-12"><a href="#cb53-12"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-13"><a href="#cb53-13"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;All genes&quot;</span>)</span>
-<span id="cb53-14"><a href="#cb53-14"></a></span>
-<span id="cb53-15"><a href="#cb53-15"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-16"><a href="#cb53-16"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-17"><a href="#cb53-17"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb53-18"><a href="#cb53-18"></a>           <span class="dt">subset_row =</span> hvg2000), </span>
-<span id="cb53-19"><a href="#cb53-19"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-20"><a href="#cb53-20"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 2000 genes&quot;</span>)</span>
-<span id="cb53-21"><a href="#cb53-21"></a></span>
-<span id="cb53-22"><a href="#cb53-22"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-23"><a href="#cb53-23"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-24"><a href="#cb53-24"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb53-25"><a href="#cb53-25"></a>           <span class="dt">subset_row =</span> hvg1000), </span>
-<span id="cb53-26"><a href="#cb53-26"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-27"><a href="#cb53-27"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 1000 genes&quot;</span>)</span>
-<span id="cb53-28"><a href="#cb53-28"></a></span>
-<span id="cb53-29"><a href="#cb53-29"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-30"><a href="#cb53-30"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-31"><a href="#cb53-31"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb53-32"><a href="#cb53-32"></a>           <span class="dt">subset_row =</span> hvg100), </span>
-<span id="cb53-33"><a href="#cb53-33"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-34"><a href="#cb53-34"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 100 genes&quot;</span>)</span>
-<span id="cb53-35"><a href="#cb53-35"></a></span>
-<span id="cb53-36"><a href="#cb53-36"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-37"><a href="#cb53-37"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-38"><a href="#cb53-38"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb53-39"><a href="#cb53-39"></a>           <span class="dt">subset_row =</span> hvg10), </span>
-<span id="cb53-40"><a href="#cb53-40"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-41"><a href="#cb53-41"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 10 genes&quot;</span>)</span>
-<span id="cb53-42"><a href="#cb53-42"></a></span>
-<span id="cb53-43"><a href="#cb53-43"></a><span class="kw">plotPCA</span>(</span>
-<span id="cb53-44"><a href="#cb53-44"></a>    <span class="kw">runPCA</span>(sce,</span>
-<span id="cb53-45"><a href="#cb53-45"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
-<span id="cb53-46"><a href="#cb53-46"></a>           <span class="dt">subset_row =</span> hvg5), </span>
-<span id="cb53-47"><a href="#cb53-47"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
-<span id="cb53-48"><a href="#cb53-48"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 5 genes&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>hvg_all &lt;-<span class="st"> </span><span class="kw">getTopHVGs</span>(dec)</span>
+<span id="cb56-2"><a href="#cb56-2"></a></span>
+<span id="cb56-3"><a href="#cb56-3"></a>hvg2000 &lt;-<span class="st"> </span>... <span class="co"># extract top 2000 highly variable genes</span></span>
+<span id="cb56-4"><a href="#cb56-4"></a>hvg1000 &lt;-<span class="st"> </span>... <span class="co"># extract top 1000 highly variable genes</span></span>
+<span id="cb56-5"><a href="#cb56-5"></a>hvg100 &lt;-<span class="st"> </span>... <span class="co"># extract top 100 highly variable genes</span></span>
+<span id="cb56-6"><a href="#cb56-6"></a>hvg10 &lt;-<span class="st"> </span>... <span class="co"># extract top 10 highly variable genes</span></span>
+<span id="cb56-7"><a href="#cb56-7"></a>hvg5 &lt;-<span class="st"> </span>... <span class="co"># extract top 5 highly variable genes</span></span>
+<span id="cb56-8"><a href="#cb56-8"></a></span>
+<span id="cb56-9"><a href="#cb56-9"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-10"><a href="#cb56-10"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-11"><a href="#cb56-11"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>), </span>
+<span id="cb56-12"><a href="#cb56-12"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-13"><a href="#cb56-13"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;All genes&quot;</span>)</span>
+<span id="cb56-14"><a href="#cb56-14"></a></span>
+<span id="cb56-15"><a href="#cb56-15"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-16"><a href="#cb56-16"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-17"><a href="#cb56-17"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb56-18"><a href="#cb56-18"></a>           <span class="dt">subset_row =</span> hvg2000), </span>
+<span id="cb56-19"><a href="#cb56-19"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-20"><a href="#cb56-20"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 2000 genes&quot;</span>)</span>
+<span id="cb56-21"><a href="#cb56-21"></a></span>
+<span id="cb56-22"><a href="#cb56-22"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-23"><a href="#cb56-23"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-24"><a href="#cb56-24"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb56-25"><a href="#cb56-25"></a>           <span class="dt">subset_row =</span> hvg1000), </span>
+<span id="cb56-26"><a href="#cb56-26"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-27"><a href="#cb56-27"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 1000 genes&quot;</span>)</span>
+<span id="cb56-28"><a href="#cb56-28"></a></span>
+<span id="cb56-29"><a href="#cb56-29"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-30"><a href="#cb56-30"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-31"><a href="#cb56-31"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb56-32"><a href="#cb56-32"></a>           <span class="dt">subset_row =</span> hvg100), </span>
+<span id="cb56-33"><a href="#cb56-33"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-34"><a href="#cb56-34"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 100 genes&quot;</span>)</span>
+<span id="cb56-35"><a href="#cb56-35"></a></span>
+<span id="cb56-36"><a href="#cb56-36"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-37"><a href="#cb56-37"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-38"><a href="#cb56-38"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb56-39"><a href="#cb56-39"></a>           <span class="dt">subset_row =</span> hvg10), </span>
+<span id="cb56-40"><a href="#cb56-40"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-41"><a href="#cb56-41"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 10 genes&quot;</span>)</span>
+<span id="cb56-42"><a href="#cb56-42"></a></span>
+<span id="cb56-43"><a href="#cb56-43"></a><span class="kw">plotPCA</span>(</span>
+<span id="cb56-44"><a href="#cb56-44"></a>    <span class="kw">runPCA</span>(sce,</span>
+<span id="cb56-45"><a href="#cb56-45"></a>           <span class="dt">ncomponents =</span> <span class="dv">2</span>, </span>
+<span id="cb56-46"><a href="#cb56-46"></a>           <span class="dt">subset_row =</span> hvg5), </span>
+<span id="cb56-47"><a href="#cb56-47"></a>    <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>) <span class="op">+</span></span>
+<span id="cb56-48"><a href="#cb56-48"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Top 5 genes&quot;</span>)</span></code></pre></div>
 </div>
 <div id="remarks-on-pca" class="section level3">
 <h3><span class="header-section-number">12.2.4</span> Remarks on PCA</h3>
@@ -1190,23 +1200,23 @@ div.tocify {
 <p>PCA is implicitly based on Euclidean distances, corresponding to maximizing a Gaussian likelihood, which is inappropriate for count data such as scRNA-seq. <a href="https://doi.org/10.1186/s13059-019-1861-6">Townes et al.</a> (2019) develop GLM-PCA, a generalization of PCA for exponential family likelihoods. They posit, using negative control data, that the data generative mechanism of UMI count data can be considered to be multinomial.</p>
 <p>The GLM-PCA strategy is implemented in the <code>glmpca</code> function of the <code>glmpca</code> package.</p>
 <p>Note that this function is quite computationally intensive. For regular PCA on log-transformed normalized counts, the underlying computations can be strongly simplified. Here, we work with the raw counts, which we assume to be <em>Poisson</em> distributed, requiring an iterative optimization scheme.</p>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a><span class="co"># runs 2min on my laptop</span></span>
-<span id="cb54-2"><a href="#cb54-2"></a><span class="kw">library</span>(glmpca)</span>
-<span id="cb54-3"><a href="#cb54-3"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
-<span id="cb54-4"><a href="#cb54-4"></a>poipca &lt;-<span class="st"> </span><span class="kw">glmpca</span>(<span class="dt">Y =</span> ..., <span class="co"># counts for the higly variable genes</span></span>
-<span id="cb54-5"><a href="#cb54-5"></a>                 <span class="dt">L =</span> ..., <span class="co"># two latent dimensions (components)</span></span>
-<span id="cb54-6"><a href="#cb54-6"></a>                 <span class="dt">fam =</span> ..., <span class="co"># assume Poisson for droplet data</span></span>
-<span id="cb54-7"><a href="#cb54-7"></a>                 <span class="dt">minibatch =</span> <span class="st">&quot;stochastic&quot;</span>) <span class="co"># used in the package vignette by </span></span>
-<span id="cb54-8"><a href="#cb54-8"></a><span class="co"># the authors, but beyond the scope of this session.</span></span>
-<span id="cb54-9"><a href="#cb54-9"></a><span class="kw">reducedDim</span>(sce, <span class="st">&quot;PoiPCA&quot;</span>) &lt;-<span class="st"> </span>poipca<span class="op">$</span>factors</span>
-<span id="cb54-10"><a href="#cb54-10"></a><span class="kw">plotReducedDim</span>(...) <span class="co"># make sure to specify the right value for the `dimred` argument</span></span></code></pre></div>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a><span class="co"># runs 2min on my laptop</span></span>
+<span id="cb57-2"><a href="#cb57-2"></a><span class="kw">library</span>(glmpca)</span>
+<span id="cb57-3"><a href="#cb57-3"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
+<span id="cb57-4"><a href="#cb57-4"></a>poipca &lt;-<span class="st"> </span><span class="kw">glmpca</span>(<span class="dt">Y =</span> ..., <span class="co"># counts for the higly variable genes</span></span>
+<span id="cb57-5"><a href="#cb57-5"></a>                 <span class="dt">L =</span> ..., <span class="co"># two latent dimensions (components)</span></span>
+<span id="cb57-6"><a href="#cb57-6"></a>                 <span class="dt">fam =</span> ..., <span class="co"># assume Poisson for droplet data</span></span>
+<span id="cb57-7"><a href="#cb57-7"></a>                 <span class="dt">minibatch =</span> <span class="st">&quot;stochastic&quot;</span>) <span class="co"># used in the package vignette by </span></span>
+<span id="cb57-8"><a href="#cb57-8"></a><span class="co"># the authors, but beyond the scope of this session.</span></span>
+<span id="cb57-9"><a href="#cb57-9"></a><span class="kw">reducedDim</span>(sce, <span class="st">&quot;PoiPCA&quot;</span>) &lt;-<span class="st"> </span>poipca<span class="op">$</span>factors</span>
+<span id="cb57-10"><a href="#cb57-10"></a><span class="kw">plotReducedDim</span>(...) <span class="co"># make sure to specify the right value for the `dimred` argument</span></span></code></pre></div>
 <p>Alternatively, we could adopt the GLM-PCA strategy using only the genes with high deviance.</p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a><span class="co"># Based on the diagnostic plot from the feature selection, we would select the </span></span>
-<span id="cb55-2"><a href="#cb55-2"></a><span class="co"># top 2000 genes with highest deviance. However, to reduce the running time of</span></span>
-<span id="cb55-3"><a href="#cb55-3"></a><span class="co"># the function, I here select the top 500 (which still is quite slow - 5min).</span></span>
-<span id="cb55-4"><a href="#cb55-4"></a>hdg500 &lt;-<span class="st"> </span><span class="kw">names</span>(<span class="kw">sort</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>binomial_deviance, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>))[<span class="dv">1</span><span class="op">:</span><span class="dv">500</span>]</span>
-<span id="cb55-5"><a href="#cb55-5"></a></span>
-<span id="cb55-6"><a href="#cb55-6"></a>...</span></code></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="co"># Based on the diagnostic plot from the feature selection, we would select the </span></span>
+<span id="cb58-2"><a href="#cb58-2"></a><span class="co"># top 2000 genes with highest deviance. However, to reduce the running time of</span></span>
+<span id="cb58-3"><a href="#cb58-3"></a><span class="co"># the function, I here select the top 500 (which still is quite slow - 5min).</span></span>
+<span id="cb58-4"><a href="#cb58-4"></a>hdg500 &lt;-<span class="st"> </span><span class="kw">names</span>(<span class="kw">sort</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>binomial_deviance, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>))[<span class="dv">1</span><span class="op">:</span><span class="dv">500</span>]</span>
+<span id="cb58-5"><a href="#cb58-5"></a></span>
+<span id="cb58-6"><a href="#cb58-6"></a>...</span></code></pre></div>
 <p>The authors of the <code>glmpca</code> package note that GLM-PCA can be slow for large datasets. Therefore, they have implemented a fast approximation of the algorithm, which first fits a null model of constant expression for each gene across all cells, and subsequently fits standard PCA to either the Pearson or deviance residuals from the null model.</p>
 <p>However, at least for me the <code>nullResiduals</code> function was <strong>extremely slow</strong> even slower than the <code>glmpca</code> code above. Therefore, <strong>I suggest not running</strong> this code, but I leave it in for reference.</p>
 <pre><code>sce &lt;- nullResiduals(sce, assay=&quot;counts&quot;, type=&quot;deviance&quot;)
@@ -1235,25 +1245,25 @@ ggplot(pd, aes(x=dim1, y=dim2, colour=phenoid)) + geom_point() +
 <p>Running t-SNE on a <code>SingleCellExperiment</code> object can be achieved with the <code>runTSNE</code> function of the <code>scater</code> package. By default, this function will first perform PCA, and use the top 50 PCs as an input to the actual t-SNE algorithm. Since we already performed PCA, we may set <code>dimred = "PCA"</code> as argument to the function. As such we will be performing a T-SNE on the 30 PCs we computed before. If we would like to run t-SNE only using the top 10 PCs, we could set <code>n_dimred = 10</code>.</p>
 <p>In addition, we may wish to set <code>external_neighbors=TRUE</code>, which increases the speed of the algorithm for large datasets by applying a heuristic.</p>
 <p><strong>Note:</strong> for me this was the slowest function of the analysis (so far). If you feel like your PC/laptop had a lot of trouble with the previous step(s), you may consider not running this code, or running it on a subset of the data (e.g., randomly subsampling cells) for demonstrational purposes. Alternatively, you may consider reducing the input space for the t-SNE algorithm, e.g. by setting <code>n_dimred = 5</code>.</p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a><span class="co"># (For me it takes 3min30 with n_dimred = 5)</span></span>
-<span id="cb57-2"><a href="#cb57-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runTSNE</span>(<span class="dt">x =</span> ..., </span>
-<span id="cb57-3"><a href="#cb57-3"></a>               <span class="dt">dimred =</span> ...,</span>
-<span id="cb57-4"><a href="#cb57-4"></a>               <span class="dt">n_dimred =</span> ...,</span>
-<span id="cb57-5"><a href="#cb57-5"></a>               <span class="dt">external_neighbors =</span> ...)</span>
-<span id="cb57-6"><a href="#cb57-6"></a><span class="kw">plotTSNE</span>(sce,</span>
-<span id="cb57-7"><a href="#cb57-7"></a>         <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a><span class="co"># (For me it takes 3min30 with n_dimred = 5)</span></span>
+<span id="cb60-2"><a href="#cb60-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runTSNE</span>(<span class="dt">x =</span> ..., </span>
+<span id="cb60-3"><a href="#cb60-3"></a>               <span class="dt">dimred =</span> ...,</span>
+<span id="cb60-4"><a href="#cb60-4"></a>               <span class="dt">n_dimred =</span> ...,</span>
+<span id="cb60-5"><a href="#cb60-5"></a>               <span class="dt">external_neighbors =</span> ...)</span>
+<span id="cb60-6"><a href="#cb60-6"></a><span class="kw">plotTSNE</span>(sce,</span>
+<span id="cb60-7"><a href="#cb60-7"></a>         <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
 </div>
 <div id="non-linear-dimensionality-reduction-umap" class="section level2">
 <h2><span class="header-section-number">12.5</span> Non-linear dimensionality reduction: UMAP</h2>
 <p>It is often suggested that UMAP is better than t-SNE in preserving global differences. Therefore, UMAP is also often used in analyses such as trajectory inference, where this is important.</p>
 <p>Running UMAP on a <code>SingleCellExperiment</code> object can be achieved with the <code>runUMAP</code> function of the <code>scater</code> package.</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="co"># Using top 10% highly variable genes and top 30 PCs</span></span>
-<span id="cb58-2"><a href="#cb58-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runUMAP</span>(...)</span>
-<span id="cb58-3"><a href="#cb58-3"></a><span class="kw">plotUMAP</span>(...)</span>
-<span id="cb58-4"><a href="#cb58-4"></a></span>
-<span id="cb58-5"><a href="#cb58-5"></a><span class="co"># Using top 10% highly variable genes and top 10 PCs</span></span>
-<span id="cb58-6"><a href="#cb58-6"></a><span class="kw">plotUMAP</span>(<span class="kw">runUMAP</span>(...),</span>
-<span id="cb58-7"><a href="#cb58-7"></a>  <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a><span class="co"># Using top 10% highly variable genes and top 30 PCs</span></span>
+<span id="cb61-2"><a href="#cb61-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runUMAP</span>(...)</span>
+<span id="cb61-3"><a href="#cb61-3"></a><span class="kw">plotUMAP</span>(...)</span>
+<span id="cb61-4"><a href="#cb61-4"></a></span>
+<span id="cb61-5"><a href="#cb61-5"></a><span class="co"># Using top 10% highly variable genes and top 10 PCs</span></span>
+<span id="cb61-6"><a href="#cb61-6"></a><span class="kw">plotUMAP</span>(<span class="kw">runUMAP</span>(...),</span>
+<span id="cb61-7"><a href="#cb61-7"></a>  <span class="dt">colour_by =</span> <span class="st">&quot;cluster&quot;</span>)</span></code></pre></div>
 </div>
 </div>
 
