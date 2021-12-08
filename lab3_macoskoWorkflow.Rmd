@@ -33,7 +33,12 @@ pkgs <- c("SingleCellExperiment",
           "Seurat",
           "PCAtools",
           "glmpca",
-          "genefilter")
+          "genefilter",
+          "pheatmap",
+          "tidyverse",
+          "mclust",
+          "ggplot2",
+          "SingleR")
 notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
 if(length(notInstalled) > 0){
   BiocManager::install(notInstalled)
@@ -2226,7 +2231,7 @@ reference dataset from
 a scRNA-seq dataset that studied the mouse retina, and the Macosko dataset. 
 
 To perform the actual label transfer, will use the `SingleR` Bioconductor 
-package. For each "test" cell in the Macosko dataset, `singleR` will:
+package. For each "test" cell in the Macosko dataset, `SingleR` will:
 
 1. Compute Spearman correlation between the test cell and each reference cell. 
 To improve signal/noise, only marker genes identified using the reference 
