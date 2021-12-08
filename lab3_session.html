@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Koen Van den Berge and Jeroen Gilis" />
+
+
+<title>Lab3: Clustering, marker gene detection and cell type annotation</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Single-cell course</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="introSequencingBulk.html">A brief introduction to sequencing technology</a>
+    </li>
+    <li>
+      <a href="singleCellProtocols.html">Two popular single-cell protocols</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="lab1_session.html">Lab 1</a>
+    </li>
+    <li>
+      <a href="lab2_session.html">Lab 2</a>
+    </li>
+    <li>
+      <a href="lab3_session.html">Lab 3</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Lab3: Clustering, marker gene detection and cell type annotation</h1>
+<h4 class="author">Koen Van den Berge and Jeroen Gilis</h4>
+<h4 class="date">7/12/2021</h4>
+
+</div>
+
+
+<p>In this third lab session, we will perform clustering, marker gene detection and cell type annotation on the dataset from Macosko <em>et al.</em>.</p>
+<div id="macosko-dataset" class="section level1">
+<h1><span class="header-section-number">1</span> Macosko dataset</h1>
+<p>In the first lab session (24 November, 2021), we have quantified and pre-processed the droplet single-cell RNA-seq dataset (<strong>drop-seq protocol</strong>) from the publication by Macosko <em>et al.</em>, Cell 161, 1202–1214 <a href="https://doi.org/10.1016/j.cell.2015.05.002">(link)</a>. In this experiment, Macosko <em>et al.</em> sequenced 49,300 cells from the mouse retina, identifying 39 transcriptionally distinct cell populations. The experiment was performed in 7 batches.</p>
+<p>In the previous two session, we already performed several steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Import the Macosko dataset as <code>SingleCellExperiment</code> object from the <code>scRNAseq</code> Bioconductor package.</p></li>
+<li><p>Include ENSEMBL gene identifiers in the <code>rowData</code></p></li>
+<li><p>Remove very lowly expressed genes</p></li>
+<li><p>Remove low quality cells 4.1. Cells with outlying library size 4.2. Cells with outlying transcriptome complexity 4.3. Cells with outlying percentage of mitochondrial reads 4.4. Empty droplets 4.5. Doublets</p></li>
+<li><p>Normalization 5.1. Compute log-normalized counts 5.2. Compute scaling factor to correct for differences in library size</p></li>
+<li><p>Feature selection 6.1. Genes with high variance 6.2. Genes with high variance with respect to their mean expression 6.3. Genes with high deviance 6.4. Genes with high variance after variance-stabilizing transformation (VST)</p></li>
+<li><p>Dimensionality reduction 7.1. Based on two most variable genes from step 6.2. 7.2. PCA 7.3. GLM-PCA 7.4. T-SNE 7.5. UMAP</p></li>
+</ol>
+<p>During this session, we will add the following steps to this workflow :</p>
+<ul>
+<li>Clustering (graph-based, k-means and hierarchical clustering)</li>
+<li>Marker gene detection</li>
+<li>Cell type annotation (supervised and semi-supervised)</li>
+</ul>
+<p>To guide you with these next steps, we provide with an Rmarkdown template that you can fill out:</p>
+<p><a href="./lab3_macoskoTemplate.html">lab3_macoskoTemplate</a></p>
+<hr />
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAnTGFiMzogQ2x1c3RlcmluZywgbWFya2VyIGdlbmUgZGV0ZWN0aW9uIGFuZCBjZWxsIHR5cGUgYW5ub3RhdGlvbicKYXV0aG9yOiAiS29lbiBWYW4gZGVuIEJlcmdlIGFuZCBKZXJvZW4gR2lsaXMiCmRhdGU6ICI3LzEyLzIwMjEiCm91dHB1dDoKICAgIGh0bWxfZG9jdW1lbnQ6CiAgICAgIGNvZGVfZG93bmxvYWQ6IHRydWUgICAgCiAgICAgIHRoZW1lOiBjb3NtbwogICAgICB0b2M6IHRydWUKICAgICAgdG9jX2Zsb2F0OiB0cnVlCiAgICAgIGhpZ2hsaWdodDogdGFuZ28KICAgICAgbnVtYmVyX3NlY3Rpb25zOiB0cnVlCi0tLQoKSW4gdGhpcyB0aGlyZCBsYWIgc2Vzc2lvbiwgd2Ugd2lsbCBwZXJmb3JtIGNsdXN0ZXJpbmcsIG1hcmtlciBnZW5lIGRldGVjdGlvbiBhbmQgCmNlbGwgdHlwZSBhbm5vdGF0aW9uIG9uIHRoZSBkYXRhc2V0IGZyb20gTWFjb3NrbyAqZXQgYWwuKi4KCiMgTWFjb3NrbyBkYXRhc2V0CgpJbiB0aGUgZmlyc3QgbGFiIHNlc3Npb24gKDI0IE5vdmVtYmVyLCAyMDIxKSwgd2UgaGF2ZSBxdWFudGlmaWVkIGFuZCAKcHJlLXByb2Nlc3NlZCB0aGUgZHJvcGxldCBzaW5nbGUtY2VsbCBSTkEtc2VxIGRhdGFzZXQgKCoqZHJvcC1zZXEgcHJvdG9jb2wqKikgCmZyb20gdGhlIHB1YmxpY2F0aW9uIGJ5IE1hY29za28gKmV0IGFsLiosIENlbGwgMTYxLCAxMjAy4oCTMTIxNApbKGxpbmspXShodHRwczovL2RvaS5vcmcvMTAuMTAxNi9qLmNlbGwuMjAxNS4wNS4wMDIpLiBJbiB0aGlzIGV4cGVyaW1lbnQsIApNYWNvc2tvICpldCBhbC4qIHNlcXVlbmNlZCA0OSwzMDAgY2VsbHMgZnJvbSB0aGUgbW91c2UgcmV0aW5hLCBpZGVudGlmeWluZyAKMzkgdHJhbnNjcmlwdGlvbmFsbHkgZGlzdGluY3QgY2VsbCBwb3B1bGF0aW9ucy4gVGhlIGV4cGVyaW1lbnQgd2FzIHBlcmZvcm1lZCBpbgo3IGJhdGNoZXMuCgpJbiB0aGUgcHJldmlvdXMgdHdvIHNlc3Npb24sIHdlIGFscmVhZHkgcGVyZm9ybWVkIHNldmVyYWwgc3RlcHM6CgoxLiBJbXBvcnQgdGhlIE1hY29za28gZGF0YXNldCBhcyBgU2luZ2xlQ2VsbEV4cGVyaW1lbnRgIG9iamVjdCBmcm9tIHRoZSAKYHNjUk5Bc2VxYCBCaW9jb25kdWN0b3IgcGFja2FnZS4KCjIuIEluY2x1ZGUgRU5TRU1CTCBnZW5lIGlkZW50aWZpZXJzIGluIHRoZSBgcm93RGF0YWAKCjMuIFJlbW92ZSB2ZXJ5IGxvd2x5IGV4cHJlc3NlZCBnZW5lcwoKNC4gUmVtb3ZlIGxvdyBxdWFsaXR5IGNlbGxzIAogIDQuMS4gQ2VsbHMgd2l0aCBvdXRseWluZyBsaWJyYXJ5IHNpemUgCiAgNC4yLiBDZWxscyB3aXRoIG91dGx5aW5nIHRyYW5zY3JpcHRvbWUgY29tcGxleGl0eSAKICA0LjMuIENlbGxzIHdpdGggb3V0bHlpbmcgcGVyY2VudGFnZSBvZiBtaXRvY2hvbmRyaWFsIHJlYWRzIAogIDQuNC4gRW1wdHkgZHJvcGxldHMgCiAgNC41LiBEb3VibGV0cwoKNS4gTm9ybWFsaXphdGlvbiAKICA1LjEuIENvbXB1dGUgbG9nLW5vcm1hbGl6ZWQgY291bnRzIAogIDUuMi4gQ29tcHV0ZSBzY2FsaW5nIGZhY3RvciB0byBjb3JyZWN0IGZvciBkaWZmZXJlbmNlcyBpbiBsaWJyYXJ5IHNpemUKCjYuIEZlYXR1cmUgc2VsZWN0aW9uIAogIDYuMS4gR2VuZXMgd2l0aCBoaWdoIHZhcmlhbmNlIAogIDYuMi4gR2VuZXMgd2l0aCBoaWdoIHZhcmlhbmNlIHdpdGggcmVzcGVjdCB0byB0aGVpciBtZWFuIGV4cHJlc3Npb24gCiAgNi4zLiBHZW5lcyB3aXRoIGhpZ2ggZGV2aWFuY2UgCiAgNi40LiBHZW5lcyB3aXRoIGhpZ2ggdmFyaWFuY2UgYWZ0ZXIgdmFyaWFuY2Utc3RhYmlsaXppbmcgdHJhbnNmb3JtYXRpb24gKFZTVCkKCjcuIERpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbiAKICA3LjEuIEJhc2VkIG9uIHR3byBtb3N0IHZhcmlhYmxlIGdlbmVzIGZyb20gc3RlcCA2LjIuIAogIDcuMi4gUENBIAogIDcuMy4gR0xNLVBDQSAKICA3LjQuIFQtU05FIAogIDcuNS4gVU1BUAogCiBEdXJpbmcgdGhpcyBzZXNzaW9uLCB3ZSB3aWxsIGFkZCB0aGUgZm9sbG93aW5nIHN0ZXBzIHRvIHRoaXMgd29ya2Zsb3cgOgogCiAtIENsdXN0ZXJpbmcgKGdyYXBoLWJhc2VkLCBrLW1lYW5zIGFuZCBoaWVyYXJjaGljYWwgY2x1c3RlcmluZykKIC0gTWFya2VyIGdlbmUgZGV0ZWN0aW9uCiAtIENlbGwgdHlwZSBhbm5vdGF0aW9uIChzdXBlcnZpc2VkIGFuZCBzZW1pLXN1cGVydmlzZWQpCiAKVG8gZ3VpZGUgeW91IHdpdGggdGhlc2UgbmV4dCBzdGVwcywgd2UgcHJvdmlkZSB3aXRoIGFuIFJtYXJrZG93biB0ZW1wbGF0ZQp0aGF0IHlvdSBjYW4gZmlsbCBvdXQ6CgpbbGFiM19tYWNvc2tvVGVtcGxhdGVdKC4vbGFiM19tYWNvc2tvVGVtcGxhdGUuaHRtbCkKCgotLS0KCg==</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("lab3_session.rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.11.24)  7 DEC 2021 15:52
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.12.6)  8 DEC 2021 09:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -711,7 +711,7 @@ Package rerunfilecheck Info: File `singleCellProtocols.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  16377 strings out of 478256
- 304530 string characters out of 5855040
+ 304530 string characters out of 5855041
  758865 words of memory out of 5000000
  36713 multiletter control sequences out of 15000+600000
  406988 words of font info for 56 fonts, out of 8000000 for 9000

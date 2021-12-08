@@ -246,15 +246,6 @@ graph <- buildSNNGraph(sce,
 # alternative: buildKNNGraph()
 ```
 
-```
-# Slow and not really informative -> leave out?
-library(igraph)
-igraph::plot.igraph(
-  graph, layout = layout_with_fr(graph),
-  vertex.size = 5, vertex.label = NA
-)
-```
-
 ### Detect clusters on the graph
 
 Two popular graph-based clustering algorithm are the `leiden` and `louvain` 
@@ -470,7 +461,7 @@ clust_hcl_k10 <- cutree(hcl, k = 10)
 table(clust_hcl_k10)
 ```
 
-````{r}
+```{r}
 # cut to get 39 clusters
 clust_hcl_k39 <- cutree(hcl, k = 39)
 table(clust_hcl_k39)
@@ -514,6 +505,13 @@ pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_louvain))
 pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_leiden2))
 
 pheatmap::pheatmap(table(sce$cluster_lowRes, sce$clust_hcl_k10))
+```
+
+Also, when we look at the t-SNE from the original publication, we observe
+clearly distinct clusters:
+
+```{r, echo=FALSE}
+knitr::include_graphics("./../macosko_figure_5B.jpeg")
 ```
 
 The main reason for this is that the authors of the original paper used quite a 
@@ -657,7 +655,7 @@ clustering and that of the original authors. More specifically:
 - The original rods correspond with our group 5
 - The original cones correspond with our group 2
 - The original pericytes and vascular endothelium correspond with our group 7
-- The original muller glia, astrocytes, fibroblasts amd microglia (which are 
+- The original muller glia, astrocytes, fibroblasts and microglia (which are 
 similar cell types, see paper figure 5D) correspond with our group 8
 - The original ganglion and horizontal cells (which are similar cell types, 
 see paper figure 5D) correspond with our group 1
@@ -687,7 +685,12 @@ the authors)
 original results (clusters 37 and 38)
 
 **Overall, we observe a rather strong correspondence between our clusters and**
-**those of the authors.**
+**those of the authors.** Also note that our t-SNE visualization now resembles
+the t-SNE map of the original authors much more closely:
+
+```{r}
+knitr::include_graphics("./../macosko_figure_5B.jpeg")
+```
 
 # Cell type annotation
 
@@ -757,8 +760,13 @@ plotTSNE(sce_900,
          text_by = "clust_hcl_k39")
 ```
 
-From figure 5D, we obtain the marker-cell type relationship, and draw the
-following conclusions.
+From figure 5D, we obtain the marker-cell type relationship, 
+
+```{r}
+knitr::include_graphics("./../macosko_figure_5D.jpeg")
+```
+
+and draw the following conclusions:
 
 - The *LHX1* marker is specific for horizontal cells. As such, our **cluster 3**
 corresponds to **horizontal cells**.
@@ -896,7 +904,8 @@ head(ordered[,c(1:4,10)],n=10) # showing basic stats only, for brevity.
 ```
 
 We can also visualize the log-normalized expression of the top10 markers in 
-each cell, stratified on cluster label:
+each cell, stratified on cluster label, using the `plotExpression` function
+of the `scater` package:
 
 ```{r, message=FALSE, warning=FALSE}
 library(scater)
@@ -1175,12 +1184,14 @@ sce_900$SingleR_lowRes <- pred.lowRes$labels
 # our low resolution labels based on reference
 plotTSNE(sce_900,
          colour_by = "SingleR_lowRes",
-         text_by = "SingleR_lowRes")
+         text_by = "SingleR_lowRes",
+         text_size = 3)
 
 # low resolution labels of the authors
 plotTSNE(sce_900,
          colour_by = "cluster_lowRes",
-         text_by = "cluster_lowRes")
+         text_by = "cluster_lowRes",
+         text_size = 3)
 ```
 
 Comparing these two figures, we come to the same conclusion as above based on 
@@ -1193,7 +1204,7 @@ classifier as misclassified these (i.e., the original labels are correct).
 On the other hand, we were here nicely able to distinguish between bipolar cells
 and rod bipolar cells, which cluster separately.
 
-**Altogether, label-transfer was quite successfull, and we would have been able**
+**Altogether, label-transfer was quite successful, and we would have been able**
 **to very quickly get high-quality results using this very user-friendly and** 
 **fast approach implemented in the `SingleR` package.**
 
@@ -1238,13 +1249,15 @@ sce_900$SingleR_highRes <- pred.higRes$labels
 # our high resolution labels based on reference
 plotTSNE(sce_900,
          colour_by = "SingleR_highRes",
-         text_by = "SingleR_highRes")
+         text_by = "SingleR_highRes",
+         text_size = 2.5)
 
 
 # high resolution labels of the authors
 plotTSNE(sce_900,
          colour_by = "cluster_highRes",
-         text_by = "cluster_highRes")
+         text_by = "cluster_highRes",
+         text_size = 2.5)
 # TODO: make labels more readable. However, I cant seem to find where to adapt
 # label font size directly in the TSNE call. A more manual implementation might
 # be needed...
