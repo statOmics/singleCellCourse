@@ -49,9 +49,10 @@ that you can fill out:
 
 [lab2_MacoskoTemplate](./lab2_MacoskoTemplate.html)
 
-Here, we provide you with a solution file for the exercise:
+Here, we provide you with a solution file for the exercise (sections
+normalization, feature selection and dimensionality reduction):
 
-[lab2_MacoskoWorkflow](./lab2_MacoskoWorkflow.html)
+[lab2_macoskoWorkflow](./lab3_macoskoWorkflow.html)
 
 # Cuomo dataset
 
@@ -77,7 +78,7 @@ session, and some placeholders for the analysis of this session:
 
 Here, we provide you with a solution file for the exercise:
 
-[lab2__Macosko_CuomoWorkflow](./lab2_CuomoWorkflow.html)
+[lab2_Macosko_CuomoWorkflow](./lab2_CuomoWorkflow.html)
 
 
 ---

@@ -69,7 +69,8 @@ that you can fill out:
 
 [lab3_macoskoTemplate](./lab3_macoskoTemplate.html)
 
-We also provide the solution to this exercise here:
+We also provide the solution to this exercise here (sections clustering,
+marker gene detection and annotation):
 
 [lab3_macoskoWorkflow](./lab3_macoskoWorkflow.html)
 
