@@ -21,13 +21,19 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 pkgs <- c("SingleCellExperiment",
           "ExperimentHub",
           "edgeR",
+          "biomaRt",
           "DropletUtils", 
           "scRNAseq", 
           "scater", 
           "scuttle", 
-          "scran", 
+          "scran",
+          "scry",
           "BiocSingular", 
-          "scDblFinder")
+          "scDblFinder",
+          "Seurat",
+          "PCAtools",
+          "glmpca",
+          "genefilter")
 notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
 if(length(notInstalled) > 0){
   BiocManager::install(notInstalled)

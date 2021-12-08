@@ -69,6 +69,10 @@ that you can fill out:
 
 [lab3_macoskoTemplate](./lab3_macoskoTemplate.html)
 
+We also provide the solution to this exercise here:
+
+[lab3_macoskoWorkflow](./lab3_macoskoWorkflow.html)
+
 
 ---
 
