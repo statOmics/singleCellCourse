@@ -34,19 +34,13 @@ pkgs <- c("SingleCellExperiment",
           "scran",
           "scry",
           "BiocSingular", 
-          "scDblFinder")
+          "scDblFinder",
+          "Seurat",
+          "PCAtools",
+          "glmpca")
 notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
 if(length(notInstalled) > 0){
   BiocManager::install(notInstalled)
-}
-
-# install from CRAN if not yet installed.
-CRANpkgs <- c("Seurat",
-              "PCAtools",
-              "glmpca")
-notInstalledCRAN <- CRANpkgs[!CRANpkgs %in% installed.packages()[,1]]
-if(length(CRANpkgs) > 0){
-  install.packages(CRANpkgs)
 }
 ```
 
@@ -443,7 +437,7 @@ mitochondrial genes. This indicates likely damaged cells, presumably because
 of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
 the downstream analysis.
 
-```
+```{r,eval=FALSE}
 # Number of genes vs library size
 plotColData(sce, x = "sum", y="detected", colour_by="cluster") 
 
@@ -491,8 +485,8 @@ table(discardCells)
 colData(sce)$discardCells <- discardCells
 
 # visualize cells to be removed
-plotColData(sce, x = "sum", y="detected", colour_by="discardCells")
-plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discardCells")
+# plotColData(sce, x = "sum", y="detected", colour_by="discardCells")
+# plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discardCells")
 ```
 
 We removed a total of $3423$ cells, most of which because of an outlyingly high 

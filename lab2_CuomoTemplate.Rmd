@@ -49,7 +49,7 @@ doing this during the lab session, to avoid overloading the system.
 
 First we read in the count matrix:
 
-```{r, message=FALSE, warning=FALSE,eval=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
 download.file()
 sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")

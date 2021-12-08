@@ -11,7 +11,7 @@ output:
 
 # Preamble: installation of Bioconductor libraries
 
-```{r,eval=FALSE}
+```{r}
 # install BiocManager package if not installed yet.
 # BiocManager is the package installer for Bioconductor software.
 if (!requireNamespace("BiocManager", quietly = TRUE))
