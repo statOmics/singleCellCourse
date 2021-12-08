@@ -1642,7 +1642,7 @@ the initialization of the cluster centers, it is typically recommended to run
 k-means with multiple starting configurations (via the `nstart` argument).
 For reproducibility, we also strongly advise to set a seed.
 
-```{r}
+```{r,eval=FALSE}
 set.seed(123)
 
 # k=10
@@ -1724,7 +1724,7 @@ The differences between the different methods goes beyond the scope of this
 session, but a brief description is provided in the function help file. In 
 the context of scRNA-seq, we recommend the use of the `"ward.D2"` method.
 
-```{r}
+```{r,eval=FALSE}
 distsce <- dist(reducedDim(sce, "PCA")) #1min
 hcl <- hclust(distsce, method = "ward.D2") #3min
 plot(hcl, labels = FALSE)
@@ -1738,19 +1738,19 @@ and a threshold value for cutting the tree. The latter may be either `k`, the
 number of clusters we want to report, or `h`, the height of the dendrogram at 
 which we want to cut the tree.
 
-```{r}
+```{r,eval=FALSE}
 # cut to get 10 clusters
 clust_hcl_k10 <- cutree(hcl, k = 10)
 table(clust_hcl_k10)
 ```
 
-```{r}
+```{r,eval=FALSE}
 # cut to get 39 clusters
 clust_hcl_k39 <- cutree(hcl, k = 39)
 table(clust_hcl_k39)
 ```
 
-```{r}
+```{r,eval=FALSE}
 sce$clust_hcl_k10 <- as.factor(clust_hcl_k10)
 sce$clust_hcl_k39 <- as.factor(clust_hcl_k39)
 
@@ -1770,19 +1770,19 @@ see that the correspondence is not great. As a demonstration, I make a table and
 a heatmap comparing the low-resolution cluster labels from the paper with our 
 Louvain, Leiden2 and hierarchical clustering (k=10) labels:
 
-```{r}
+```{r,eval=FALSE}
 table(sce$cluster_lowRes, sce$cluster_louvain)
 ```
 
-```{r}
+```{r,eval=FALSE}
 table(sce$cluster_lowRes, sce$cluster_leiden2)
 ```
 
-```{r}
+```{r,eval=FALSE}
 table(sce$cluster_lowRes, sce$clust_hcl_k10)
 ```
 
-```{r}
+```{r,eval=FALSE}
 pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_louvain))
 
 pheatmap::pheatmap(table(sce$cluster_lowRes, sce$cluster_leiden2))
@@ -2496,7 +2496,7 @@ and rod bipolar cells, which cluster separately.
 For the sake of completeness, we may also perform label transfer with `SingleR`
 using the more fine-grained labels from the reference dataset.
 
-```{r}
+```{r,eval=FALSE}
 # Runs 3min 30sec for me
 pred.higRes <- SingleR(test = sce_900, 
                      ref = ref.data, 
@@ -2505,19 +2505,19 @@ pred.higRes <- SingleR(test = sce_900,
 table(pred.higRes$labels)
 ```
 
-```{r}
+```{r,eval=FALSE}
 table(sce_900$cluster_lowRes, pred.higRes$labels)
 ```
 
-```{r}
+```{r,eval=FALSE}
 pheatmap::pheatmap(table(sce_900$cluster_lowRes, pred.higRes$labels))
 ```
 
-```{r}
+```{r,eval=FALSE}
 gg <- plotScoreHeatmap(pred.higRes[1:20,])
 ```
 
-```{r}
+```{r,eval=FALSE}
 # low certainty labels: 751
 summary(is.na(pred.higRes$pruned.labels))
 table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)], 
@@ -2526,7 +2526,7 @@ table(sce_900$cluster_lowRes[!is.na(pred.higRes$pruned.labels)],
 
 
 
-```{r}
+```{r,eval=FALSE}
 sce_900$SingleR_highRes <- pred.higRes$labels
 
 # our high resolution labels based on reference
@@ -2541,9 +2541,6 @@ plotTSNE(sce_900,
          colour_by = "cluster_highRes",
          text_by = "cluster_highRes",
          text_size = 2.5)
-# TODO: make labels more readable. However, I cant seem to find where to adapt
-# label font size directly in the TSNE call. A more manual implementation might
-# be needed...
 ```
 
 
