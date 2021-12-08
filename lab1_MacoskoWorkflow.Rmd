@@ -426,7 +426,7 @@ mitochondrial genes. This indicates likely damaged cells, presumably because
 of loss of cytoplasmic RNA from perforated cells, so we should remove these for 
 the downstream analysis.
 
-```{r}
+```
 # Number of genes vs library size
 plotColData(sce, x = "sum", y="detected", colour_by="cluster") 
 
