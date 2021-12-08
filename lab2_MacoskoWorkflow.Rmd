@@ -37,7 +37,8 @@ pkgs <- c("SingleCellExperiment",
           "scDblFinder",
           "Seurat",
           "PCAtools",
-          "glmpca")
+          "glmpca",
+          "genefilter")
 notInstalled <- pkgs[!pkgs %in% installed.packages()[,1]]
 if(length(notInstalled) > 0){
   BiocManager::install(notInstalled)
@@ -784,7 +785,7 @@ The simplest approach to quantifying per-gene variation is to compute the
 variance of the log-normalized expression values (i.e., "log-counts") for 
 each gene across all cells. 
 
-```{r,eval=FALSE}
+```{r}
 # calculate variance of log-normalized counts for each gene
 geneVars <- genefilter::rowVars(assays(sce)$logcounts)
 # select top 1000 highly variable genes
@@ -860,7 +861,7 @@ legend("topleft",
 As a comparison, we could color the genes on this figure according to the 
 selection that was made purely by looking at the raw variance of each gene.
 
-```{r,eval=FALSE}
+```{r}
 plot(fitRetina$mean, fitRetina$var, 
      col = c("orange", "steelblue")[(names(fitRetina$mean) %in% highVarGenes)+1],
      xlab="Mean of log-expression",
@@ -889,7 +890,7 @@ fraction varies significantly across the cells in our datasets.Genes with a
 high deviance will thus most poorly fit a null model where the relative
 abundance is equal for all cells, which therefore are informative.
 
-```{r,eval=FALSE}
+```{r}
 #BiocManager::install("scry")
 library(scry)
 sce <- devianceFeatureSelection(object = sce, 
@@ -926,7 +927,7 @@ for performing scRNA-seq data analysis is `Seurat`. However, functions from
 and vice versa. Fortunately, efforts have been made to increase the
 interoperability between the two toolboxes.
 
-```{r, eval=FALSE}
+```{r}
 library(Seurat)
 seurat_obj <- as.Seurat(sce)
 seurat_obj # notice the "0 variable features"
@@ -936,7 +937,7 @@ On this object, we may use functions from the `Seurat` toolbox.
 For instance, we may search for highly variable features using `Seurat`'s VST
 implementation:
 
-```{r, eval=FALSE}
+```{r}
 seurat_obj <- Seurat::NormalizeData(seurat_obj, 
                                     normalization.method = "LogNormalize", 
                                     scale.factor = 10000)
@@ -945,7 +946,7 @@ seurat_obj <-  FindVariableFeatures(object = seurat_obj,
                                     selection.method = "vst")
 ```
 
-```{r, eval=FALSE}
+```{r}
 seurat_obj  # notice the "2000 variable features" (default)
 head(VariableFeatures(seurat_obj)) # here they are
 ```
@@ -1052,7 +1053,7 @@ way for determining this, there are procedures available that aim to
 computationally identify the elbow/knee point in the variance explained per 
 PC plot.
 
-```{r, eval = FALSE}
+```{r}
 library(PCAtools)
 chosen.elbow <- findElbowPoint(percent.var)
 chosen.elbow
@@ -1081,7 +1082,7 @@ signal-to-noise ratio!
 First, we compare the different feature selection criteria, using the top 1000
 highly variable genes for each method.
 
-```{r,eval=FALSE}
+```{r}
 # Get top 1000 highly variable features using the highly variable genes
 # (w.r.t. mean), high deviance genes and the VST strategy of Seurat
 
@@ -1196,7 +1197,7 @@ on log-transformed normalized counts, the underlying computations can be
 strongly simplified. Here, we work with the raw counts, which we assume to 
 be *Poisson* distributed, requiring an iterative optimization scheme.
 
-```{r, eval=FALSE}
+```{r}
 # runs 2min on my laptop
 library(glmpca)
 set.seed(211103)
@@ -1213,7 +1214,7 @@ plotReducedDim(sce,
 Alternatively, we could adopt the GLM-PCA strategy using only the genes with 
 high deviance.
 
-```{r,eval=FALSE}
+```{r}
 # Based on the diagnostic plot from the feature selection, we would select the 
 # top 2000 genes with highest deviance. However, to reduce the running time of
 # the function, I here select the top 500 (which still is quite slow - 5min).

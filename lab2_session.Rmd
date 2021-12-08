@@ -75,6 +75,10 @@ session, and some placeholders for the analysis of this session:
 
 [lab2_CuomoTemplate](./lab2_CuomoTemplate.html)
 
+Here, we provide you with a solution file for the exercise:
+
+[lab2__Macosko_CuomoWorkflow](./lab2_CuomoWorkflow.html)
+
 
 ---
 
