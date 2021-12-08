@@ -1789,7 +1789,7 @@ Also, when we look at the t-SNE from the original publication, we observe
 clearly distinct clusters:
 
 ```{r, echo=FALSE}
-knitr::include_graphics("./../macosko_figure_5B.jpeg")
+knitr::include_graphics("./macosko_figure_5B.jpeg")
 ```
 
 The main reason for this is that the authors of the original paper used quite a 
@@ -1967,7 +1967,7 @@ original results (clusters 37 and 38)
 the t-SNE map of the original authors much more closely:
 
 ```{r}
-knitr::include_graphics("./../macosko_figure_5B.jpeg")
+knitr::include_graphics("./macosko_figure_5B.jpeg")
 ```
 
 # Cell type annotation
@@ -2041,7 +2041,7 @@ plotTSNE(sce_900,
 From figure 5D, we obtain the marker-cell type relationship, 
 
 ```{r}
-knitr::include_graphics("./../macosko_figure_5D.jpeg")
+knitr::include_graphics("./macosko_figure_5D.jpeg")
 ```
 
 and draw the following conclusions:
