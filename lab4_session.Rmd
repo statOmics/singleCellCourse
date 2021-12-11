@@ -1,0 +1,92 @@
+---
+title: 'Lab4: Batch correction and trajectory inference'
+author: "Koen Van den Berge and Jeroen Gilis"
+date: "11/12/2021"
+output:
+    html_document:
+      code_download: true    
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
+---
+
+In this fourth and final lab session, we will perform batch correction, 
+trajectory inference and differential expression testing along the estimated
+trajectory on the dataset from Cuomo *et al.*
+
+# Cuomo dataset
+
+Same as for the Macosko dataset, we will continue our workflow for the Cuomo
+dataset. 
+
+In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
+from 125 healthy human donors. These cells were used to study the endoderm 
+differentiation process. The authors cultered the iPSCs cell lines and allowed 
+for differentiation for three days. Knowing the process of endoderm 
+differentiation, these time points should correspond with different cell types: 
+day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
+are "intermediate" cells and day3 are fully differentiated endoderm cells.
+This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
+
+In the first and second sessions, we already performed several steps:
+
+
+1. Remove very lowly expressed genes
+
+2. Remove low quality cells 
+
+    2.1. Cells with outlying library size 
+    
+    2.2. Cells with outlying transcriptome complexity 
+    
+    2.3. Cells with outlying percentage of mitochondrial reads 
+
+3. Normalization 
+
+    3.1. Compute log-normalized counts
+    
+    3.2. Compute scaling factor to correct for differences in library size
+
+4. Feature selection 
+    
+    4.1. Genes with high variance 
+    
+    4.2. Genes with high variance with respect to their mean expression 
+    
+    4.3. Genes with high deviance 
+    
+    4.4. Genes with high variance after variance-stabilizing transformation (VST)
+
+5. Dimensionality reduction
+
+    5.1. Based on two most variable genes from step 6.2. 
+    
+    5.2. PCA 
+    
+    5.3. GLM-PCA 
+    
+    5.4. T-SNE 
+    
+    5.5. UMAP
+ 
+ During this session, we will add the following steps to this workflow :
+ 
+ - Batch correction
+ - Clustering (hierarchical clustering)
+ - Building a trajectory
+ - Testing differential expression along the inferred trajectory
+ 
+To guide you with these next steps, we provide with an Rmarkdown template
+that you can fill out:
+
+[lab3_macoskoTemplate] make later and put in root with all eval=FALSE?
+
+We also provide the solution to this exercise here (sections clustering,
+marker gene detection and annotation):
+
+[lab4_CuomoWorkflow.html](./lab4_CuomoWorkflow.html)
+
+
+---
