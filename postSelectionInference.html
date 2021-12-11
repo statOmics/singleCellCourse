@@ -502,7 +502,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Post-selection inference</h1>
 <h4 class="author">Koen Van den Berge</h4>
-<h4 class="date">Last compiled on 08 December, 2021</h4>
+<h4 class="date">Last compiled on 11 December, 2021</h4>
 
 </div>
 
@@ -514,13 +514,13 @@ div.tocify {
 ##     CRAN: https://cran.rstudio.com</code></pre>
 <pre><code>## Bioconductor version 3.14 (BiocManager 1.30.16), R 4.1.2 (2021-11-01)</code></pre>
 <pre><code>## Installing package(s) &#39;DESeq2&#39;</code></pre>
-<pre><code>## also installing the dependency &#39;geneplotter&#39;</code></pre>
+<pre><code>## also installing the dependencies &#39;annotate&#39;, &#39;genefilter&#39;, &#39;geneplotter&#39;</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//Rtmp42zSHy/downloaded_packages</code></pre>
+##  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//RtmpOJEiWP/downloaded_packages</code></pre>
 <pre><code>## Old packages: &#39;crayon&#39;, &#39;digest&#39;, &#39;glue&#39;, &#39;knitr&#39;, &#39;lattice&#39;, &#39;lifecycle&#39;,
 ##   &#39;mgcv&#39;, &#39;mime&#39;, &#39;nlme&#39;, &#39;pillar&#39;, &#39;rlang&#39;, &#39;rmarkdown&#39;, &#39;stringi&#39;, &#39;tibble&#39;,
-##   &#39;tinytex&#39;, &#39;withr&#39;, &#39;xfun&#39;</code></pre>
+##   &#39;tinytex&#39;, &#39;withr&#39;, &#39;xfun&#39;, &#39;Matrix&#39;</code></pre>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>runEdgeR &lt;-<span class="st"> </span><span class="cf">function</span>(counts, design){</span>
 <span id="cb7-2"><a href="#cb7-2"></a>  d &lt;-<span class="st"> </span><span class="kw">DGEList</span>(counts)</span>
 <span id="cb7-3"><a href="#cb7-3"></a>  d &lt;-<span class="st"> </span><span class="kw">calcNormFactors</span>(d)</span>
@@ -604,7 +604,7 @@ div.tocify {
 ## [22] htmltools_0.5.2        Matrix_1.3-4           pkgconfig_2.0.3       
 ## [25] XML_3.99-0.8           genefilter_1.76.0      zlibbioc_1.40.0       
 ## [28] purrr_0.3.4            xtable_1.8-4           scales_1.1.1          
-## [31] BiocParallel_1.28.2    tibble_3.1.4           annotate_1.72.0       
+## [31] BiocParallel_1.28.3    tibble_3.1.4           annotate_1.72.0       
 ## [34] KEGGREST_1.34.0        generics_0.1.1         ggplot2_3.3.5         
 ## [37] ellipsis_0.3.2         cachem_1.0.6           survival_3.2-13       
 ## [40] magrittr_2.0.1         crayon_1.4.1           memoise_2.0.1         

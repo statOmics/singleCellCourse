@@ -1,10 +1,10 @@
-This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.12.6)  8 DEC 2021 15:36
+This is XeTeX, Version 3.141592653-2.6-0.999993 (TeX Live 2021) (preloaded format=xelatex 2021.12.8)  11 DEC 2021 14:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **singleCellProtocols.tex
 (./singleCellProtocols.tex
-LaTeX2e <2021-11-15>
+LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2021-11-22> (/Users/runner/Library/TinyTeX/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
 (/Users/runner/Library/TinyTeX/texmf-dist/tex/latex/base/size10.clo
@@ -712,7 +712,7 @@ Package rerunfilecheck Info: File `singleCellProtocols.out' has not changed.
 Here is how much of TeX's memory you used:
  16377 strings out of 478256
  304530 string characters out of 5855041
- 758865 words of memory out of 5000000
+ 758858 words of memory out of 5000000
  36713 multiletter control sequences out of 15000+600000
  406988 words of font info for 56 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
