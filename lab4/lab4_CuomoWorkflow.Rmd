@@ -48,7 +48,7 @@ if(length(notInstalled) > 0){
 
 # install harmony from github
 
-```{r}
+```
 library(devtools)
 install_github("immunogenomics/harmony",
                dependencies = TRUE,
@@ -170,7 +170,7 @@ rowData(sce) <- data.frame(Ensembl = gsub("_.*", "", rowData(sce)$V1),
 head(rowData(sce))
 ```
 
-```{r}
+```
 # currently issues with ensembl server -> do not evaluate this chunk
 library("biomaRt")
 ensembl75 <- useEnsembl(biomart = 'genes', 
@@ -498,6 +498,9 @@ We will explore this phenomenon in more detail later
 
 ## Non-linear dimensionality reduction: UMAP
 
+@Koen: this UMAP looks different and worse from the one you show in the course
+slides. Which parameters did you use (or maybe upstream, #HVGs and so on)?
+
 ```{r, eval=FALSE}
 set.seed(65187)
 
@@ -542,15 +545,17 @@ that are useful for exploring this:
 table(sce$donor,sce$experiment)
 ```
 
+We have cells from 15 different patients and 14 different "experiments" 
+(= sequencing batches).
 
+We now will assess if this additional source of heterogeneity is also
+picked up in the reduced dimension plot
 
 ```{r}
-# target effect in PCA space, all time points
+# time effect in PCA space, all time points
 plotPCA(sce,
         colour_by = "day")
-```
 
-```{r}
 # donor (nuisance) effect in PCA space, all time points
 plotPCA(sce,
         colour_by = "donor")
@@ -559,6 +564,10 @@ plotPCA(sce,
 plotPCA(sce,
         colour_by = "experiment")
 ```
+
+We see that within a certain time point, cells of the same patient/experiment
+seem to cluster together at least to some extent. This effect becomes clearer
+when we visualize the data of the different time points separately.
 
 ```{r}
 # donor effect in PCA space, per time point
@@ -572,20 +581,37 @@ plotPCA(sce[,sce$day=="day3"],
         colour_by = "donor")
 ```
 
+Analogously, we may inspect the effect of patient and experiment in the t-SNE
+plot we created earlier:
+
 ```{r}
+# time effect
+plotTSNE(sce,
+         colour_by = "day")
+
 # nuisance effects in t-SNE space, all time points
 plotTSNE(sce,
          colour_by = "donor")
+
 plotTSNE(sce,
          colour_by = "experiment")
 ```
 
-```
-saveRDS(sce, "/Users/jg/Desktop/sce_after_prep.rds")
-sce <- readRDS("/Users/jg/Desktop/sce_after_prep.rds")
-```
+As expected, we see that the additional heterogeneity observed in the clusters
+colored based on the time points can be explained by the patient effects.
+
+In this experiment, the primary interest are the changes in gene expression 
+across the four days, reflecting differentiation from induced pluripotent stem 
+cells to endoderm cells. In contrast, the between-patient effects are not of
+interest here. Using batch correction, we will aim to "correct" for the donor 
+effects, while retaining the main biological variation of interest!
+
+We will explore two popular strategies for batch correction for scRNA-Seq data:
+**Seurat CCA** and **Harmony**.
 
 ## Seurat CCA batch correction
+
+TODO: add a brief (high-level, conceptual) description on CCA.
 
 ```{r, warning=FALSE, message=FALSE}
 library(Seurat)
@@ -611,11 +637,27 @@ either merging such small batches with other batches, or removing the small
 batches altogether. They actually seem to favor the latter, do that is what I
 will be doing here.
 
+In the code chunk below, I remove cells for patients that have less or equal than 
+30 cells. If we do not do this, we will get issues downstream with the Seurat
+functions `FindIntegrationAnchors` and `IntegrateData`, which break down
+when the number of cells per batch is small. This is a known issue
+
+- https://github.com/satijalab/seurat/issues/3930
+- https://github.com/satijalab/seurat/issues/4803
+- https://github.com/satijalab/seurat/issues/4812
+- https://github.com/carmonalab/STACAS/issues/12
+
+and the package maintainers suggest to either remove or manually merge small
+batches together. We will here simply remove the cells of patient "bezi";
+
 ```{r}
 table(seurat_obj$donor)
 table(seurat_obj$donor)[table(seurat_obj$donor) <= 30]
 seurat_obj <- seurat_obj[,-which(seurat_obj$donor == names(table(seurat_obj$donor)[table(seurat_obj$donor) <= 30]))]
 ```
+
+After this, the `SplitObject` object function is used to generate a list of
+`Seurat` objects, where each list elements hold the data of 1 batch (patient):
 
 ```{r}
 seurat_obj.list <- SplitObject(seurat_obj, split.by = "donor")
@@ -623,8 +665,29 @@ nlevels(as.factor(sce$donor)) # originally 15 patients
 length(seurat_obj.list) # 14 patients left
 ```
 
-```{r}
-# normalize and identify variable features for each dataset (patient) independently
+Next, Seurat will perform the following steps for batch correction:
+
+- `NormalizeData`: by default, takes the count assay of the `Seurat` object and
+performs a log-transformation, resulting in an additional log-transformed assay.
+This is performed for each batch separately.
+
+- `FindVariableFeatures`: Feature selection, using the variance-stabilizing
+transformation (VST) from `Seurat`, which amounts to calculating Pearson
+residuals from a regularized negative binomial regression model, with sequencing 
+depth as a covariate. This is performed for each batch separately.
+
+- `SelectIntegrationFeatures`: Choose the features to use when integrating 
+multiple datasets or batches. This function ranks features by the number of 
+batches they are deemed variable in, breaking ties by the median variable 
+feature rank across datasets. It returns the top scoring features by this 
+ranking, which are called "anchors".
+
+- `IntegrateData`: Performs dataset integration using a pre-computed set of
+"anchors" as obtained with `SelectIntegrationFeatures`.
+
+
+```{r, warning=FALSE, message=FALSE}
+# Normalize and identify variable features for each dataset (patient) independently
 seurat_obj.list <- lapply(X = seurat_obj.list, FUN = function(x) {
     x <- NormalizeData(x,verbose = FALSE)
     x <- FindVariableFeatures(x, 
@@ -633,132 +696,225 @@ seurat_obj.list <- lapply(X = seurat_obj.list, FUN = function(x) {
                               verbose = FALSE)
 })
 
-# select features that are repeatedly variable across datasets for integration
+# Select features that are repeatedly variable across datasets for integration
 features <- SelectIntegrationFeatures(object.list = seurat_obj.list)
-```
 
-```{r, warning=FALSE, message=FALSE}
+# Choose the features to use when integrating multiple datasets or batches
 anchors <- FindIntegrationAnchors(object.list = seurat_obj.list, 
                                   anchor.features = features,
                                   verbose = FALSE)
-```
 
-```{r}
-# this command creates an 'integrated' data assay
+# This command creates an 'integrated' data assay. We have set the `k.weight` 
+# argument, which specifies the Number of neighbors to consider when weighting 
+# anchors, to 30 (default is 100). This was necessary to avoid errors, since we
+# have many batches with less than 100 cells.
 data.combined <- IntegrateData(anchorset = anchors,
                                k.weight = 30,
                                verbose=FALSE)
+
+data.combined
 ```
 
+Now, we have a new `Seurat` object, which again is a single object (not a list)
+storing the expression values of all cells **after batch correction**. Note that
+the original expression values are still present in the *originalexp* assay of
+the object.
 
+@Koen: I was thinking of not using the chunk below, i.e. to only perform a t-SNE
+and to not perform clustering on the Seurat batch corrected data. I would only
+perform clustering on the Harmony normalized data. We can discuss this, we
+could include Seurat as well for comparison, but maybe that would bring us too 
+far.
+
+```
+data.combined <- RunUMAP(object = data.combined,
+                         reduction = "pca",
+                         dims = 1:12,
+                         min.dist=0.4,
+                         n.neighbors=15,
+                         verbose = FALSE)
+
+data.combined <- FindNeighbors(object = data.combined,
+                               reduction = "PCA_SeuBatch",
+                               dims = 1:12,
+                               verbose = FALSE)
+
+data.combined <- FindClusters(object = data.combined,
+                              resolution = 0.5,
+                              verbose = FALSE)
+```
+
+Finally, we may use `Seurat` functions for performing dimension reduction and
+visualization of the batch corrected data.
 
 ```{r}
 # Run the standard Seurat workflow for visualization and clustering
+
+# Step 1: Scales and centers features in the dataset, prior step to PCA
 data.combined <- ScaleData(object = data.combined, 
                            verbose = FALSE)
 
+# Step 2: Perform PCA to 30 dimensions
 data.combined <- RunPCA(object = data.combined, 
                         npcs = 30,
                         reduction.name = "PCA_SeuBatch",
                         verbose = FALSE)
 
-# data.combined <- RunUMAP(object = data.combined, 
-#                          reduction = "pca", 
-#                          dims = 1:12, 
-#                          min.dist=0.4,
-#                          n.neighbors=15,
-#                          verbose = FALSE)
-
+# Step 3: Perform t-SNE on the first 12 principal components
 data.combined <- RunTSNE(object = data.combined, 
                          reduction = "PCA_SeuBatch",
                          reduction.name = "tSNE_SeuBatch",
                          dims = 1:12)
-```
-
-```{r}
-data.combined <- FindNeighbors(object = data.combined, 
-                               reduction = "PCA_SeuBatch", 
-                               dims = 1:12,
-                               verbose = FALSE)
-data.combined <- FindClusters(object = data.combined, 
-                              resolution = 0.5,
-                              verbose = FALSE)
 
 # t-SNE visualization
 p1 <- DimPlot(object = data.combined, 
               reduction = "tSNE_SeuBatch", 
-              group.by = "donor")
+              group.by = "day")
+
 p2 <- DimPlot(object = data.combined, 
               reduction = "tSNE_SeuBatch", 
-              group.by = "day")
+              group.by = "donor")
 p1 + p2
 ```
 
-Visualize using Bioconductor functions
+Alternatively, we can transform the `Seurat` object back to a 
+`SingleCellExperiment` object and generate the visualizations using the 
+Bioconductor functions that we used previously:
 
 ```{r}
+# Convert Seurat object to SingleCellExperiment object
 sce_intSeurat <- as.SingleCellExperiment(data.combined)
 
-# without Seurat batch correction
+# t-SNE without Seurat batch correction
 p1 <- plotTSNE(sce,
-               colour_by = "day")
+               colour_by = "day") + ggtitle("No batch")
 p2 <- plotTSNE(sce,
-               colour_by = "donor")
-p1 + p2
+               colour_by = "donor") + ggtitle("No batch")
 
-# with Seurat batch correction
+# t-SNE with Seurat batch correction
+p3 <- plotReducedDim(sce_intSeurat,
+                     dimred = "TSNE_SEUBATCH",
+                     colour_by = "day") + ggtitle("Batch corrected")
+p4 <- plotReducedDim(sce_intSeurat,
+                     dimred = "TSNE_SEUBATCH",
+                     colour_by = "donor") + ggtitle("Batch corrected")
 
+p1 + p3
 
+p2 + p4
 ```
+
+The batch correction seems to have worked very well. Both with and without
+batch correction, we observe that cells of the same time point cluster together.
+But when no batch correction is performed, there seems to be an additional level
+of variability in the data.
+
+When we color the cells based on the donor variable, we see that without batch 
+correction cells of the same donor cluster together. After batch correction,
+such donor effects seem to be no longer present.
+
+Also note that while batch correction remove the between-donor variability,
+the between-day variability that is of interest is still preserved. As such,
+based on our visualizations, it looks like the batch correction did not 
+overcorrect and succeeded in removing only the unwanted variation in the data.
+
 ## Harmony batch correction
+
+TODO: add a brief (high-level, conceptual) description on Harmony.
+
+Performing batch correction with `harmony` is very simple; we only need a single
+function call and can directly work with our `SingleCellExperiment` object.
+
+The function `RunHarmony` takes the follwoing inputs:
+
+- `object`: name of the `SingleCellExperiment` object
+
+- `group.by.vars`: the names of the variables for which we want to perform batch
+correction. Conveniently, this can be multiple variables, so we can correct both
+for donor and experiment effects (since the correspondence between the two was
+not perfect)
+
+- `reduction`: Name of the previously computed reduced dimension space on which
+batch correction will be performed (not on raw data to improve signal-to-noise
+ratio). Typically PCA is chosen
+
+- `reduction.save`: name to store the batch corrected dimenion reduced space
+
+- `verbose`: print progress or not.
 
 ```{r}
 library(harmony)
 
 set.seed(684864)
 sce <- harmony::RunHarmony(object = sce, 
-                        group.by.vars	= c("donor", "experiment"),
-                        reduction = "PCA",
-                        reduction.save = "HARMONY_donor_experiment",
-                        verbose = FALSE)
+                           group.by.vars	= c("donor", "experiment"),
+                           reduction = "PCA",
+                           reduction.save = "HARMONY_donor_experiment",
+                           verbose = FALSE)
 ```
+
+The output is an additional element in the reduced dimension space:
 
 ```{r}
-reducedDim(sce,type="PCA")[1:5,1:2]
-reducedDim(sce,type="HARMONY_donor_experiment")[1:5,1:2]
+reducedDim(sce, type="PCA")[1:5,1:2]
+reducedDim(sce, type="HARMONY_donor_experiment")[1:5,1:2]
 ```
+
+for which the values differ as compared to the original PCA coordinates. This
+is a consequence of the batch correction.
 
 ```{r}
-ggplot(data = as.data.frame(reducedDim(sce,type="PCA")[,1:2]), 
-       aes(x=PC1,y=PC2)) +
-  geom_point(aes(colour = as.factor(sce$day))) +
-  theme_bw()
+plotReducedDim(object = sce,
+               dimred = "PCA",
+               colour_by = "day")
 
-ggplot(data = as.data.frame(reducedDim(sce,type="HARMONY_donor_experiment")[,1:2]), 
-       aes(x=HARMONY_donor_experiment_1,y=HARMONY_donor_experiment_2)) +
-  geom_point(aes(colour = as.factor(sce$day))) +
-  theme_bw()
+plotReducedDim(object = sce,
+               dimred = "HARMONY_donor_experiment",
+               colour_by = "day")
 ```
 
-```{r,fig.height=20, fig.width=7}
-ggplot(data = as.data.frame(reducedDim(sce,type="PCA")[,1:2]), 
-       aes(x=PC1,y=PC2)) +
-  geom_point(aes(colour = as.factor(sce$donor))) +
-  theme_bw() +
-  theme(legend.title = element_blank()) +
-  facet_wrap(~as.factor(sce$day), scales="free", ncol=1)
-```
-
-```{r,fig.height=20, fig.width=7}
-ggplot(data = as.data.frame(reducedDim(sce,type="HARMONY_donor_experiment")[,1:2]), 
-       aes(x=HARMONY_donor_experiment_1, y=HARMONY_donor_experiment_2)) +
-  geom_point(aes(colour = as.factor(sce$donor))) +
-  theme_bw() +
-  theme(legend.title = element_blank()) +
-  facet_wrap(~as.factor(sce$day), scales="free", ncol=1)
-```
+When coloring on day, both plots look very similar.
 
 ```{r}
+plotReducedDim(object = sce,
+               dimred = "PCA",
+               colour_by = "donor")
+
+plotReducedDim(object = sce,
+               dimred = "HARMONY_donor_experiment",
+               colour_by = "donor")
+```
+
+This figure is too cluttered to see the donor effects. Below, we therefore
+generate a separate figure for each timepoint.
+
+```{r, fig.height=10, fig.width=4}
+# without bacth correction
+p1 <- plotReducedDim(object = sce,
+                     dimred = "PCA",
+                     colour_by = "donor")
+
+p1 + facet_wrap(~sce$day, ncol=1)
+```
+
+Especially for time points day0 and day1, we observe clear donor effects.
+
+```{r, fig.height=10, fig.width=4}
+# harmony batch correction
+p2 <- plotReducedDim(object = sce,
+                     dimred = "HARMONY_donor_experiment",
+                     colour_by = "donor")
+
+p2 + facet_wrap(~sce$day, ncol=1)
+```
+
+After batch correction with harmony, the donor effects are largely removed.
+
+When using t-SNE visualization, the discrepancy between the uncorrected and
+batch corrected data becomes even clearer:
+
+```{r}
+# make t-SNE space based on batch-corrected PCA data
 sce <- runTSNE(sce, 
                dimred = 'HARMONY_donor_experiment',
                external_neighbors=TRUE,
@@ -766,7 +922,7 @@ sce <- runTSNE(sce,
 ```
 
 ```{r}
-# no batch versus batch corrected, color by day
+# No batch versus batch corrected, color by day
 p1 <- plotReducedDim(sce,
                      dimred = "TSNE",
                      colour_by = "day")
@@ -776,7 +932,7 @@ p2 <- plotReducedDim(sce,
                      colour_by = "day")
 p1 + p2
 
-# no batch versus batch corrected, color by donor
+# No batch versus batch corrected, color by donor
 p3 <- plotReducedDim(sce,
                      dimred = "TSNE",
                      colour_by = "donor")
@@ -786,7 +942,7 @@ p4 <- plotReducedDim(sce,
                      colour_by = "donor")
 p3 + p4
 
-# no batch versus batch corrected, color by experiment
+# No batch versus batch corrected, color by experiment
 p5 <- plotReducedDim(sce,
                      dimred = "TSNE",
                      colour_by = "experiment")
@@ -803,9 +959,13 @@ saveRDS(sce, "/Users/jg/Desktop/sce_after_batch.rds")
 
 # Clustering
 
+In the second lab session, we discussed graph-based clustering, k-means 
+clustering and hierarchical cluster. Here, we will only perform hierarchical 
+clustering.
+
 ## Hierarchical clustering
 
-We may split the process in two more intuitive steps:
+We may split the hierarchical clustering process in two intuitive steps:
 
 1. Compute the pairwise distances between all cells. These are by default
 euclidean distances and, in order to reduce data complexity and increase signal
@@ -837,10 +997,16 @@ and a threshold value for cutting the tree. This is either `k`, the number of
 clusters we want to report, or `h`, the height in the dendrogram at which
 we wan to cut the tree.
 
+Here we choose `k = 4`, since we know in advance that we expect four clusters of
+cells (four time points).
+
 ```{r}
 clust_hcl_k4 <- cutree(hcl, k = 4)
 table(clust_hcl_k4)
 ```
+
+Next, we visualize the data in PCA space colored based on time point and based
+on our inferred cluster labels.
 
 ```{r}
 sce$clust_hcl_k4 <- as.factor(clust_hcl_k4)
