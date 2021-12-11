@@ -22,6 +22,8 @@ navbar:
         href: lab2_session.html
       - text: "Lab 3"
         href: lab3_session.html
+      - text: "Lab 4"
+        href: lab4_session.html
   right:
     - icon: fab fa-github
       href: https://github.com/statOmics/Rmd-website

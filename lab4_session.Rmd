@@ -86,7 +86,7 @@ that you can fill out:
 We also provide the solution to this exercise here (sections clustering,
 marker gene detection and annotation):
 
-[lab4_CuomoWorkflow.html](./lab4_CuomoWorkflow.html)
+[lab4_CuomoWorkflow.html](./lab4/lab4_CuomoWorkflow.html)
 
 
 ---

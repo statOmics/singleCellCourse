@@ -456,6 +456,9 @@ plotPCA(sce,
         colour_by = "day")
 ```
 
+We see that for this dataset, PCA is able to distinguish between the different
+developmental stages quite well.
+
 ## A generalization of PCA for exponential family distributions.
 
 ```{r, eval=TRUE}
@@ -471,6 +474,9 @@ plotReducedDim(sce,
                colour_by = "day")
 ```
 
+We observe a similar reduced dimension plot as for the classical PCA approach,
+with reasonable separation between cells of different developmental stages.
+
 ## Non-linear dimensionality reduction: T-SNE
 
 ```{r}
@@ -481,6 +487,14 @@ sce <- runTSNE(sce,
 plotTSNE(sce,
          colour_by = "day")
 ```
+
+In this 2D t-SNE space, it is clear that cells of different developmental stages
+cluster separately. However, there appears to be some other level of
+heterogeneity in the data as well. We observe multiple clusters fo the cells 
+sampled at the same time point. In addition, while still clustering separately,
+some clusters of cells of different time points are still very close together.
+
+We will explore this phenomenon in more detail later
 
 ## Non-linear dimensionality reduction: UMAP
 
@@ -497,11 +511,12 @@ sce <- runUMAP(sce,
                external_neighbors = TRUE)
 plotUMAP(sce,
          colour_by = "day")
-plotUMAP(sce,
-         colour_by = "donor")
-plotUMAP(sce,
-         colour_by = "experiment")
 ```
+
+While the visualization is less clear than the t-SNE figure above, we observe
+a similar pattern in this UMAP; cells of different developmental stages
+cluster separately, however, there seems to be an additional level of
+heterogeneity in the data.
 
 ---
 
@@ -513,9 +528,21 @@ plotUMAP(sce,
 
 ## Observed patient/experiment effect
 
+In this experiment, our main interest is to study the endoderm differentiation
+process, i.e. the 4-day differentiation process of induced pluripotent stem 
+cells (iPSCs) at day0, via mesendoderm cells (day1) and another intermediate 
+stage (day2) to endoderm cells (day3).
+
+However, we will need to account for the fact that the cells have been sampled
+from 15 different subject, thus introducing additional biological heterogeneity.
+There are two variables in the `colData` of our `SingleCellExperiment` object
+that are useful for exploring this:
+
 ```{r}
 table(sce$donor,sce$experiment)
 ```
+
+
 
 ```{r}
 # target effect in PCA space, all time points
