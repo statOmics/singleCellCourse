@@ -985,7 +985,7 @@ In the context of scRNA-seq, I have mostly seen the use of the "ward.D2"
 method.
 
 ```{r}
-distsce <- dist(reducedDim(sce, "HARMONY_donor_experiment"))
+distsce <- dist(reducedDim(sce, "HARMONY_donor_experiment")[,1:10])
 hcl <- hclust(distsce, method = "ward.D2")
 plot(hcl, labels = FALSE)
 ```
@@ -1011,12 +1011,12 @@ on our inferred cluster labels.
 ```{r}
 sce$clust_hcl_k4 <- as.factor(clust_hcl_k4)
 
-plotReducedDim(sce,
-        dimred = "HARMONY_donor_experiment",
-        colour_by="clust_hcl_k4")
 plotReducedDim(sce, 
         dimred = "HARMONY_donor_experiment",
          colour_by ="day")
+plotReducedDim(sce,
+        dimred = "HARMONY_donor_experiment",
+        colour_by="clust_hcl_k4")
 ```
 
 # Trajectory inference
@@ -1042,8 +1042,8 @@ to create a trajectory for the Cuomo dataset.
 ```{r}
 library(slingshot)
 sce <- slingshot(sce,
-                 start.clus = "2",
-                 end.clus = "3",
+                 start.clus = "3",
+                 end.clus = "2",
                  clusterLabels = "clust_hcl_k4", 
                  reducedDim = "HARMONY_donor_experiment")
 ```
