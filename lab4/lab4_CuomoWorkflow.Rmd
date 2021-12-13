@@ -57,21 +57,20 @@ install_github("immunogenomics/harmony",
 
 # The Cuomo dataset
 
-We here make use of the publication of Anna Cuomo et al.
-(last author Oliver Stegle), which we will refer to as the `iPSC dataset`. The 
+We here make use of the publication of Anna Cuomo *et al.*, which we will refer to as the `iPSC dataset`. The 
 paper that describes this dataset can be found using this 
 [link](https://www.nature.com/articles/s41467-020-14457-z).
 
 In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
-from 125 healthy human donors. These cells were used to study the endoderm 
-differentiation process. In this process, iPSCs differentiate to endoderm cells,
-a process which takes approximately three days. As such, the authors 
-cultered the iPSCs cell lines and allowed for differentiation for three days. 
+from 125 healthy human donors, used to study the endoderm 
+differentiation process, in which iPSCs differentiate to endoderm cells over the
+course of approximately three days. As such, the authors 
+cultered the iPSCs cell lines and allowed them to differentiate for three days. 
 During the experiment, cells were harvested at four different time points: 
-day0 (directly at to incubation), day1, day2 and day3. Knowing the process of 
-endoderm differentiation, these time points should correspond with different 
-cell types: day0 are (undifferentiated) iPSCs, day1 are mesendoderm cells, day2
-are "intermediate" cells and day3 are fully differentiated endoderm cells.
+day0 (directly at incubation), day1, day2 and day3. Knowing the process of 
+endoderm differentiation, these time points should roughly correspond to different 
+cell types: day0 are (undifferentiated) iPSCs, day1 are mostly mesendoderm cells, day2
+are mostly "intermediate" cells and day3 are mostly fully differentiated endoderm cells.
 
 This dataset was generated using the **SMART-Seq2** scRNA-seq protocol.
 
@@ -82,14 +81,14 @@ process of endoderm differentiation.
 
 For this lab session, we will work with a subset of the data, i.e., the data
 for the first (alphabetically) 15 patients in the experiment. These are the
-data you already downloaded for lab session 2 using the *belnet filesender* 
+data you already downloaded for lab session 2 using the *Belnet filesender* 
 link.
 
-The data original (125 patient) could be downloaded from 
+The original data (125 patient) could be downloaded from 
 [Zenodo](https://zenodo.org/record/3625024#.YWfahtlBxB1). At the bottom of this
 web-page, we can download the files `raw_counts.csv.zip` and 
 `cell_metadata_cols.tsv` and store these files locally. We do not recommend 
-doing this during the lab session, to avoid overloading the system.
+doing this during the lab session, to avoid overloading the WiFi network.
 
 # Import data
 
@@ -111,7 +110,7 @@ colnames(colData(sce))
 ```
 
 As stated in the paper, cells were sampled on 4 time points. Each of these 
-time points is expected to correspond with different cell types (day0 = iPSC,
+time points is roughly expected to correspond with different cell types (day0 = iPSC,
 day1 = mesendoderm, day2 = intermediate and day3 = endoderm).
 
 ```{r}
@@ -127,7 +126,7 @@ length(table(colData(sce)$donor)) # number of donors
 range(table(colData(sce)$donor)) # cells per donor
 ```
 
-Below, we look how many cells are harvest per patent and per time point.
+Below, we look at how many cells are harvest per patent and per time point.
 
 ```{r}
 table(colData(sce)$donor,colData(sce)$day)
@@ -137,8 +136,7 @@ We see that for many patients the data is complete, i.e. cells were sampled
 on all time points.
 
 Practically, the cells were prepared in 28 batches. Since we here only look
-at a subset of the data, we see that only 14 of these batches are represented 
-here.
+at a subset of the data, we see that only 14 of these batches are represented.
 
 ```{r}
 length(table(colData(sce)$experiment))
@@ -202,8 +200,9 @@ We see that this filtering strategy does not remove any genes for this dataset.
 In general, datasets from plate-based scRNA-seq dataset have a far higher
 sequencing depth than data from droplet-based protocols. As requiring a minimum
 expression of 1 count in at least 10 cells is a very lenient criterion if we 
-consider that we have 36.000 cells, we should consider adopting a more stringent
-filtering criterium, like the `filterByExpr` from `edgeR`:
+consider that we are working 36.000 cells, we should consider adopting a more stringent
+filtering criterium.
+Below we do so using the `filterByExpr` from `edgeR`:
 
 ```{r, message=FALSE, warning=FALSE}
 library(edgeR)
@@ -311,7 +310,6 @@ table(sce$experiment, sce$discardCells)
 table(sce$experiment, sce$donor)
 ```
 
-Most removed cells (fraction) are from patients `dixh` and `babz`.
 Most low library sizes seem to come from patient `dixh`; for patient `babz`
 the effect is less pronounced.
 
@@ -325,7 +323,7 @@ batches in which they were sequenced. However, we want to be careful; we only
 want to remove technical artefacts, while retaining as much of the biology as
 possible. In our exploratory figure, we see that the cells we are removing based
 on the number of genes detected, are quite far apart from the bulk of the data
-cloud; as such, these cells are indeed suspicious. For the criterion of
+cloud; as such, these cells may be considered suspicious. For the criterion of
 library size, we see that the cells removed there are still strongly connected
 to the data cloud. As such, we may want to relax the filtering criterion there a
 little bit. When we think of how the adaptive threshold strategy works, we
@@ -346,7 +344,7 @@ table(discardCells)
 colData(sce)$discardCells <- discardCells
 ```
 
-Note that these steps are not exact; different analysts will come with different
+Note that these steps are not exact; different analysts will arrive to different
 filtering criteria for many of the steps. The key ideas are that
 we let appropriate exploratory figures guide us to make reasonable choices;
 i.e., we look at the data rather than blindly following a standardized pipeline
@@ -437,7 +435,7 @@ plotPCA(sce,
 ```
 
 PCA has been performed. The PCA information has been automatically stored in the
-*reducedDim* slot of the SingleCellExperiment object.
+`reducedDim` slot of the `SingleCellExperiment` object.
 
 ```{r}
 reducedDimNames(sce)
@@ -474,7 +472,7 @@ plotReducedDim(sce,
                colour_by = "day")
 ```
 
-We observe a similar reduced dimension plot as for the classical PCA approach,
+Using `glmpca`, we observe a similar reduced dimension plot as for the classical PCA approach,
 with reasonable separation between cells of different developmental stages.
 
 ## Non-linear dimensionality reduction: T-SNE
@@ -489,12 +487,12 @@ plotTSNE(sce,
 ```
 
 In this 2D t-SNE space, it is clear that cells of different developmental stages
-cluster separately. However, there appears to be some other level of
-heterogeneity in the data as well. We observe multiple clusters fo the cells 
+cluster separately. However, there appears to be some
+heterogeneity. We observe multiple clusters of cells 
 sampled at the same time point. In addition, while still clustering separately,
-some clusters of cells of different time points are still very close together.
+some clusters of cells of different time points are still very close together in 2D space.
 
-We will explore this phenomenon in more detail later
+We will explore this phenomenon in more detail later.
 
 ## Non-linear dimensionality reduction: UMAP
 
