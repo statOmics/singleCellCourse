@@ -526,6 +526,7 @@ heterogeneity in the data.
 ---
 
 # Batch correction
+# Batch correction
 
 ## Observed patient/experiment effect
 
@@ -923,37 +924,52 @@ sce <- runTSNE(sce,
 # No batch versus batch corrected, color by day
 p1 <- plotReducedDim(sce,
                      dimred = "TSNE",
-                     colour_by = "day")
+                     colour_by = "day") + ggtitle("Day - no batch")
 
 p2 <- plotReducedDim(sce,
                      dimred = "TSNE_HARMONY_donor_experiment",
-                     colour_by = "day")
+                     colour_by = "day") + ggtitle("Day - batch")
 p1 + p2
 
 # No batch versus batch corrected, color by donor
 p3 <- plotReducedDim(sce,
                      dimred = "TSNE",
-                     colour_by = "donor")
+                     colour_by = "donor") + ggtitle("Donor - no batch")
 
 p4 <- plotReducedDim(sce,
                      dimred = "TSNE_HARMONY_donor_experiment",
-                     colour_by = "donor")
+                     colour_by = "donor") + ggtitle("Donor - batch")
 p3 + p4
 
 # No batch versus batch corrected, color by experiment
 p5 <- plotReducedDim(sce,
                      dimred = "TSNE",
-                     colour_by = "experiment")
+                     colour_by = "experiment") + ggtitle("Experiment - no batch")
 
 p6 <- plotReducedDim(sce,
                      dimred = "TSNE_HARMONY_donor_experiment",
-                     colour_by = "experiment")
+                     colour_by = "experiment") + ggtitle("Experiment - batch")
 p5 + p6
 ```
 
-```
-saveRDS(sce, "/Users/jg/Desktop/sce_after_batch.rds")
-```
+We here show the t-SNE visualizations comparing non-corrected versus the batch
+corrected data, with cells colored based on day, donor and experiment. The
+interpretation is analogous to the interpretation above for the Seurat
+batch correction:
+
+The batch correction seems to have worked very well. Both with and without
+batch correction, we observe that cells of the same time point cluster together.
+But when no batch correction is performed, there seems to be an additional level
+of variability in the data.
+
+When we color the cells based on the donor/experiment variable, we see that
+without batch correction cells of the same donor cluster together. After 
+batch correction, such donor/experiment effects seem to be no longer present.
+
+Also note that while batch correction remove the between-donor/experiment 
+variability, the between-day variability that is of interest is still preserved. 
+As such, based on our visualizations, it looks like the batch correction did not 
+overcorrect and succeeded in removing only the unwanted variation in the data.
 
 # Clustering
 
@@ -1017,6 +1033,17 @@ plotReducedDim(sce,
         colour_by="clust_hcl_k4")
 ```
 
+We see that our inferred clustering largely corresponds with the original
+day variable.
+
+```{r}
+table(sce$day, sce$clust_hcl_k4)
+```
+
+We see that most cells of day0 are in hierarchical cluster 3 (arbitrary 
+indicator), day1 cells are in cluster 4, day2 cells are mainly in cluster 1 and
+fay3 cells are found back in cluster 2.
+
 # Trajectory inference
 
 [Wikipedia](https://en.wikipedia.org/wiki/Trajectory_inference)
@@ -1033,24 +1060,24 @@ which represents the progression through the process."
 
 ## Computing the trajectory
 
-Here, we will use 
+Many methods for estimating trajectories exist. Here, we will use 
 [slingshot](https://bioconductor.org/packages/release/bioc/html/slingshot.html) 
 to create a trajectory for the Cuomo dataset.
 
 ```{r}
 library(slingshot)
-sce <- slingshot(sce,
-                 start.clus = "3",
-                 end.clus = "2",
-                 clusterLabels = "clust_hcl_k4", 
-                 reducedDim = "HARMONY_donor_experiment")
+sce <- slingshot(sce, # target object
+                 start.clus = "3", # cluster that corresponds to day0 cells!
+                 end.clus = "2", # cluster that corresponds to day3 cells!
+                 clusterLabels = "clust_hcl_k4", # clustering to use 
+                 reducedDim = "HARMONY_donor_experiment") # dimred to use
 ```
 
 ## Visualizing the trajectory
 
 ```{r}
-plot(reducedDims(sce)$HARMONY_donor_experiment[,c(1,2)], 
-     col = as.factor(sce$clust_hcl_k4),
+plot(reducedDims(sce)$HARMONY_donor_experiment, 
+     col = as.factor(sce$clust_hcl_k4), # colored according to inferred clusters
      pch=16, 
      asp = 1)
 lines(SlingshotDataSet(sce), 
@@ -1061,7 +1088,7 @@ lines(SlingshotDataSet(sce),
 
 ```{r}
 plot(reducedDims(sce)$HARMONY_donor_experiment, 
-     col = as.factor(sce$day), 
+     col = as.factor(sce$day), # colored according to original time points
      pch=16, 
      asp = 1)
 lines(SlingshotDataSet(sce), 
@@ -1070,11 +1097,43 @@ lines(SlingshotDataSet(sce),
       col = 'black')
 ```
 
-## Differential gene expression tests along a trajectory using tradeSeq
+We see that the trajectory inferred with `slingshot` nicely captures the
+expected developmental process.
+
+# Differential gene expression tests along a trajectory using tradeSeq
+
+As a next step, we may be interested in identifying the genes are involved in 
+the developmental process. To this end, our group has developed the Bioconductor
+R package [tradeSeq](http://www.bioconductor.org/packages/release/bioc/html/tradeSeq.html).
+`tradeSeq` is a flexible that tools that allows for studying differential gene
+expression along the developmental trajectory, or between different lineages.
+The functionalities of the package are summarized in the following figure:
+
+```{r}
+knitr::include_graphics("./../tradeseq_summary.jpeg")
+```
 
 ```{r}
 library(tradeSeq)
 ```
+
+`tradeSeq` uses a negative binomial generalized additive model (NB-GAM) 
+framework to smooth each gene’s expression in each lineage. Smoothers can be 
+decomposed into a set of basis functions, which are joined together at knot 
+points, often simply called knots (`k`).
+
+Ideally, the number of knots should be selected to reach an optimal 
+bias-variance trade-off for the smoother, where one explains as much 
+variability in the expression data as possible with only a few regression 
+coefficients. In order to guide that choice, we developed diagnostic plots 
+using the Akaike Information Criterion (AIC). This is implemented in the 
+`evaluateK` function in `tradeSeq`.
+
+However, in the [tradeSeq](https://www.nature.com/articles/s41467-020-14766-3) 
+publication the authors show that the  algorithm is not too sensitive for the
+number of knots, and that values between 5 and 9 often work well. The code
+below would allow you to find a good value for `k`, but we will simply use
+the default value of `k = 6` downstream.
 
 ```
 ### Find knots
@@ -1082,7 +1141,7 @@ library(tradeSeq)
 # We first need to decide on the number of knots. This is done using the  -->
 # `evaluateK` function. This takes a little time. -->
 
-# takes 9min for me
+# takes 9 minutes for me
 set.seed(5)
 icMat <- evaluateK(counts = assays(sce)$counts,
                    sds = sling$slingshot,
@@ -1091,7 +1150,15 @@ icMat <- evaluateK(counts = assays(sce)$counts,
                    verbose = T)
 ```
 
-### Fit GAM
+## Fit GAM
+
+We fit a negative binomial generalized additive model (NB-GAM), smoothing each 
+gene’s expression along the developmental trajectory. When modeling all the 
+genes (±10.000), this function takes about 20 minutes to complete. For this
+lab session, we will therefore randomly sample 1.000 genes. In addition, we make
+sure that three specific genes are also included: "ENSG00000111704", 
+"ENSG00000164458" and "ENSG00000141448". These genes are known markers for the 
+different developmental stages nd were use in the publication of *Cuomo et al.*
 
 ```{r}
 set.seed(7)
@@ -1103,25 +1170,33 @@ markers <- c("ENSG00000111704", "ENSG00000164458", "ENSG00000141448")
 # make sure the genes from the paper are in there
 subset_genes <- c(subset_genes, markers[!markers %in% subset_genes])
 
-#20min for all genes, ±2min30 for 1000 genes
+# 20min for all genes, ±2min30 for 1000 genes
 pseudotime <- slingPseudotime(sce, na = FALSE)
 cellWeights <- slingCurveWeights(sce)
 
 sce_fit <- fitGAM(counts = assays(sce)$counts[subset_genes,], 
-                       pseudotime = pseudotime, 
-                       cellWeights = cellWeights,
-                       nknots = 6, 
-                       verbose = TRUE)
+                  pseudotime = pseudotime, 
+                  cellWeights = cellWeights,
+                  nknots = 6, 
+                  verbose = TRUE)
 ```
+
+To assess if all genes could modeled;
 
 ```{r}
 table(rowData(sce_fit)$tradeSeq$converged)
 ```
 
-### Association test
+## Association test
+
+Next, we can perform different types of differential expression testing along
+the trajectory.
+
+The `associationTest` function allows for performing a global test that assesses
+if the average expression of a gene is associated with pseudotime.
 
 ```{r}
-# ±20sec
+# ±20 sec
 assoRes <- associationTest(sce_fit)
 head(assoRes)
 ```
@@ -1131,11 +1206,29 @@ sum(p.adjust(assoRes$pvalue, method = "BH") < 0.05, na.rm=T)/nrow(assoRes)
 # @Koen ±90% significant (?)
 ```
 
-### Start vs end top 20
+We observe a huge number of statistically significant findings. With such many
+data points (3.731), it is difficult to control the type I error at the nominal 
+level. To prioritize for genes that are also biologically relevant, we may test
+against a log-fold change cut-off:
 
 ```{r}
-startRes <- startVsEndTest(sce_fit)
+assoRes2 <- associationTest(sce_fit, l2fc=1)
+sum(p.adjust(assoRes2$pvalue, method = "BH") < 0.05, na.rm=T)/nrow(assoRes2) 
 ```
+
+## Start vs end top 20
+
+Another type of test is to compare the average gene expression of each gene 
+between the start point and the end point of a lineage. This is implemented
+in the `startVsEndTest` function.
+
+```{r}
+startRes <- startVsEndTest(sce_fit, l2fc=1)
+```
+
+We can then visualize the gene expression profile along pseudotime of the top5
+genes for which differential expression between start and end point was 
+identified.
 
 ```{r}
 oStart <- order(startRes$waldStat, decreasing = TRUE)
@@ -1148,22 +1241,30 @@ for (i in 1:5) {
 }
 ```
 
-### Comparison to original paper
+## Comparison to original paper
 
-In the Cuomo paper, the authors highlighted the following genes:
+In the Cuomo paper, the authors highlighted the following genes;
+"ENSG00000111704", "ENSG00000164458" and "ENSG00000141448". In gene symbols,
+these genes are NANOG, T (yes, there is a gene called "T)" and GATA6. These
+genes are markers of day0, day1 and day2/day3 cells, respectively.
+
+We may now visualize the expression of these genes along pseudotime.
 
 ```{r}
 plotSmoothers(sce_fit, 
               assays(sce_fit)$counts, 
-              gene = which(rownames(sce_fit) == "ENSG00000111704"))
+              gene = which(rownames(sce_fit) == "ENSG00000111704")) +
+  ggtitle("ENSG00000111704")
 
 plotSmoothers(sce_fit, 
               assays(sce_fit)$counts, 
-              gene = which(rownames(sce_fit) == "ENSG00000164458"))
+              gene = which(rownames(sce_fit) == "ENSG00000164458")) +
+  ggtitle("ENSG00000164458")
 
 plotSmoothers(sce_fit, 
               assays(sce_fit)$counts, 
-              gene = which(rownames(sce_fit) == "ENSG00000141448"))
+              gene = which(rownames(sce_fit) == "ENSG00000141448")) +
+  ggtitle("ENSG00000141448")
 
 ```
 
@@ -1174,6 +1275,26 @@ knitr::include_graphics("./../cuomo_traj1.jpeg")
 knitr::include_graphics("./../cuomo_traj2.jpeg")
 knitr::include_graphics("./../cuomo_traj3.jpeg")
 ```
+
+We also inspect the results in our differential testin output.
+
+Association test:
+
+```{r}
+assoRes2[markers,]
+# @Koen: third gene is NA, maybe due to too large estimate? fitGAM did converge though...
+```
+
+Start versus end test:
+
+```{r}
+startRes[markers,]
+# @Koen: ideally, ENSG00000164458 should not be DE between start and end.
+```
+
+Another interesting visualization is implemented in the `plotGeneCount` 
+function, which colors the cells based on the log-normalized expression
+value of the target genes:
 
 ```{r}
 plotGeneCount(sce$slingshot, 
@@ -1188,5 +1309,4 @@ plotGeneCount(sce$slingshot,
               assays(sce_fit)$counts, 
               gene = which(rownames(sce_fit) == "ENSG00000141448"))
 ```
-
 
