@@ -96,8 +96,8 @@ First we read in the count matrix:
 
 ```{r, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
-# sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
-sce <- readRDS("/Users/koenvandenberge/Desktop/sce_15_cuomo.rds")
+sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+#sce <- readRDS("/Users/koenvandenberge/Desktop/sce_15_cuomo.rds")
 ```
 
 # Explore metadata
@@ -497,28 +497,21 @@ We will explore this phenomenon in more detail later.
 
 ## Non-linear dimensionality reduction: UMAP
 
-@Koen: this UMAP looks different and worse from the one you show in the course
-slides. Which parameters did you use (or maybe upstream, #HVGs and so on)?
-
-```{r, eval=FALSE}
+```{r}
 set.seed(65187)
-
-sce <- runPCA(sce, 
-              ncomponents=30,
-              subset_row=hvg)
-
 sce <- runUMAP(sce, 
-               dimred = 'PCA',
-               pca = 12,
+               dimred = "PCA",
+               min_dist = 0.4,
+               n_dimred = 12,
                external_neighbors = TRUE)
+
 plotUMAP(sce,
          colour_by = "day")
 ```
 
-While the visualization is less clear than the t-SNE figure above, we observe
-a similar pattern in this UMAP; cells of different developmental stages
-cluster separately, however, there seems to be an additional level of
-heterogeneity in the data.
+We observe a very similar pattern as for the t-SNE above in this UMAP; 
+cells of different developmental stages cluster separately, however, there 
+seems to be an additional level of heterogeneity in the data.
 
 ---
 
@@ -580,19 +573,19 @@ plotPCA(sce[,sce$day=="day3"],
         colour_by = "donor")
 ```
 
-Analogously, we may inspect the effect of patient and experiment in the t-SNE
-plot we created earlier.
+Analogously, we may inspect the effect of patient and experiment in the UMAP
+visualization we created earlier.
 
 ```{r}
 # time effect
-plotTSNE(sce,
+plotUMAP(sce,
          colour_by = "day")
 
-# nuisance effects in t-SNE space, all time points
-plotTSNE(sce,
+# nuisance effects in UMAP space, all time points
+plotUMAP(sce,
          colour_by = "donor")
 
-plotTSNE(sce,
+plotUMAP(sce,
          colour_by = "experiment")
 ```
 
@@ -610,9 +603,25 @@ We will explore two popular strategies for batch correction for scRNA-Seq data:
 
 ## Seurat CCA batch correction
 
-We will first integrate the data across the different donors using `Seurat`. This procedure is implemented to integrate datasets/batches in a pairwise fashion. In the case of multiple batches/datasets, it integrates them in a bottom-up strategy, starting with integrating pairwise samples first. Because of this, below, we will introduce the methodology for two batches/datasets, but note that an analogous procedure is applied in the case of multiple batches/datasets.
+We will first integrate the data across the different donors using `Seurat`. 
+This procedure is implemented to integrate datasets/batches in a pairwise 
+fashion. In the case of multiple batches/datasets, it integrates them in a 
+bottom-up strategy, starting with integrating pairwise samples first. Because of
+this, below, we will introduce the methodology for two batches/datasets, but 
+note that an analogous procedure is applied in the case of multiple 
+batches/datasets.
 
-The `Seurat` method will first perform feature selection to identify features that are informative in all datasets. Using these features, it will perform a canonical correlation analysis; a dimensionality reduction technique that focusses on shared variation between datasets/batches. The CCA dimensions may be viewed as gene modules that are present in each dataset. Within this shared space, it identifies **anchor cells** (one for each donor, in our case). These anchor cells may be considered as cells sharing the same biological state, and systematic differences between them correspond to batch/dataset-specific effects. A correction on the original gene expression matrix is then applied by considering systematic differences across all anchor cells identified for each pair of batches/datasets.
+The `Seurat` method will first perform feature selection to identify features 
+that are informative in all datasets. Using these features, it will perform a 
+canonical correlation analysis; a dimensionality reduction technique that 
+focusses on shared variation between datasets/batches. The CCA dimensions may 
+be viewed as gene modules that are present in each dataset. Within this shared 
+space, it identifies **anchor cells** (one for each donor, in our case). These 
+anchor cells may be considered as cells sharing the same biological state, and 
+systematic differences between them correspond to batch/dataset-specific 
+effects. A correction on the original gene expression matrix is then applied by 
+considering systematic differences across all anchor cells identified for each 
+pair of batches/datasets.
 
 ```{r, warning=FALSE, message=FALSE}
 library(Seurat)
@@ -665,9 +674,16 @@ batches they are deemed variable in, breaking ties by the median variable
 feature rank across datasets. It returns the top scoring features by this 
 ranking, which are then used in the steps below.
 
-- `FindIntegrationAnchors`: For each pair of datasets we want to integrate, we identify anchor cells, one from each dataset, that are assumed to share a similar biological state. Anchor cells are identified as mutual nearest neighbors in the shared canonical correlation analysis space. Anchor cells are also scored and weighted according to their quality.
+- `FindIntegrationAnchors`: For each pair of datasets we want to integrate, we 
+identify anchor cells, one from each dataset, that are assumed to share a 
+similar biological state. Anchor cells are identified as mutual nearest 
+neighbors in the shared canonical correlation analysis space. Anchor cells are 
+also scored and weighted according to their quality.
 
-- `IntegrateData`: Anchor cells are used to calculate a 'corrected' data matrix, removing systematic differences between anchor cells. This creates an `integrated` assay in the `Seurat` object containing this corrected data matrix, which may then be used for downstream visualization and analysis as such.
+- `IntegrateData`: Anchor cells are used to calculate a 'corrected' data matrix,
+removing systematic differences between anchor cells. This creates an 
+`integrated` assay in the `Seurat` object containing this corrected data matrix, 
+which may then be used for downstream visualization and analysis as such.
 
 ```{r, warning=FALSE, message=FALSE}
 # Normalize and identify variable features for each dataset (patient) independently
@@ -703,31 +719,6 @@ storing the expression values of all cells **after batch correction**. Note that
 the original expression values are still present in the *originalexp* assay of
 the object.
 
-@Koen: I was thinking of not using the chunk below, i.e. to only perform a t-SNE
-and to not perform clustering on the Seurat batch corrected data. I would only
-perform clustering on the Harmony normalized data. We can discuss this, we
-could include Seurat as well for comparison, but maybe that would bring us too 
-far.
-@Jeroen: Showing just the DR is fine to me, no clustering necessary. I would focus on UMAP though.
-
-```
-data.combined <- RunUMAP(object = data.combined,
-                         reduction = "pca",
-                         dims = 1:12,
-                         min.dist=0.4,
-                         n.neighbors=15,
-                         verbose = FALSE)
-
-data.combined <- FindNeighbors(object = data.combined,
-                               reduction = "PCA_SeuBatch",
-                               dims = 1:12,
-                               verbose = FALSE)
-
-data.combined <- FindClusters(object = data.combined,
-                              resolution = 0.5,
-                              verbose = FALSE)
-```
-
 Finally, we may use `Seurat` functions for performing dimension reduction and
 visualization of the batch corrected data.
 
@@ -744,19 +735,20 @@ data.combined <- RunPCA(object = data.combined,
                         reduction.name = "PCA_SeuBatch",
                         verbose = FALSE)
 
-# Step 3: Perform t-SNE on the first 12 principal components
-data.combined <- RunTSNE(object = data.combined, 
+# Step 3: Perform UMAP on the first 12 principal components
+data.combined <- RunUMAP(object = data.combined, 
                          reduction = "PCA_SeuBatch",
-                         reduction.name = "tSNE_SeuBatch",
-                         dims = 1:12)
+                         reduction.name = "UMAP_SeuBatch",
+                         dims = 1:12,
+                         verbose = FALSE)
 
-# t-SNE visualization
+# UMAP visualization
 p1 <- DimPlot(object = data.combined, 
-              reduction = "tSNE_SeuBatch", 
+              reduction = "UMAP_SeuBatch", 
               group.by = "day")
 
 p2 <- DimPlot(object = data.combined, 
-              reduction = "tSNE_SeuBatch", 
+              reduction = "UMAP_SeuBatch", 
               group.by = "donor")
 p1 + p2
 ```
@@ -764,25 +756,28 @@ p1 + p2
 Alternatively, we can transform the `Seurat` object back to a 
 `SingleCellExperiment` object and generate the visualizations using the 
 Bioconductor functions that we used previously:
-@Jeroen: how about recalculating UMAP using Bioc functions on integrated data?
 
 ```{r}
 # Convert Seurat object to SingleCellExperiment object
 sce_intSeurat <- as.SingleCellExperiment(data.combined)
 
 # t-SNE without Seurat batch correction
-p1 <- plotTSNE(sce,
-               colour_by = "day") + ggtitle("No batch")
+p1 <- plotUMAP(sce,
+               colour_by = "day") + ggtitle("Day - no batch")
 p2 <- plotTSNE(sce,
-               colour_by = "donor") + ggtitle("No batch")
+               colour_by = "donor") + ggtitle("Donor - no batch")
 
-# t-SNE with Seurat batch correction
-p3 <- plotReducedDim(sce_intSeurat,
-                     dimred = "TSNE_SEUBATCH",
-                     colour_by = "day") + ggtitle("Batch corrected")
-p4 <- plotReducedDim(sce_intSeurat,
-                     dimred = "TSNE_SEUBATCH",
-                     colour_by = "donor") + ggtitle("Batch corrected")
+# UMAP with Seurat batch correction
+sce_intSeurat <- runUMAP(sce_intSeurat, 
+                         dimred = 'PCA_SEUBATCH',
+                         min_dist = 0.4,
+                         n_dimred = 12,
+                         external_neighbors = TRUE)
+
+p3 <- plotUMAP(sce_intSeurat,
+               colour_by = "day") + ggtitle("Day - with batch")
+p4 <- plotUMAP(sce_intSeurat,
+               colour_by = "donor") + ggtitle("Donor - with batch")
 
 p1 + p3
 
@@ -805,7 +800,12 @@ overcorrect and succeeded in removing only the unwanted variation in the data.
 
 ## Harmony batch correction
 
-[Harmony](https://www.nature.com/articles/s41592-019-0619-0) implements a complex data integration strategy, where cells are first clustered using a 'high-diversity clustering', favoring clusters consisting of multiple batches/datasets, and then batch effects are corrected within each cluster using a linear correction term. It iterates across these steps until no change is clustering is observed.
+[Harmony](https://www.nature.com/articles/s41592-019-0619-0) implements a 
+complex data integration strategy, where cells are first clustered using a 
+'high-diversity clustering', favoring clusters consisting of multiple 
+batches/datasets, and then batch effects are corrected within each cluster 
+using a linear correction term. It iterates across these steps until no change 
+is clustering is observed.
 
 Performing batch correction with `harmony` is very simple; we only need a single
 function call and can directly work with our `SingleCellExperiment` object.
@@ -871,7 +871,7 @@ plotReducedDim(object = sce,
 ```
 
 This figure is too cluttered to see the donor effects. Below, we therefore
-generate a separate figure for each timepoint.
+generate a separate figure for each time point.
 
 ```{r, fig.height=10, fig.width=4}
 # without bacth correction
@@ -895,50 +895,52 @@ p2 + facet_wrap(~sce$day, ncol=1)
 
 After batch correction with harmony, the donor effects are largely removed.
 
-When using t-SNE visualization, the discrepancy between the uncorrected and
+When using UMAP visualization, the discrepancy between the uncorrected and
 batch corrected data becomes even clearer:
 
 ```{r}
-# make t-SNE space based on batch-corrected PCA data
-sce <- runTSNE(sce, 
+# make UMAP space based on batch-corrected PCA data
+sce <- runUMAP(sce, 
                dimred = 'HARMONY_donor_experiment',
+               n_dimred = 12,
+               min_dist = 0.4,
                external_neighbors=TRUE,
-               name = "TSNE_HARMONY_donor_experiment")
+               name = "UMAP_HARMONY_donor_experiment")
 ```
 
 ```{r}
 # No batch versus batch corrected, color by day
 p1 <- plotReducedDim(sce,
-                     dimred = "TSNE",
+                     dimred = "UMAP",
                      colour_by = "day") + ggtitle("Day - no batch")
 
 p2 <- plotReducedDim(sce,
-                     dimred = "TSNE_HARMONY_donor_experiment",
+                     dimred = "UMAP_HARMONY_donor_experiment",
                      colour_by = "day") + ggtitle("Day - batch")
 p1 + p2
 
 # No batch versus batch corrected, color by donor
 p3 <- plotReducedDim(sce,
-                     dimred = "TSNE",
+                     dimred = "UMAP",
                      colour_by = "donor") + ggtitle("Donor - no batch")
 
 p4 <- plotReducedDim(sce,
-                     dimred = "TSNE_HARMONY_donor_experiment",
+                     dimred = "UMAP_HARMONY_donor_experiment",
                      colour_by = "donor") + ggtitle("Donor - batch")
 p3 + p4
 
 # No batch versus batch corrected, color by experiment
 p5 <- plotReducedDim(sce,
-                     dimred = "TSNE",
+                     dimred = "UMAP",
                      colour_by = "experiment") + ggtitle("Experiment - no batch")
 
 p6 <- plotReducedDim(sce,
-                     dimred = "TSNE_HARMONY_donor_experiment",
+                     dimred = "UMAP_HARMONY_donor_experiment",
                      colour_by = "experiment") + ggtitle("Experiment - batch")
 p5 + p6
 ```
 
-We here show the t-SNE visualizations comparing non-corrected versus the batch
+We here show the UMAP visualizations comparing non-corrected versus the batch
 corrected data, with cells colored based on day, donor and experiment. The
 interpretation is analogous to the interpretation above for the Seurat
 batch correction:
@@ -972,10 +974,11 @@ euclidean distances and, in order to reduce data complexity and increase signal
 to noise, we may perform this on the top (30) PC's. Implemented in the `dist`
 function.
 
-2. Perform a hierarchical clustering analysis on these distances. Initially, each cell is assigned to its own cluster and then the 
+2. Perform a hierarchical clustering analysis on these distances. Initially, 
+each cell is assigned to its own cluster and then the 
 algorithm proceeds iteratively, at each stage joining the two most similar 
-clusters, continuing until there is just a single cluster. This is implemented in the
-`hclust` function.
+clusters, continuing until there is just a single cluster. This is implemented 
+in the `hclust` function.
 
 Note that the `hclust` function allows for specifying a `method` argument.
 The differences between the different methods are beyond the scope of this
@@ -1025,15 +1028,23 @@ day variable.
 table(sce$day, sce$clust_hcl_k4)
 ```
 
-Mapping clusters to timepoints, we note that most cells of day0 are in hierarchical cluster 3 (arbitrary 
-indicator), day1 cells are in cluster 4, day2 cells are mainly in cluster 1 and
-fay3 cells are found back in cluster 2.
+Mapping clusters to timepoints, we note that most cells of day0 are in 
+hierarchical cluster 3 (arbitrary indicator), day1 cells are in cluster 4, 
+day2 cells are mainly in cluster 1 and day3 cells are found back in cluster 2.
 
 # Trajectory inference
 
-Trajectory inference is a computational procedure that attempts to summarize a dynamic process in a 'trajectory'. The trajectory tries to find a sensible ordering of the cells according to their progression through this dynamic process. Trajectories can be linear, diverging, converging or cyclic. If there are multiple differentiation paths, each path is called a lineage, and the combination of lineages is called a trajectory.
+Trajectory inference is a computational procedure that attempts to summarize 
+a dynamic process in a 'trajectory'. The trajectory tries to find a sensible 
+ordering of the cells according to their progression through this dynamic 
+process. Trajectories can be linear, diverging, converging or cyclic. If there 
+are multiple differentiation paths, each path is called a lineage, and the 
+combination of lineages is called a trajectory.
 
-Based on the trajectory, one may define a **pseudotime** for each cell, which defines that cell's progression along one of the differentiation paths: if the pseudotime of a cell is close to zero, then that cell is close to the starting point of the trajectory.
+Based on the trajectory, one may define a **pseudotime** for each cell, which 
+defines that cell's progression along one of the differentiation paths: if the 
+pseudotime of a cell is close to zero, then that cell is close to the starting 
+point of the trajectory.
 
 ## Computing the trajectory
 
@@ -1041,7 +1052,7 @@ Many methods for estimating trajectories exist. Here, we will use
 [slingshot](https://bioconductor.org/packages/release/bioc/html/slingshot.html) 
 to create a trajectory for the Cuomo dataset.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(slingshot)
 sce <- slingshot(sce, # target object
                  start.clus = "3", # cluster that corresponds to day0 cells!
@@ -1073,6 +1084,34 @@ lines(SlingshotDataSet(sce),
       col = 'orange')
 ```
 
+We could also use `ggplot2` functions to obtained prettier figures that are
+more easy to annotate:
+
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+
+rd <- reducedDim(sce, type="HARMONY_donor_experiment")[,1:2] # extract first two PCs
+colnames(rd) <- c("Dim1", "Dim2") # give column names
+cl <- sce$clust_hcl_k4 # store clustering
+df <- data.frame(rd, "cl" = as.character(cl)) # PCs and clustering together in 1 data frame
+sds <- slingshot(rd, cl) # convert data frame to slingshot object
+curves <- slingCurves(sds, as.df = TRUE) # obtain smooth curve for lineages (here only one lineage)
+
+# plot cells as dots in dimension reduced space
+p <- ggplot(df, aes(x = Dim1, y = Dim2)) +
+  geom_point(aes(fill = cl), col = "grey70", shape = 21) + 
+  theme_classic()
+
+# add smooth curves
+p + geom_path(data = curves %>% arrange(Order),
+              aes(group = Lineage), size = 1.5) 
+
+# compute and add minimum spanning tree
+mst <- slingMST(sds, as.df = TRUE)
+p + geom_point(data = mst, size = 4) +
+  geom_path(data = mst %>% arrange(Order), aes(group = Lineage), size = 2)
+```
+
 We see that the trajectory inferred with `slingshot` nicely captures the
 expected developmental process.
 
@@ -1089,7 +1128,7 @@ The functionalities of the package are summarized in the following figure:
 knitr::include_graphics("./../tradeseq_summary.jpeg")
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(tradeSeq)
 ```
 
@@ -1136,7 +1175,12 @@ sure that three specific genes are also included: "ENSG00000111704",
 "ENSG00000164458" and "ENSG00000141448". These genes are known markers for the 
 different developmental stages nd were use in the publication of *Cuomo et al.*.
 
-The `tradeSeq` model allows us to incorporate fixed effects. While we have estimated the trajectory on the integrated data, we model the raw gene expression data, since `tradeSeq` is a count model and requires raw counts as input. On the raw counts, we therefore still have substantial variability that may be explained by the patient effects. We therefore incorporate a patient fixed effect to the design matrix.
+The `tradeSeq` model allows us to incorporate fixed effects. While we have 
+estimated the trajectory on the integrated data, we model the raw gene 
+expression data, since `tradeSeq` is a count model and requires raw counts as 
+input. On the raw counts, we therefore still have substantial variability that 
+may be explained by the patient effects. We therefore incorporate a patient 
+fixed effect to the design matrix.
 
 ```{r}
 set.seed(7)
@@ -1148,7 +1192,7 @@ markers <- c("ENSG00000111704", "ENSG00000164458", "ENSG00000141448")
 # make sure the genes from the paper are in there
 subset_genes <- c(subset_genes, markers[!markers %in% subset_genes])
 
-# 20min for all genes, ±2min30 for 1000 genes
+# ±7min for 1000 genes
 pseudotime <- slingPseudotime(sce, na = FALSE)
 cellWeights <- slingCurveWeights(sce)
 
@@ -1173,8 +1217,9 @@ table(rowData(sce_fit)$tradeSeq$converged)
 Next, we can perform different types of differential expression testing along
 the trajectory.
 
-The `associationTest` assesses whether the average expression of a gene is associated with pseudotime. To prioritize for genes that are also biologically relevant, we may test
-against a log-fold change cut-off:
+The `associationTest` assesses whether the average expression of a gene is 
+associated with pseudotime. To prioritize for genes that are also biologically 
+relevant, we may test against a log-fold change cut-off:
 
 ```{r}
 assoRes2 <- associationTest(sce_fit, l2fc=log2(2))
@@ -1191,7 +1236,7 @@ in the `startVsEndTest` function.
 startRes <- startVsEndTest(sce_fit, l2fc=log2(2))
 ```
 
-We can then visualize the gene expression profile along pseudotime of the top5
+We can then visualize the gene expression profile along pseudotime of the top 5
 genes for which differential expression between start and end point was 
 identified.
 
@@ -1247,7 +1292,6 @@ Association test:
 
 ```{r}
 assoRes2[markers,]
-# @Koen: third gene is NA, maybe due to too large estimate? fitGAM did converge though...
 ```
 
 Start versus end test:
