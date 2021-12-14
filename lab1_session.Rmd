@@ -55,7 +55,7 @@ Here, we provide an example of a script for performing data exploration
 and preprocessing in R for the Macosko dataset (first sections, until
 normalization):
 
-[lab1_macoskoWorkflow](./lab3_macoskoWorkflow.html)
+[lab1_macoskoWorkflow](./lab3_MacoskoWorkflow.html)
 
 # Cuomo dataset
 

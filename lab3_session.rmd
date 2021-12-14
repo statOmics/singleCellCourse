@@ -72,7 +72,7 @@ that you can fill out:
 We also provide the solution to this exercise here (sections clustering,
 marker gene detection and annotation):
 
-[lab3_macoskoWorkflow](./lab3_macoskoWorkflow.html)
+[lab3_macoskoWorkflow](./lab3_MacoskoWorkflow.html)
 
 
 ---

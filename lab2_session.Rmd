@@ -52,7 +52,7 @@ that you can fill out:
 Here, we provide you with a solution file for the exercise (sections
 normalization, feature selection and dimensionality reduction):
 
-[lab2_macoskoWorkflow](./lab3_macoskoWorkflow.html)
+[lab2_macoskoWorkflow](./lab3_MacoskoWorkflow.html)
 
 # Cuomo dataset
 
