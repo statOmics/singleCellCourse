@@ -1045,7 +1045,7 @@ PCA has been performed. The PCA information has been automatically stored in the
 reducedDimNames(sce)
 ```
 
-```{r}
+```{r, eval=FALSE}
 head(reducedDim(sce,
            type="PCA"))
 ```
@@ -1053,7 +1053,7 @@ head(reducedDim(sce,
 The `plotPCA` function of the `scater` package now allows us to visualize
 the cells in PCA space, based on the PCA information stored in our object:
 
-```{r}
+```{r, eval=FALSE}
 plotPCA(sce, 
         colour_by = "cluster")
 ```
