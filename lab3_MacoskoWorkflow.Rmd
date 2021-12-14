@@ -1115,7 +1115,7 @@ signal-to-noise ratio!
 First, we compare the different feature selection criteria, using the top 1000
 highly variable genes for each method.
 
-```{r}
+```{r, eval=FALSE}
 # Get top 1000 highly variable features using the highly variable genes
 # (w.r.t. mean), high deviance genes and the VST strategy of Seurat
 
@@ -1152,7 +1152,7 @@ plotPCA(
 Next, we assess the sensitivity on the number of top features for the highly
 variable genes method;
 
-```{r}
+```{r, eval=FALSE}
 hvg_all <- getTopHVGs(dec)
 
 hvg2000 <- hvg_all[1:2000]
