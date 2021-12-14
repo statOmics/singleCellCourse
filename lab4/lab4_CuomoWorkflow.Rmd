@@ -526,7 +526,6 @@ heterogeneity in the data.
 ---
 
 # Batch correction
-# Batch correction
 
 ## Observed patient/experiment effect
 
@@ -548,7 +547,7 @@ We have cells from 15 different patients and 14 different "experiments"
 (= sequencing batches).
 
 We now will assess if this additional source of heterogeneity is also
-picked up in the reduced dimension plot
+picked up in the reduced dimension plot.
 
 ```{r}
 # time effect in PCA space, all time points
@@ -581,7 +580,7 @@ plotPCA(sce[,sce$day=="day3"],
 ```
 
 Analogously, we may inspect the effect of patient and experiment in the t-SNE
-plot we created earlier:
+plot we created earlier.
 
 ```{r}
 # time effect
@@ -603,38 +602,22 @@ In this experiment, the primary interest are the changes in gene expression
 across the four days, reflecting differentiation from induced pluripotent stem 
 cells to endoderm cells. In contrast, the between-patient effects are not of
 interest here. Using batch correction, we will aim to "correct" for the donor 
-effects, while retaining the main biological variation of interest!
+effects, while hopefully retaining the main biological variation of interest!
 
 We will explore two popular strategies for batch correction for scRNA-Seq data:
 **Seurat CCA** and **Harmony**.
 
 ## Seurat CCA batch correction
 
-TODO: add a brief (high-level, conceptual) description on CCA.
+We will first integrate the data across the different donors using `Seurat`. This procedure is implemented to integrate datasets/batches in a pairwise fashion. In the case of multiple batches/datasets, it integrates them in a bottom-up strategy, starting with integrating pairwise samples first. Because of this, below, we will introduce the methodology for two batches/datasets, but note that an analogous procedure is applied in the case of multiple batches/datasets.
+
+The `Seurat` method will first perform feature selection to identify features that are informative in all datasets. Using these features, it will perform a canonical correlation analysis; a dimensionality reduction technique that focusses on shared variation between datasets/batches. The CCA dimensions may be viewed as gene modules that are present in each dataset. Within this shared space, it identifies **anchor cells** (one for each donor, in our case). These anchor cells may be considered as cells sharing the same biological state, and systematic differences between them correspond to batch/dataset-specific effects. A correction on the original gene expression matrix is then applied by considering systematic differences across all anchor cells identified for each pair of batches/datasets.
 
 ```{r, warning=FALSE, message=FALSE}
 library(Seurat)
 seurat_obj <- as.Seurat(sce)
 seurat_obj
 ```
-
-@Koen: When you ran the Seurat CCA algorithm, it was on the Cuomo dataset
-without quality control. HEre, after quality control, we have 1 group with less
-or equal than 30 cells. As a consequence, the `FindIntegrationAnchors` 
-function breaks. It can be rescued by setting the `dims` argument lower, 
-however, then the `IntegrateData` function may break. This all has been well
-documented in the following GitHub issues:
-
-- https://github.com/satijalab/seurat/issues/3930
-- https://github.com/satijalab/seurat/issues/4803
-- https://github.com/satijalab/seurat/issues/4812
-- https://github.com/carmonalab/STACAS/issues/12
-
-The bottom line of the responses from the maintainers is that CCA should not be
-used with small batches, e.g., less than 30 or even 100 cells. They suggest
-either merging such small batches with other batches, or removing the small
-batches altogether. They actually seem to favor the latter, do that is what I
-will be doing here.
 
 In the code chunk below, I remove cells for patients that have less or equal than 
 30 cells. If we do not do this, we will get issues downstream with the Seurat
@@ -647,7 +630,7 @@ when the number of cells per batch is small. This is a known issue
 - https://github.com/carmonalab/STACAS/issues/12
 
 and the package maintainers suggest to either remove or manually merge small
-batches together. We will here simply remove the cells of patient "bezi";
+batches together. We will here simply remove the cells of patient "bezi".
 
 ```{r}
 table(seurat_obj$donor)
@@ -679,11 +662,11 @@ depth as a covariate. This is performed for each batch separately.
 multiple datasets or batches. This function ranks features by the number of 
 batches they are deemed variable in, breaking ties by the median variable 
 feature rank across datasets. It returns the top scoring features by this 
-ranking, which are called "anchors".
+ranking, which are then used in the steps below.
 
-- `IntegrateData`: Performs dataset integration using a pre-computed set of
-"anchors" as obtained with `SelectIntegrationFeatures`.
+- `FindIntegrationAnchors`: For each pair of datasets we want to integrate, we identify anchor cells, one from each dataset, that are assumed to share a similar biological state. Anchor cells are identified as mutual nearest neighbors in the shared canonical correlation analysis space. Anchor cells are also scored and weighted according to their quality.
 
+- `IntegrateData`: Anchor cells are used to calculate a 'corrected' data matrix, removing systematic differences between anchor cells. This creates an `integrated` assay in the `Seurat` object containing this corrected data matrix, which may then be used for downstream visualization and analysis as such.
 
 ```{r, warning=FALSE, message=FALSE}
 # Normalize and identify variable features for each dataset (patient) independently
@@ -698,7 +681,7 @@ seurat_obj.list <- lapply(X = seurat_obj.list, FUN = function(x) {
 # Select features that are repeatedly variable across datasets for integration
 features <- SelectIntegrationFeatures(object.list = seurat_obj.list)
 
-# Choose the features to use when integrating multiple datasets or batches
+# Indentify pairs of cells with similar biological state
 anchors <- FindIntegrationAnchors(object.list = seurat_obj.list, 
                                   anchor.features = features,
                                   verbose = FALSE)
@@ -724,6 +707,7 @@ and to not perform clustering on the Seurat batch corrected data. I would only
 perform clustering on the Harmony normalized data. We can discuss this, we
 could include Seurat as well for comparison, but maybe that would bring us too 
 far.
+@Jeroen: Showing just the DR is fine to me, no clustering necessary. I would focus on UMAP though.
 
 ```
 data.combined <- RunUMAP(object = data.combined,
@@ -779,6 +763,7 @@ p1 + p2
 Alternatively, we can transform the `Seurat` object back to a 
 `SingleCellExperiment` object and generate the visualizations using the 
 Bioconductor functions that we used previously:
+@Jeroen: how about recalculating UMAP using Bioc functions on integrated data?
 
 ```{r}
 # Convert Seurat object to SingleCellExperiment object
