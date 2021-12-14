@@ -61,8 +61,8 @@ We here make use of the publication of Anna Cuomo *et al.*, which we will refer 
 paper that describes this dataset can be found using this 
 [link](https://www.nature.com/articles/s41467-020-14457-z).
 
-In the experiment, the authors harvested induced pluripotent stem cells (iPSCs)
-from 125 healthy human donors, used to study the endoderm 
+In the experiment, the authors harvested pluripotent stem cells (iPSCs)
+from 125 healthy human donors, and induced them to study the endoderm 
 differentiation process, in which iPSCs differentiate to endoderm cells over the
 course of approximately three days. As such, the authors 
 cultered the iPSCs cell lines and allowed them to differentiate for three days. 
@@ -96,7 +96,8 @@ First we read in the count matrix:
 
 ```{r, message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
-sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+# sce <- readRDS("/Users/jg/Desktop/sce_15_cuomo.rds")
+sce <- readRDS("/Users/koenvandenberge/Desktop/sce_15_cuomo.rds")
 ```
 
 # Explore metadata
@@ -804,12 +805,12 @@ overcorrect and succeeded in removing only the unwanted variation in the data.
 
 ## Harmony batch correction
 
-TODO: add a brief (high-level, conceptual) description on Harmony.
+[Harmony](https://www.nature.com/articles/s41592-019-0619-0) implements a complex data integration strategy, where cells are first clustered using a 'high-diversity clustering', favoring clusters consisting of multiple batches/datasets, and then batch effects are corrected within each cluster using a linear correction term. It iterates across these steps until no change is clustering is observed.
 
 Performing batch correction with `harmony` is very simple; we only need a single
 function call and can directly work with our `SingleCellExperiment` object.
 
-The function `RunHarmony` takes the follwoing inputs:
+The function `RunHarmony` takes the following inputs:
 
 - `object`: name of the `SingleCellExperiment` object
 
@@ -820,7 +821,7 @@ not perfect)
 
 - `reduction`: Name of the previously computed reduced dimension space on which
 batch correction will be performed (not on raw data to improve signal-to-noise
-ratio). Typically PCA is chosen
+ratio). Typically PCA is used
 
 - `reduction.save`: name to store the batch corrected dimenion reduced space
 
@@ -959,7 +960,7 @@ overcorrect and succeeded in removing only the unwanted variation in the data.
 # Clustering
 
 In the second lab session, we discussed graph-based clustering, k-means 
-clustering and hierarchical cluster. Here, we will only perform hierarchical 
+clustering and hierarchical clustering. Here, we will perform hierarchical 
 clustering.
 
 ## Hierarchical clustering
@@ -971,16 +972,15 @@ euclidean distances and, in order to reduce data complexity and increase signal
 to noise, we may perform this on the top (30) PC's. Implemented in the `dist`
 function.
 
-2. This function performs a hierarchical cluster analysis the distances from 
-step1. Initially, each cell is assigned to its own cluster and then the 
+2. Perform a hierarchical clustering analysis on these distances. Initially, each cell is assigned to its own cluster and then the 
 algorithm proceeds iteratively, at each stage joining the two most similar 
-clusters, continuing until there is just a single cluster. Implemented in the
+clusters, continuing until there is just a single cluster. This is implemented in the
 `hclust` function.
 
-Note that the `hclust` function allows for specifying a "method" argument.
-The differences between the different methods goes beyond the scope of this
+Note that the `hclust` function allows for specifying a `method` argument.
+The differences between the different methods are beyond the scope of this
 session, but a brief description is provided in the function help file.
-In the context of scRNA-seq, I have mostly seen the use of the "ward.D2"
+In the context of scRNA-seq, we have mostly seen the use of the "ward.D2"
 method.
 
 ```{r}
@@ -1025,23 +1025,15 @@ day variable.
 table(sce$day, sce$clust_hcl_k4)
 ```
 
-We see that most cells of day0 are in hierarchical cluster 3 (arbitrary 
+Mapping clusters to timepoints, we note that most cells of day0 are in hierarchical cluster 3 (arbitrary 
 indicator), day1 cells are in cluster 4, day2 cells are mainly in cluster 1 and
 fay3 cells are found back in cluster 2.
 
 # Trajectory inference
 
-[Wikipedia](https://en.wikipedia.org/wiki/Trajectory_inference)
-provides a decent high-level description of this trajectory inference: 
+Trajectory inference is a computational procedure that attempts to summarize a dynamic process in a 'trajectory'. The trajectory tries to find a sensible ordering of the cells according to their progression through this dynamic process. Trajectories can be linear, diverging, converging or cyclic. If there are multiple differentiation paths, each path is called a lineage, and the combination of lineages is called a trajectory.
 
-"Trajectory inference or pseudotemporal ordering is a computational technique 
-used in single-cell transcriptomics to determine the pattern of a dynamic 
-process experienced by cells and then arrange cells based on their progression 
-through the process. [...] Trajectory inference seeks to characterize [such] 
-differences by placing cells along a continuous path that represents the 
-evolution of the process rather than dividing cells into discrete clusters.
-In some methods this is done by projecting cells onto an axis called pseudotime 
-which represents the progression through the process."
+Based on the trajectory, one may define a **pseudotime** for each cell, which defines that cell's progression along one of the differentiation paths: if the pseudotime of a cell is close to zero, then that cell is close to the starting point of the trajectory.
 
 ## Computing the trajectory
 
@@ -1066,9 +1058,9 @@ plot(reducedDims(sce)$HARMONY_donor_experiment,
      pch=16, 
      asp = 1)
 lines(SlingshotDataSet(sce), 
-      lwd=2, 
+      lwd=3, 
       type = 'lineages', 
-      col = 'black')
+      col = 'orange')
 ```
 
 ```{r}
@@ -1077,9 +1069,8 @@ plot(reducedDims(sce)$HARMONY_donor_experiment,
      pch=16, 
      asp = 1)
 lines(SlingshotDataSet(sce), 
-      lwd=2, 
-      type = 'lineages', 
-      col = 'black')
+      lwd=3, 
+      col = 'orange')
 ```
 
 We see that the trajectory inferred with `slingshot` nicely captures the
@@ -1090,8 +1081,8 @@ expected developmental process.
 As a next step, we may be interested in identifying the genes are involved in 
 the developmental process. To this end, our group has developed the Bioconductor
 R package [tradeSeq](http://www.bioconductor.org/packages/release/bioc/html/tradeSeq.html).
-`tradeSeq` is a flexible that tools that allows for studying differential gene
-expression along the developmental trajectory, or between different lineages.
+`tradeSeq` is a flexible tool that allows for studying differential gene
+expression along such a trajectory, within or between different lineages.
 The functionalities of the package are summarized in the following figure:
 
 ```{r}
@@ -1143,7 +1134,9 @@ genes (±10.000), this function takes about 20 minutes to complete. For this
 lab session, we will therefore randomly sample 1.000 genes. In addition, we make
 sure that three specific genes are also included: "ENSG00000111704", 
 "ENSG00000164458" and "ENSG00000141448". These genes are known markers for the 
-different developmental stages nd were use in the publication of *Cuomo et al.*
+different developmental stages nd were use in the publication of *Cuomo et al.*.
+
+The `tradeSeq` model allows us to incorporate fixed effects. While we have estimated the trajectory on the integrated data, we model the raw gene expression data, since `tradeSeq` is a count model and requires raw counts as input. On the raw counts, we therefore still have substantial variability that may be explained by the patient effects. We therefore incorporate a patient fixed effect to the design matrix.
 
 ```{r}
 set.seed(7)
@@ -1159,14 +1152,17 @@ subset_genes <- c(subset_genes, markers[!markers %in% subset_genes])
 pseudotime <- slingPseudotime(sce, na = FALSE)
 cellWeights <- slingCurveWeights(sce)
 
+patient <- colData(sce)$donor
+U <- model.matrix(~ 0 + patient)
 sce_fit <- fitGAM(counts = assays(sce)$counts[subset_genes,], 
                   pseudotime = pseudotime, 
                   cellWeights = cellWeights,
                   nknots = 6, 
+                  U = U,
                   verbose = TRUE)
 ```
 
-To assess if all genes could modeled;
+To assess if all models have converged;
 
 ```{r}
 table(rowData(sce_fit)$tradeSeq$converged)
@@ -1177,27 +1173,11 @@ table(rowData(sce_fit)$tradeSeq$converged)
 Next, we can perform different types of differential expression testing along
 the trajectory.
 
-The `associationTest` function allows for performing a global test that assesses
-if the average expression of a gene is associated with pseudotime.
-
-```{r}
-# ±20 sec
-assoRes <- associationTest(sce_fit)
-head(assoRes)
-```
-
-```{r}
-sum(p.adjust(assoRes$pvalue, method = "BH") < 0.05, na.rm=T)/nrow(assoRes) 
-# @Koen ±90% significant (?)
-```
-
-We observe a huge number of statistically significant findings. With such many
-data points (3.731), it is difficult to control the type I error at the nominal 
-level. To prioritize for genes that are also biologically relevant, we may test
+The `associationTest` assesses whether the average expression of a gene is associated with pseudotime. To prioritize for genes that are also biologically relevant, we may test
 against a log-fold change cut-off:
 
 ```{r}
-assoRes2 <- associationTest(sce_fit, l2fc=1)
+assoRes2 <- associationTest(sce_fit, l2fc=log2(2))
 sum(p.adjust(assoRes2$pvalue, method = "BH") < 0.05, na.rm=T)/nrow(assoRes2) 
 ```
 
@@ -1208,7 +1188,7 @@ between the start point and the end point of a lineage. This is implemented
 in the `startVsEndTest` function.
 
 ```{r}
-startRes <- startVsEndTest(sce_fit, l2fc=1)
+startRes <- startVsEndTest(sce_fit, l2fc=log2(2))
 ```
 
 We can then visualize the gene expression profile along pseudotime of the top5
@@ -1261,7 +1241,7 @@ knitr::include_graphics("./../cuomo_traj2.jpeg")
 knitr::include_graphics("./../cuomo_traj3.jpeg")
 ```
 
-We also inspect the results in our differential testin output.
+We also inspect the results in our differential testing output.
 
 Association test:
 
@@ -1274,12 +1254,11 @@ Start versus end test:
 
 ```{r}
 startRes[markers,]
-# @Koen: ideally, ENSG00000164458 should not be DE between start and end.
 ```
 
 Another interesting visualization is implemented in the `plotGeneCount` 
-function, which colors the cells based on the log-normalized expression
-value of the target genes:
+function, which colors the cells based on the log-transformed expression
+value of the target genes.
 
 ```{r}
 plotGeneCount(sce$slingshot, 
