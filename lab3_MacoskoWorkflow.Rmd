@@ -1378,7 +1378,7 @@ sce <- readRDS("./sce_after_labsession2.rds") # change to YOUR path!
 
 # Add cluster information from publication
 
-```{r,eval=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
            "Horizontal_cells" = "1",
@@ -1848,7 +1848,7 @@ something similar to what the authors did for your reference (note that running
 this code requires installing the `snifter` R package, which requires a working
 Python and Conda installation).
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 # code for steps 1-4
 library(scater)
 library(genefilter)
@@ -1914,7 +1914,7 @@ ggplot() +
     theme_bw()
 ```
 
-```{r}
+```{r,eval=FALSE}
 # Step 5 for us: perform hierarchical clustering
 distsce <- dist(reducedDim(sce_900, "PCA"))
 hcl <- hclust(distsce, method = "ward.D2")
@@ -1928,7 +1928,7 @@ sce_900$clust_hcl_k39 <- as.factor(clust_hcl_k39)
 
 Visualize our labels and compare with original labels
 
-```{r}
+```{r,eval=FALSE}
 plotTSNE(sce_900,
          colour_by = "clust_hcl_k10",
          text_by = "clust_hcl_k10")
@@ -1951,7 +1951,7 @@ see paper figure 5D) correspond with our group 1
 - The original bipolar cells are split out between our groups 4 and 10
 - The original amacrine cells correspond with our groups 3, 6 and 9
 
-```{r}
+```{r,eval=FALSE}
 plotTSNE(sce_900,
          colour_by = "clust_hcl_k39",
          text_by = "clust_hcl_k39")
@@ -1990,7 +1990,7 @@ data by using a set of 12 well-known molecular markers; genes for which the
 expression profile is typically very specific, i.e., highly expressed only in
 one specific cell type. They used the following markers: 
 
-```{r}
+```{r,eval=FALSE}
 markers <- c("LHX1", "SLC17A6","PAX6","GAD1","SLC6A9","OPN1MW","VSX2",
              "RLBP1", "GFAP", "PECAM1", "KCNJ8","CX3CR1")
 ```
@@ -1999,7 +1999,7 @@ We will here visualize the expression of these markers in t-SNE space.
 First, we create a "baseline" figure, displaying each cell in 2D space, colored
 in black.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 gg_hlp_data <- data.frame(x = reducedDim(sce_900, type = "TSNE")[,1],
                           y = reducedDim(sce_900, type = "TSNE")[,2],
@@ -2015,7 +2015,7 @@ gg_base
 
 Next, we obtain the counts of the 12 pre-selected marker genes for all cells.
 
-```{r}
+```{r,eval=FALSE}
 marker_counts <- assays(sce_900)$counts[markers,]
 marker_counts <- as.matrix(t(marker_counts))
 ```
@@ -2024,7 +2024,7 @@ Finally, we make one figure for each of the 12 marker genes. The idea is to
 give each cell that has a non-zero expression of the marker (i.e., for which
 the marker is expressed) a red coloring.
 
-```{r}
+```{r,eval=FALSE}
 marker_counts_binary <- marker_counts
 marker_counts_binary[which(marker_counts_binary > 0)] <- 1
 
@@ -2042,7 +2042,7 @@ for (i in seq_along(markers)) {
 }
 ```
 
-```{r}
+```{r,eval=FALSE}
 # Visualize our clusters
 plotTSNE(sce_900,
          colour_by = "clust_hcl_k39",
@@ -2139,18 +2139,18 @@ particular cluster are then consolidated into a single data frame for that
 cluster. This approach is implemented in the `scoreMarkers` function of the
 `scran` package.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scran)
 marker.info <- scoreMarkers(sce_900, 
                             sce_900$clust_hcl_k39)
 marker.info # one dataframe for each of the 39 clusters
 ```
 
-```{r}
+```{r,eval=FALSE}
 colnames(marker.info[["1"]]) # statistics for cluster 1.
 ```
 
-```{r}
+```{r,eval=FALSE}
 head(marker.info[["1"]])
 ```
 
@@ -2186,7 +2186,7 @@ selecting marker genes.
 Based on the `mean.AUC` statistic, we may now inspect the top10 markers to
 distinguish between cells of cluster 1 and cells of the other clusters:
 
-```{r}
+```{r,eval=FALSE}
 chosen <- marker.info[["1"]]
 ordered <- chosen[order(chosen$mean.AUC, decreasing=TRUE),]
 head(ordered[,c(1:4,10)],n=10) # showing basic stats only, for brevity.
@@ -2196,7 +2196,7 @@ We can also visualize the log-normalized expression of the top10 markers in
 each cell, stratified on cluster label, using the `plotExpression` function
 of the `scater` package:
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scater)
 plotExpression(sce_900, 
                features=head(rownames(ordered),n=10), 
@@ -2256,23 +2256,23 @@ explore (brief) and wrangle the reference dataset by Shekhar *et al.*.
 The dataset by Shekhar *et al.* can be conveniently imported using the 
 `scRNAseq` package.
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scRNAseq)
 (ref.data <- scRNAseq::ShekharRetinaData(ensembl = TRUE))
 ```
 
 ### Explore metadata of reference data
 
-```{r}
+```{r,eval=FALSE}
 head(colData(ref.data))
 levels(as.factor(ref.data$CLUSTER))
 ```
 
-```{r}
+```{r,eval=FALSE}
 levels(as.factor(ref.data$`SUB-CLUSTER`))
 ```
 
-```{r}
+```{r,eval=FALSE}
 # both have exactly the same info...
 all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
 ```
@@ -2281,7 +2281,7 @@ all(ref.data$`SUB-CLUSTER` == ref.data$CLUSTER, na.rm = TRUE)
 
 1. Remove unlabeled cells
 
-```{r}
+```{r,eval=FALSE}
 sum(is.na(ref.data$CLUSTER))
 ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
 ```
@@ -2291,14 +2291,14 @@ ref.data <- ref.data[,-which(is.na(ref.data$CLUSTER))]
 The original authors already performed quality control; we have cells with 
 cluster label "Doublets/Contaminants". Let’s remove those:
 
-```{r}
+```{r,eval=FALSE}
 sum(ref.data$CLUSTER == "Doublets/Contaminants")
 ref.data <- ref.data[,-which(ref.data$CLUSTER == "Doublets/Contaminants")]
 ```
 
 3. Make lower resolution cell type levels (for easier interpretation)
 
-```{r}
+```{r,eval=FALSE}
 ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER, 
            "Amacrine_cells" = "AC (Amacrine cell)",
            "Bipolar_cells" = "BC1A",
@@ -2322,7 +2322,7 @@ ref.data$CLUSTER_lowRes <- fct_recode(ref.data$CLUSTER,
 
 4. Remove lowly expressed genes
 
-```{r}
+```{r,eval=FALSE}
 keep <- rowSums(assays(ref.data)$counts > 0) > 10
 table(keep)
 ref.data <- ref.data[keep,]
@@ -2333,21 +2333,21 @@ ref.data <- ref.data[keep,]
 To avoid problems with different version of gene symbols, it is good practice
 do work with unambiguous gene identifiers like those of ENSEMBL instead.
 
-```{r}
+```{r,eval=FALSE}
 rownames(sce_900) <- rowData(sce_900)$ensembl_gene_id # use ENSEMBL identifiers instead
 sum(rownames(sce_900) %in% rownames(ref.data))
 ```
 
 6. Compute `logNormCounts`
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(scuttle)
 ref.data <- logNormCounts(ref.data)
 ```
 
 ### `SingleR` at low reference resolution
 
-```{r}
+```{r,eval=FALSE}
 #BiocManager::install("SingleR")
 library(SingleR)
 
@@ -2370,7 +2370,7 @@ labels that were obtained by Macokso *et al.*, which we *could* consider to be
 ground truth labels if we assume that the authors succeeded in their large 
 effort of annotating their cell clusters for their publication.
 
-```{r}
+```{r,eval=FALSE}
 tab <- table(sce_900$cluster_lowRes, pred.lowRes$labels)
 tab
 ```
@@ -2381,7 +2381,7 @@ amacrine cells being predicted as amacrine cells, most bipolar cells being
 predicted as bipolar cells, and so on). Before we dive deeper into this, we
 may visualize our result using a heatmap:
 
-```{r}
+```{r,eval=FALSE}
 pheatmap::pheatmap(tab / rowSums(tab))
 ```
 
@@ -2400,7 +2400,7 @@ function then allows you to plot, for each cell (columns) the assignment score
 (which can be thought of as a probability) of that cell belonging to each of 
 the reference label categories (rows).
 
-```{r}
+```{r,eval=FALSE}
 gg <- plotScoreHeatmap(pred.lowRes[1:20,])
 gg
 ```
@@ -2414,7 +2414,7 @@ Finally, we can use these assignment score to filter out cells that could not be
 unambiguously assigned to one cell type, i.e., only report those cells that we
 were able to reliably assign:
 
-```{r}
+```{r,eval=FALSE}
 summary(is.na(pred.lowRes$pruned.labels))
 
 range(rowMaxs(pred.lowRes$scores)) # all assignments
@@ -2467,7 +2467,7 @@ rod cells (1834/(1834+6+4+1) ±= 99% correctly assigned).
 We can now also visualize the predicted labels and the original labels on our
 t-SNE.
 
-```{r}
+```{r,eval=FALSE}
 sce_900$SingleR_lowRes <- pred.lowRes$labels
 
 # our low resolution labels based on reference
