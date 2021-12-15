@@ -761,10 +761,10 @@ Bioconductor functions that we used previously:
 # Convert Seurat object to SingleCellExperiment object
 sce_intSeurat <- as.SingleCellExperiment(data.combined)
 
-# t-SNE without Seurat batch correction
+# UMAP without Seurat batch correction
 p1 <- plotUMAP(sce,
                colour_by = "day") + ggtitle("Day - no batch")
-p2 <- plotTSNE(sce,
+p2 <- plotUMAP(sce,
                colour_by = "donor") + ggtitle("Donor - no batch")
 
 # UMAP with Seurat batch correction
@@ -1125,7 +1125,7 @@ expression along such a trajectory, within or between different lineages.
 The functionalities of the package are summarized in the following figure:
 
 ```{r}
-knitr::include_graphics("./../tradeseq_summary.jpeg")
+knitr::include_graphics("./tradeseq_summary.jpeg")
 ```
 
 ```{r, message=FALSE, warning=FALSE}
@@ -1281,9 +1281,9 @@ plotSmoothers(sce_fit,
 **A very nice correspondence with the results presented in the paper!!**
 
 ```{r}
-knitr::include_graphics("./../cuomo_traj1.jpeg")
-knitr::include_graphics("./../cuomo_traj2.jpeg")
-knitr::include_graphics("./../cuomo_traj3.jpeg")
+knitr::include_graphics("./cuomo_traj1.jpeg")
+knitr::include_graphics("./cuomo_traj2.jpeg")
+knitr::include_graphics("./cuomo_traj3.jpeg")
 ```
 
 We also inspect the results in our differential testing output.

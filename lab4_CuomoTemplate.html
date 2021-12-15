@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Koen Van den Berge and Jeroen Gilis" />
+
+
+<title>Lab4: Batch correction and trajectory inference for the Cuomo dataset</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Single-cell course</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-chalkboard-teacher"></span>
+     
+    Lectures
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="introSequencingBulk.html">A brief introduction to sequencing technology</a>
+    </li>
+    <li>
+      <a href="singleCellProtocols.html">Two popular single-cell protocols</a>
+    </li>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    <span class="fa fa-laptop"></span>
+     
+    Labs
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="lab1_session.html">Lab 1</a>
+    </li>
+    <li>
+      <a href="lab2_session.html">Lab 2</a>
+    </li>
+    <li>
+      <a href="lab3_session.html">Lab 3</a>
+    </li>
+    <li>
+      <a href="lab4_session.html">Lab 4</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/statOmics/Rmd-website">
+    <span class="fab fa-github"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="http://statomics.github.io/">statOmics</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Lab4: Batch correction and trajectory inference for the Cuomo dataset</h1>
+<h4 class="author">Koen Van den Berge and Jeroen Gilis</h4>
+<h4 class="date">15/12/2021</h4>
+
+</div>
+
+
+<div id="preamble-installation-of-r-libraries" class="section level1">
+<h1><span class="header-section-number">1</span> Preamble: installation of R libraries</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># install BiocManager package if not installed yet.</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co"># BiocManager is the package installer for Bioconductor software.</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="cf">if</span> (<span class="op">!</span><span class="kw">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>))</span>
+<span id="cb1-4"><a href="#cb1-4"></a>    <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># install packages if not yet installed.</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>pkgs &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;SingleCellExperiment&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8"></a>          <span class="st">&quot;ExperimentHub&quot;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9"></a>          <span class="st">&quot;edgeR&quot;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10"></a>          <span class="st">&quot;biomaRt&quot;</span>,</span>
+<span id="cb1-11"><a href="#cb1-11"></a>          <span class="st">&quot;DropletUtils&quot;</span>, </span>
+<span id="cb1-12"><a href="#cb1-12"></a>          <span class="st">&quot;scRNAseq&quot;</span>, </span>
+<span id="cb1-13"><a href="#cb1-13"></a>          <span class="st">&quot;scater&quot;</span>, </span>
+<span id="cb1-14"><a href="#cb1-14"></a>          <span class="st">&quot;scuttle&quot;</span>, </span>
+<span id="cb1-15"><a href="#cb1-15"></a>          <span class="st">&quot;scran&quot;</span>,</span>
+<span id="cb1-16"><a href="#cb1-16"></a>          <span class="st">&quot;scry&quot;</span>,</span>
+<span id="cb1-17"><a href="#cb1-17"></a>          <span class="st">&quot;BiocSingular&quot;</span>, </span>
+<span id="cb1-18"><a href="#cb1-18"></a>          <span class="st">&quot;scDblFinder&quot;</span>,</span>
+<span id="cb1-19"><a href="#cb1-19"></a>          <span class="st">&quot;Seurat&quot;</span>,</span>
+<span id="cb1-20"><a href="#cb1-20"></a>          <span class="st">&quot;PCAtools&quot;</span>,</span>
+<span id="cb1-21"><a href="#cb1-21"></a>          <span class="st">&quot;glmpca&quot;</span>,</span>
+<span id="cb1-22"><a href="#cb1-22"></a>          <span class="st">&quot;genefilter&quot;</span>,</span>
+<span id="cb1-23"><a href="#cb1-23"></a>          <span class="st">&quot;pheatmap&quot;</span>,</span>
+<span id="cb1-24"><a href="#cb1-24"></a>          <span class="st">&quot;tidyverse&quot;</span>,</span>
+<span id="cb1-25"><a href="#cb1-25"></a>          <span class="st">&quot;mclust&quot;</span>,</span>
+<span id="cb1-26"><a href="#cb1-26"></a>          <span class="st">&quot;ggplot2&quot;</span>,</span>
+<span id="cb1-27"><a href="#cb1-27"></a>          <span class="st">&quot;devtools&quot;</span>,</span>
+<span id="cb1-28"><a href="#cb1-28"></a>          <span class="st">&quot;SingleR&quot;</span>)</span>
+<span id="cb1-29"><a href="#cb1-29"></a>notInstalled &lt;-<span class="st"> </span>pkgs[<span class="op">!</span>pkgs <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[,<span class="dv">1</span>]]</span>
+<span id="cb1-30"><a href="#cb1-30"></a><span class="cf">if</span>(<span class="kw">length</span>(notInstalled) <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>){</span>
+<span id="cb1-31"><a href="#cb1-31"></a>  BiocManager<span class="op">::</span><span class="kw">install</span>(notInstalled)</span>
+<span id="cb1-32"><a href="#cb1-32"></a>}</span></code></pre></div>
+</div>
+<div id="install-harmony-from-github" class="section level1">
+<h1><span class="header-section-number">2</span> install harmony from github</h1>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">library</span>(devtools)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">install_github</span>(<span class="st">&quot;immunogenomics/harmony&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3"></a>               <span class="dt">dependencies =</span> <span class="ot">TRUE</span>,</span>
+<span id="cb2-4"><a href="#cb2-4"></a>               <span class="dt">force =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+</div>
+<div id="the-cuomo-dataset" class="section level1">
+<h1><span class="header-section-number">3</span> The Cuomo dataset</h1>
+<p>We here make use of the publication of Anna Cuomo <em>et al.</em>, which we will refer to as the <code>iPSC dataset</code>. The paper that describes this dataset can be found using this <a href="https://www.nature.com/articles/s41467-020-14457-z">link</a>.</p>
+<p>In the experiment, the authors harvested pluripotent stem cells (iPSCs) from 125 healthy human donors, and induced them to study the endoderm differentiation process, in which iPSCs differentiate to endoderm cells over the course of approximately three days. As such, the authors cultered the iPSCs cell lines and allowed them to differentiate for three days. During the experiment, cells were harvested at four different time points: day0 (directly at incubation), day1, day2 and day3. Knowing the process of endoderm differentiation, these time points should roughly correspond to different cell types: day0 are (undifferentiated) iPSCs, day1 are mostly mesendoderm cells, day2 are mostly “intermediate” cells and day3 are mostly fully differentiated endoderm cells.</p>
+<p>This dataset was generated using the <strong>SMART-Seq2</strong> scRNA-seq protocol.</p>
+<p>The final goal of the experiment was to characterize population variation in the process of endoderm differentiation.</p>
+</div>
+<div id="download-data" class="section level1">
+<h1><span class="header-section-number">4</span> Download data</h1>
+<p>For this lab session, we will work with a subset of the data, i.e., the data for the first (alphabetically) 15 patients in the experiment. These are the data you already downloaded for lab session 2 using the <em>Belnet filesender</em> link.</p>
+<p>The original data (125 patient) could be downloaded from <a href="https://zenodo.org/record/3625024#.YWfahtlBxB1">Zenodo</a>. At the bottom of this web-page, we can download the files <code>raw_counts.csv.zip</code> and <code>cell_metadata_cols.tsv</code> and store these files locally. We do not recommend doing this during the lab session, to avoid overloading the WiFi network.</p>
+</div>
+<div id="import-data" class="section level1">
+<h1><span class="header-section-number">5</span> Import data</h1>
+<p>First we read in the count matrix:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">library</span>(SingleCellExperiment)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>sce &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;/Users/jg/Desktop/sce_15_cuomo.rds&quot;</span>) <span class="co"># change to YOUR path</span></span></code></pre></div>
+</div>
+<div id="explore-metadata" class="section level1">
+<h1><span class="header-section-number">6</span> Explore metadata</h1>
+<p>Exploration of the metadata is essential to get a better idea of what the experiment was about and how it was organized.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">colData</span>(sce)[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">colnames</span>(<span class="kw">colData</span>(sce))</span></code></pre></div>
+<p>As stated in the paper, cells were sampled on 4 time points. Each of these time points is roughly expected to correspond with different cell types (day0 = iPSC, day1 = mesendoderm, day2 = intermediate and day3 = endoderm).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>day)</span></code></pre></div>
+<p>As stated in the paper, cells were harvested from 125 patients. Here, we are working on a subset with 15 patients. The number of cells harvested per patient (over all time points) ranges from 31 to 637.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">length</span>(<span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>donor)) <span class="co"># number of donors</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">range</span>(<span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>donor)) <span class="co"># cells per donor</span></span></code></pre></div>
+<p>Below, we look at how many cells are harvest per patent and per time point.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>donor,<span class="kw">colData</span>(sce)<span class="op">$</span>day)</span></code></pre></div>
+<p>We see that for many patients the data is complete, i.e. cells were sampled on all time points.</p>
+<p>Practically, the cells were prepared in 28 batches. Since we here only look at a subset of the data, we see that only 14 of these batches are represented.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">length</span>(<span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>experiment))</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>experiment, <span class="kw">colData</span>(sce)<span class="op">$</span>day)</span></code></pre></div>
+</div>
+<div id="obtaining-and-including-rowdata" class="section level1">
+<h1><span class="header-section-number">7</span> Obtaining and including rowData</h1>
+<p>The <code>rowData</code> slot of a <code>SingleCellExperiment</code> object allows for storing information on the features, i.e. the genes, in a dataset. In our object, the <code>rowData</code> slot currently contains the following:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
+<p>To improve our gene-level information, we may:</p>
+<ol style="list-style-type: decimal">
+<li><p>Split <code>V1</code> into two columns, one with the ENSEMBL ID and the other with the gene symbol.</p></li>
+<li><p>Display which chromosome the gene is located</p></li>
+</ol>
+<p>Many more options are possible, but are not necessary for us right now.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">rowData</span>(sce) &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">Ensembl =</span> <span class="kw">gsub</span>(<span class="st">&quot;_.*&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="kw">rowData</span>(sce)<span class="op">$</span>V1),</span>
+<span id="cb10-2"><a href="#cb10-2"></a>                           <span class="dt">Symbol =</span> <span class="kw">gsub</span>(<span class="st">&quot;^[^_]*_&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="kw">rowData</span>(sce)<span class="op">$</span>V1))</span>
+<span id="cb10-3"><a href="#cb10-3"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw">library</span>(<span class="st">&quot;biomaRt&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2"></a>ensembl75 &lt;-<span class="st"> </span><span class="kw">useEnsembl</span>(<span class="dt">biomart =</span> <span class="st">&#39;genes&#39;</span>, </span>
+<span id="cb11-3"><a href="#cb11-3"></a>                        <span class="dt">dataset =</span> <span class="st">&#39;hsapiens_gene_ensembl&#39;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4"></a>                        <span class="dt">version =</span> <span class="dv">75</span>)</span>
+<span id="cb11-5"><a href="#cb11-5"></a></span>
+<span id="cb11-6"><a href="#cb11-6"></a>GeneInfo &lt;-<span class="st"> </span><span class="kw">getBM</span>(<span class="dt">attributes =</span> <span class="kw">c</span>(<span class="st">&quot;ensembl_gene_id&quot;</span>, <span class="co"># To match with rownames SCE</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a>                                 <span class="st">&quot;chromosome_name&quot;</span>), <span class="co"># Info on chromose</span></span>
+<span id="cb11-8"><a href="#cb11-8"></a>                  <span class="dt">mart =</span> ensembl75)</span>
+<span id="cb11-9"><a href="#cb11-9"></a>GeneInfo &lt;-<span class="st"> </span>GeneInfo[<span class="kw">match</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>Ensembl, GeneInfo<span class="op">$</span>ensembl_gene_id),]</span>
+<span id="cb11-10"><a href="#cb11-10"></a></span>
+<span id="cb11-11"><a href="#cb11-11"></a><span class="kw">rowData</span>(sce) &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">rowData</span>(sce), GeneInfo)</span>
+<span id="cb11-12"><a href="#cb11-12"></a><span class="kw">head</span>(<span class="kw">rowData</span>(sce))</span>
+<span id="cb11-13"><a href="#cb11-13"></a><span class="kw">all</span>(<span class="kw">rowData</span>(sce)<span class="op">$</span>Ensembl <span class="op">==</span><span class="st"> </span><span class="kw">rowData</span>(sce)<span class="op">$</span>ensembl_gene_id) </span>
+<span id="cb11-14"><a href="#cb11-14"></a><span class="co"># identical, as desired, so we could optionally remove one of the two</span></span></code></pre></div>
+</div>
+<div id="filtering-non-informative-genes" class="section level1">
+<h1><span class="header-section-number">8</span> Filtering non-informative genes</h1>
+<p>Let us first try the very simple and very lenient filtering criterion that we adopted for the Macosko dataset.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>keep &lt;-<span class="st"> </span><span class="kw">rowSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">&gt;</span><span class="st"> </span><span class="dv">10</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="kw">table</span>(keep)</span></code></pre></div>
+<p>We see that this filtering strategy does not remove any genes for this dataset. In general, datasets from plate-based scRNA-seq dataset have a far higher sequencing depth than data from droplet-based protocols. As requiring a minimum expression of 1 count in at least 10 cells is a very lenient criterion if we consider that we are working 36.000 cells, we should consider adopting a more stringent filtering criterium. Below we do so using the <code>filterByExpr</code> from <code>edgeR</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="kw">library</span>(edgeR)</span>
+<span id="cb13-2"><a href="#cb13-2"></a></span>
+<span id="cb13-3"><a href="#cb13-3"></a><span class="kw">table</span>(<span class="kw">colData</span>(sce)<span class="op">$</span>day)</span>
+<span id="cb13-4"><a href="#cb13-4"></a></span>
+<span id="cb13-5"><a href="#cb13-5"></a>keep2 &lt;-<span class="st"> </span>edgeR<span class="op">::</span><span class="kw">filterByExpr</span>(<span class="dt">y=</span>sce,</span>
+<span id="cb13-6"><a href="#cb13-6"></a>                             <span class="dt">group =</span> <span class="kw">colData</span>(sce)<span class="op">$</span>day,</span>
+<span id="cb13-7"><a href="#cb13-7"></a>                             <span class="dt">min.count =</span> <span class="dv">5</span>,</span>
+<span id="cb13-8"><a href="#cb13-8"></a>                             <span class="dt">min.prop =</span> <span class="fl">0.4</span>)</span>
+<span id="cb13-9"><a href="#cb13-9"></a><span class="kw">table</span>(keep2)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>sce &lt;-<span class="st"> </span>sce[keep2,]</span></code></pre></div>
+</div>
+<div id="quality-control" class="section level1">
+<h1><span class="header-section-number">9</span> Quality control</h1>
+<div id="calculate-qc-variables" class="section level2">
+<h2><span class="header-section-number">9.1</span> Calculate QC variables</h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw">library</span>(scater)</span>
+<span id="cb15-2"><a href="#cb15-2"></a></span>
+<span id="cb15-3"><a href="#cb15-3"></a><span class="co"># check ERCC spike-in transcripts</span></span>
+<span id="cb15-4"><a href="#cb15-4"></a><span class="kw">sum</span>(<span class="kw">grepl</span>(<span class="st">&quot;^ERCC-&quot;</span>, <span class="kw">rowData</span>(sce)<span class="op">$</span>Symbol)) <span class="co"># no spike-in transcripts available</span></span>
+<span id="cb15-5"><a href="#cb15-5"></a></span>
+<span id="cb15-6"><a href="#cb15-6"></a>is.mito &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;^MT&quot;</span>, <span class="kw">rowData</span>(sce)<span class="op">$</span>chromosome_name)</span>
+<span id="cb15-7"><a href="#cb15-7"></a><span class="kw">sum</span>(is.mito) <span class="co"># 13 mitochondrial genes</span></span>
+<span id="cb15-8"><a href="#cb15-8"></a></span>
+<span id="cb15-9"><a href="#cb15-9"></a>df &lt;-<span class="st"> </span><span class="kw">perCellQCMetrics</span>(sce, <span class="dt">subsets=</span><span class="kw">list</span>(<span class="dt">Mito=</span>is.mito))</span>
+<span id="cb15-10"><a href="#cb15-10"></a><span class="kw">head</span>(df)</span>
+<span id="cb15-11"><a href="#cb15-11"></a></span>
+<span id="cb15-12"><a href="#cb15-12"></a><span class="co">## add the QC variables to sce object</span></span>
+<span id="cb15-13"><a href="#cb15-13"></a><span class="kw">colData</span>(sce) &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">colData</span>(sce), df)</span></code></pre></div>
+</div>
+<div id="exploratory-data-analysis" class="section level2">
+<h2><span class="header-section-number">9.2</span> Exploratory data analysis</h2>
+<p>In the figure below, we see that several cells have a very low number of expressed genes, and where most of the molecules are derived from mitochondrial genes. This indicates likely damaged cells, presumably because of loss of cytoplasmic RNA from perforated cells, so we should remove these for the downstream analysis.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co"># Number of genes vs library size</span></span>
+<span id="cb16-2"><a href="#cb16-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;day&quot;</span>) </span>
+<span id="cb16-3"><a href="#cb16-3"></a></span>
+<span id="cb16-4"><a href="#cb16-4"></a><span class="co"># Mitochondrial genes</span></span>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+</div>
+<div id="qc-using-adaptive-thresholds" class="section level2">
+<h2><span class="header-section-number">9.3</span> QC using adaptive thresholds</h2>
+<p>Below, we remove cells that are outlying with respect to</p>
+<ol style="list-style-type: decimal">
+<li>A low sequencing depth (number of UMIs);</li>
+<li>A low number of genes detected;</li>
+<li>A high percentage of reads from mitochondrial genes.</li>
+</ol>
+<p>We remove a total of <span class="math inline">\(301\)</span> cells, mainly due to low sequencing depth and low number of genes detected.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb17-2"><a href="#cb17-2"></a>lowFeatures &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>detected, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb17-3"><a href="#cb17-3"></a>highMito &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>subsets_Mito_percent, <span class="dt">type=</span><span class="st">&quot;higher&quot;</span>)</span>
+<span id="cb17-4"><a href="#cb17-4"></a></span>
+<span id="cb17-5"><a href="#cb17-5"></a><span class="kw">table</span>(lowLib)</span>
+<span id="cb17-6"><a href="#cb17-6"></a><span class="kw">table</span>(lowFeatures)</span>
+<span id="cb17-7"><a href="#cb17-7"></a><span class="kw">table</span>(highMito)</span>
+<span id="cb17-8"><a href="#cb17-8"></a></span>
+<span id="cb17-9"><a href="#cb17-9"></a>discardCells &lt;-<span class="st"> </span>(lowLib <span class="op">|</span><span class="st"> </span>lowFeatures <span class="op">|</span><span class="st"> </span>highMito)</span>
+<span id="cb17-10"><a href="#cb17-10"></a><span class="kw">table</span>(discardCells)</span>
+<span id="cb17-11"><a href="#cb17-11"></a><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells &lt;-<span class="st"> </span>discardCells</span>
+<span id="cb17-12"><a href="#cb17-12"></a></span>
+<span id="cb17-13"><a href="#cb17-13"></a><span class="co"># visualize cells to be removed</span></span>
+<span id="cb17-14"><a href="#cb17-14"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;discardCells&quot;</span>)</span>
+<span id="cb17-15"><a href="#cb17-15"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;discardCells&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="co"># visualize cells to be removed</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;donor&quot;</span>)</span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;donor&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># visualize cells to be removed</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;detected&quot;</span>, <span class="dt">y=</span><span class="st">&quot;subsets_Mito_percent&quot;</span>, <span class="dt">colour_by =</span> <span class="st">&quot;experiment&quot;</span>)</span>
+<span id="cb19-3"><a href="#cb19-3"></a><span class="kw">plotColData</span>(sce, <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>, <span class="dt">colour_by=</span><span class="st">&quot;experiment&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="kw">table</span>(sce<span class="op">$</span>donor, sce<span class="op">$</span>discardCells)</span>
+<span id="cb20-2"><a href="#cb20-2"></a><span class="kw">table</span>(sce<span class="op">$</span>donor, sce<span class="op">$</span>discardCells)<span class="op">/</span><span class="kw">rowSums</span>(<span class="kw">table</span>(sce<span class="op">$</span>donor, sce<span class="op">$</span>discardCells))</span>
+<span id="cb20-3"><a href="#cb20-3"></a><span class="co">#fractions of removed cells per donor</span></span></code></pre></div>
+<p>Most removed cells (fraction) are from patients <code>dixh</code> and <code>babz</code>.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a><span class="kw">table</span>(sce<span class="op">$</span>experiment, sce<span class="op">$</span>discardCells)</span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="kw">table</span>(sce<span class="op">$</span>experiment, sce<span class="op">$</span>donor)</span></code></pre></div>
+<p>Most low library sizes seem to come from patient <code>dixh</code>; for patient <code>babz</code> the effect is less pronounced.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="kw">plotColData</span>(sce[,sce<span class="op">$</span>donor<span class="op">==</span><span class="st">&quot;dixh&quot;</span>], <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>)</span>
+<span id="cb22-2"><a href="#cb22-2"></a><span class="kw">plotColData</span>(sce[,sce<span class="op">$</span>donor<span class="op">==</span><span class="st">&quot;babz&quot;</span>], <span class="dt">x =</span> <span class="st">&quot;sum&quot;</span>, <span class="dt">y=</span><span class="st">&quot;detected&quot;</span>)</span></code></pre></div>
+<p>As such, we are mainly removing cells from specific patients and the respective batches in which they were sequenced. However, we want to be careful; we only want to remove technical artefacts, while retaining as much of the biology as possible. In our exploratory figure, we see that the cells we are removing based on the number of genes detected, are quite far apart from the bulk of the data cloud; as such, these cells may be considered suspicious. For the criterion of library size, we see that the cells removed there are still strongly connected to the data cloud. As such, we may want to relax the filtering criterion there a little bit. When we think of how the adaptive threshold strategy works, we may want to remove cells that are 4MADs away from the center, rather than the default 3 MADs.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="co"># previously</span></span>
+<span id="cb23-2"><a href="#cb23-2"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb23-3"><a href="#cb23-3"></a><span class="kw">table</span>(lowLib)</span>
+<span id="cb23-4"><a href="#cb23-4"></a></span>
+<span id="cb23-5"><a href="#cb23-5"></a><span class="co"># after seeing appropriate exploratory figure</span></span>
+<span id="cb23-6"><a href="#cb23-6"></a>lowLib &lt;-<span class="st"> </span><span class="kw">isOutlier</span>(df<span class="op">$</span>sum, <span class="dt">nmads=</span><span class="dv">4</span>, <span class="dt">type=</span><span class="st">&quot;lower&quot;</span>, <span class="dt">log=</span><span class="ot">TRUE</span>)</span>
+<span id="cb23-7"><a href="#cb23-7"></a><span class="kw">table</span>(lowLib)</span>
+<span id="cb23-8"><a href="#cb23-8"></a></span>
+<span id="cb23-9"><a href="#cb23-9"></a>discardCells &lt;-<span class="st"> </span>(lowLib <span class="op">|</span><span class="st"> </span>lowFeatures <span class="op">|</span><span class="st"> </span>highMito)</span>
+<span id="cb23-10"><a href="#cb23-10"></a><span class="kw">table</span>(discardCells)</span>
+<span id="cb23-11"><a href="#cb23-11"></a><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells &lt;-<span class="st"> </span>discardCells</span></code></pre></div>
+<p>Note that these steps are not exact; different analysts will arrive to different filtering criteria for many of the steps. The key ideas are that we let appropriate exploratory figures guide us to make reasonable choices; i.e., we look at the data rather than blindly following a standardized pipeline that may work well in many cases, but maybe not our particular dataset.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="co"># remove cells identified using adaptive thresholds</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a>sce &lt;-<span class="st"> </span>sce[, <span class="op">!</span><span class="kw">colData</span>(sce)<span class="op">$</span>discardCells]</span></code></pre></div>
+</div>
+</div>
+<div id="normalization" class="section level1">
+<h1><span class="header-section-number">10</span> Normalization</h1>
+<p>For normalization, the size factors <span class="math inline">\(s_i\)</span> computed here are simply scaled library sizes:</p>
+<p><span class="math display">\[ N_i = \sum_g Y_{gi} \]</span> <span class="math display">\[ s_i = N_i / \bar{N}_i \]</span></p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a>sce &lt;-<span class="st"> </span><span class="kw">logNormCounts</span>(sce)</span>
+<span id="cb25-2"><a href="#cb25-2"></a></span>
+<span id="cb25-3"><a href="#cb25-3"></a><span class="co"># note we also returned log counts: see the additional logcounts assay.</span></span>
+<span id="cb25-4"><a href="#cb25-4"></a>sce</span>
+<span id="cb25-5"><a href="#cb25-5"></a></span>
+<span id="cb25-6"><a href="#cb25-6"></a><span class="co"># you can extract size factors using</span></span>
+<span id="cb25-7"><a href="#cb25-7"></a>sf &lt;-<span class="st"> </span><span class="kw">librarySizeFactors</span>(sce)</span>
+<span id="cb25-8"><a href="#cb25-8"></a><span class="kw">mean</span>(sf) <span class="co"># equal to 1 due to scaling.</span></span>
+<span id="cb25-9"><a href="#cb25-9"></a><span class="kw">plot</span>(<span class="dt">x=</span> <span class="kw">log</span>(<span class="kw">colSums</span>(<span class="kw">assays</span>(sce)<span class="op">$</span>counts)), </span>
+<span id="cb25-10"><a href="#cb25-10"></a>     <span class="dt">y=</span>sf)</span></code></pre></div>
+<hr />
+<p>— end lab session 1 —</p>
+<hr />
+</div>
+<div id="feature-selection" class="section level1">
+<h1><span class="header-section-number">11</span> Feature selection</h1>
+<div id="highly-variable-genes" class="section level2">
+<h2><span class="header-section-number">11.1</span> Highly variable genes</h2>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="kw">library</span>(scran)</span>
+<span id="cb26-2"><a href="#cb26-2"></a><span class="kw">rownames</span>(sce) &lt;-<span class="st"> </span><span class="kw">rowData</span>(sce)<span class="op">$</span>Ensembl</span>
+<span id="cb26-3"><a href="#cb26-3"></a>dec &lt;-<span class="st"> </span><span class="kw">modelGeneVar</span>(sce)</span>
+<span id="cb26-4"><a href="#cb26-4"></a><span class="kw">head</span>(dec)</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a>fit &lt;-<span class="st"> </span><span class="kw">metadata</span>(dec)</span>
+<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">plot</span>(fit<span class="op">$</span>mean, fit<span class="op">$</span>var, </span>
+<span id="cb27-3"><a href="#cb27-3"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
+<span id="cb27-4"><a href="#cb27-4"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
+<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">curve</span>(fit<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="co"># get top 1000 highly variable genes</span></span>
+<span id="cb28-2"><a href="#cb28-2"></a>hvg &lt;-<span class="st"> </span><span class="kw">getTopHVGs</span>(dec, </span>
+<span id="cb28-3"><a href="#cb28-3"></a>                  <span class="dt">n=</span><span class="dv">1000</span>)</span>
+<span id="cb28-4"><a href="#cb28-4"></a><span class="kw">head</span>(hvg)</span>
+<span id="cb28-5"><a href="#cb28-5"></a></span>
+<span id="cb28-6"><a href="#cb28-6"></a><span class="co"># plot these </span></span>
+<span id="cb28-7"><a href="#cb28-7"></a><span class="kw">plot</span>(fit<span class="op">$</span>mean, fit<span class="op">$</span>var, </span>
+<span id="cb28-8"><a href="#cb28-8"></a>     <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;orange&quot;</span>, <span class="st">&quot;darkseagreen3&quot;</span>)[(<span class="kw">names</span>(fit<span class="op">$</span>mean) <span class="op">%in%</span><span class="st"> </span>hvg)<span class="op">+</span><span class="dv">1</span>],</span>
+<span id="cb28-9"><a href="#cb28-9"></a>     <span class="dt">xlab=</span><span class="st">&quot;Mean of log-expression&quot;</span>,</span>
+<span id="cb28-10"><a href="#cb28-10"></a>    <span class="dt">ylab=</span><span class="st">&quot;Variance of log-expression&quot;</span>)</span>
+<span id="cb28-11"><a href="#cb28-11"></a><span class="kw">curve</span>(fit<span class="op">$</span><span class="kw">trend</span>(x), <span class="dt">col=</span><span class="st">&quot;dodgerblue&quot;</span>, <span class="dt">add=</span><span class="ot">TRUE</span>, <span class="dt">lwd=</span><span class="dv">2</span>)</span>
+<span id="cb28-12"><a href="#cb28-12"></a><span class="kw">legend</span>(<span class="st">&quot;topleft&quot;</span>, </span>
+<span id="cb28-13"><a href="#cb28-13"></a>       <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;Selected&quot;</span>, <span class="st">&quot;Not selected&quot;</span>), </span>
+<span id="cb28-14"><a href="#cb28-14"></a>       <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;darkseagreen3&quot;</span>, <span class="st">&quot;orange&quot;</span>),</span>
+<span id="cb28-15"><a href="#cb28-15"></a>       <span class="dt">pch =</span> <span class="dv">16</span>,</span>
+<span id="cb28-16"><a href="#cb28-16"></a>       <span class="dt">bty=</span><span class="st">&#39;n&#39;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="dimensionality-reduction" class="section level1">
+<h1><span class="header-section-number">12</span> Dimensionality reduction</h1>
+<div id="linear-dimensionality-reduction-pca-with-feature-selection" class="section level2">
+<h2><span class="header-section-number">12.1</span> Linear dimensionality reduction: PCA with feature selection</h2>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb29-2"><a href="#cb29-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runPCA</span>(sce, </span>
+<span id="cb29-3"><a href="#cb29-3"></a>              <span class="dt">ncomponents=</span><span class="dv">30</span>, </span>
+<span id="cb29-4"><a href="#cb29-4"></a>              <span class="dt">subset_row=</span>hvg)</span>
+<span id="cb29-5"><a href="#cb29-5"></a><span class="kw">plotPCA</span>(sce, </span>
+<span id="cb29-6"><a href="#cb29-6"></a>        <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>PCA has been performed. The PCA information has been automatically stored in the <code>reducedDim</code> slot of the <code>SingleCellExperiment</code> object.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="kw">reducedDimNames</span>(sce)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a><span class="kw">head</span>(<span class="kw">reducedDim</span>(sce,</span>
+<span id="cb31-2"><a href="#cb31-2"></a>           <span class="dt">type=</span><span class="st">&quot;PCA&quot;</span>))</span></code></pre></div>
+<p>The <code>plotPCA</code> function of the <code>scater</code> package now allows us to visualize the cells in PCA space, based on the PCA information stored in our object:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="kw">plotPCA</span>(sce, </span>
+<span id="cb32-2"><a href="#cb32-2"></a>        <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>We see that for this dataset, PCA is able to distinguish between the different developmental stages quite well.</p>
+</div>
+<div id="a-generalization-of-pca-for-exponential-family-distributions." class="section level2">
+<h2><span class="header-section-number">12.2</span> A generalization of PCA for exponential family distributions.</h2>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a><span class="kw">library</span>(glmpca)</span>
+<span id="cb33-2"><a href="#cb33-2"></a><span class="kw">set.seed</span>(<span class="dv">211103</span>)</span>
+<span id="cb33-3"><a href="#cb33-3"></a>poipca &lt;-<span class="st"> </span><span class="kw">glmpca</span>(<span class="dt">Y =</span> <span class="kw">assays</span>(sce)<span class="op">$</span>counts[hvg,],</span>
+<span id="cb33-4"><a href="#cb33-4"></a>                 <span class="dt">L =</span> <span class="dv">2</span>, </span>
+<span id="cb33-5"><a href="#cb33-5"></a>                 <span class="dt">fam =</span> <span class="st">&quot;poi&quot;</span>,</span>
+<span id="cb33-6"><a href="#cb33-6"></a>                 <span class="dt">minibatch =</span> <span class="st">&quot;stochastic&quot;</span>)</span>
+<span id="cb33-7"><a href="#cb33-7"></a><span class="kw">reducedDim</span>(sce, <span class="st">&quot;PoiPCA&quot;</span>) &lt;-<span class="st"> </span>poipca<span class="op">$</span>factors</span>
+<span id="cb33-8"><a href="#cb33-8"></a><span class="kw">plotReducedDim</span>(sce, </span>
+<span id="cb33-9"><a href="#cb33-9"></a>               <span class="dt">dimred=</span><span class="st">&quot;PoiPCA&quot;</span>,</span>
+<span id="cb33-10"><a href="#cb33-10"></a>               <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>Using <code>glmpca</code>, we observe a similar reduced dimension plot as for the classical PCA approach, with reasonable separation between cells of different developmental stages.</p>
+</div>
+<div id="non-linear-dimensionality-reduction-t-sne" class="section level2">
+<h2><span class="header-section-number">12.3</span> Non-linear dimensionality reduction: T-SNE</h2>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a><span class="kw">set.seed</span>(<span class="dv">8778</span>)</span>
+<span id="cb34-2"><a href="#cb34-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runTSNE</span>(sce, </span>
+<span id="cb34-3"><a href="#cb34-3"></a>               <span class="dt">dimred =</span> <span class="st">&#39;PCA&#39;</span>,</span>
+<span id="cb34-4"><a href="#cb34-4"></a>               <span class="dt">external_neighbors=</span><span class="ot">TRUE</span>)</span>
+<span id="cb34-5"><a href="#cb34-5"></a><span class="kw">plotTSNE</span>(sce,</span>
+<span id="cb34-6"><a href="#cb34-6"></a>         <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>In this 2D t-SNE space, it is clear that cells of different developmental stages cluster separately. However, there appears to be some heterogeneity. We observe multiple clusters of cells sampled at the same time point. In addition, while still clustering separately, some clusters of cells of different time points are still very close together in 2D space.</p>
+<p>We will explore this phenomenon in more detail later.</p>
+</div>
+<div id="non-linear-dimensionality-reduction-umap" class="section level2">
+<h2><span class="header-section-number">12.4</span> Non-linear dimensionality reduction: UMAP</h2>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a><span class="kw">set.seed</span>(<span class="dv">65187</span>)</span>
+<span id="cb35-2"><a href="#cb35-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runUMAP</span>(sce, </span>
+<span id="cb35-3"><a href="#cb35-3"></a>               <span class="dt">dimred =</span> <span class="st">&quot;PCA&quot;</span>,</span>
+<span id="cb35-4"><a href="#cb35-4"></a>               <span class="dt">min_dist =</span> <span class="fl">0.4</span>,</span>
+<span id="cb35-5"><a href="#cb35-5"></a>               <span class="dt">n_dimred =</span> <span class="dv">12</span>,</span>
+<span id="cb35-6"><a href="#cb35-6"></a>               <span class="dt">external_neighbors =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb35-7"><a href="#cb35-7"></a></span>
+<span id="cb35-8"><a href="#cb35-8"></a><span class="kw">plotUMAP</span>(sce,</span>
+<span id="cb35-9"><a href="#cb35-9"></a>         <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>We observe a very similar pattern as for the t-SNE above in this UMAP; cells of different developmental stages cluster separately, however, there seems to be an additional level of heterogeneity in the data.</p>
+<hr />
+<p>— end lab session 2 —</p>
+<hr />
+</div>
+</div>
+<div id="batch-correction" class="section level1">
+<h1><span class="header-section-number">13</span> Batch correction</h1>
+<div id="observed-patientexperiment-effect" class="section level2">
+<h2><span class="header-section-number">13.1</span> Observed patient/experiment effect</h2>
+<p>In this experiment, our main interest is to study the endoderm differentiation process, i.e. the 4-day differentiation process of induced pluripotent stem cells (iPSCs) at day0, via mesendoderm cells (day1) and another intermediate stage (day2) to endoderm cells (day3).</p>
+<p>However, we will need to account for the fact that the cells have been sampled from 15 different subject, thus introducing additional biological heterogeneity. There are two variables in the <code>colData</code> of our <code>SingleCellExperiment</code> object that are useful for exploring this:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a><span class="kw">table</span>(sce<span class="op">$</span>donor,sce<span class="op">$</span>experiment)</span></code></pre></div>
+<p>We have cells from 15 different patients and 14 different “experiments” (= sequencing batches).</p>
+<p>We now will assess if this additional source of heterogeneity is also picked up in the reduced dimension plot.</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a><span class="co"># time effect in PCA space, all time points</span></span>
+<span id="cb37-2"><a href="#cb37-2"></a><span class="kw">plotPCA</span>(<span class="dt">object =</span> ..., <span class="co"># SCE object</span></span>
+<span id="cb37-3"><a href="#cb37-3"></a>        <span class="dt">colour_by =</span> ...) <span class="co"># day variable</span></span>
+<span id="cb37-4"><a href="#cb37-4"></a></span>
+<span id="cb37-5"><a href="#cb37-5"></a><span class="co"># donor (nuisance) effect in PCA space, all time points</span></span>
+<span id="cb37-6"><a href="#cb37-6"></a>...</span>
+<span id="cb37-7"><a href="#cb37-7"></a></span>
+<span id="cb37-8"><a href="#cb37-8"></a><span class="co"># experiment (nuisance) effect in PCA space, all time points</span></span>
+<span id="cb37-9"><a href="#cb37-9"></a>...</span></code></pre></div>
+<p>We see that within a certain time point, cells of the same patient/experiment seem to cluster together at least to some extent. This effect becomes clearer when we visualize the data of the different time points separately.</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a><span class="co"># donor effect in PCA space, per time point</span></span>
+<span id="cb38-2"><a href="#cb38-2"></a><span class="kw">plotPCA</span>(sce[,sce<span class="op">$</span>day<span class="op">==</span><span class="st">&quot;day0&quot;</span>], </span>
+<span id="cb38-3"><a href="#cb38-3"></a>        <span class="dt">colour_by =</span> ...) <span class="co"># day 0</span></span>
+<span id="cb38-4"><a href="#cb38-4"></a></span>
+<span id="cb38-5"><a href="#cb38-5"></a>... <span class="co"># day 1</span></span>
+<span id="cb38-6"><a href="#cb38-6"></a></span>
+<span id="cb38-7"><a href="#cb38-7"></a>... <span class="co"># day 2</span></span>
+<span id="cb38-8"><a href="#cb38-8"></a></span>
+<span id="cb38-9"><a href="#cb38-9"></a>... <span class="co"># day 3</span></span></code></pre></div>
+<p>Analogously, we may inspect the effect of patient and experiment in the UMAP visualization we created earlier.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a><span class="co"># time effect</span></span>
+<span id="cb39-2"><a href="#cb39-2"></a><span class="kw">plotUMAP</span>(...,</span>
+<span id="cb39-3"><a href="#cb39-3"></a>         ...)</span>
+<span id="cb39-4"><a href="#cb39-4"></a></span>
+<span id="cb39-5"><a href="#cb39-5"></a><span class="co"># nuisance effects in UMAP space, all time points</span></span>
+<span id="cb39-6"><a href="#cb39-6"></a>...</span>
+<span id="cb39-7"><a href="#cb39-7"></a></span>
+<span id="cb39-8"><a href="#cb39-8"></a>...</span></code></pre></div>
+<p>As expected, we see that the additional heterogeneity observed in the clusters colored based on the time points can be explained by the patient effects.</p>
+<p>In this experiment, the primary interest are the changes in gene expression across the four days, reflecting differentiation from induced pluripotent stem cells to endoderm cells. In contrast, the between-patient effects are not of interest here. Using batch correction, we will aim to “correct” for the donor effects, while hopefully retaining the main biological variation of interest!</p>
+<p>We will explore two popular strategies for batch correction for scRNA-Seq data: <strong>Seurat CCA</strong> and <strong>Harmony</strong>.</p>
+</div>
+<div id="seurat-cca-batch-correction" class="section level2">
+<h2><span class="header-section-number">13.2</span> Seurat CCA batch correction</h2>
+<p>We will first integrate the data across the different donors using <code>Seurat</code>. This procedure is implemented to integrate datasets/batches in a pairwise fashion. In the case of multiple batches/datasets, it integrates them in a bottom-up strategy, starting with integrating pairwise samples first. Because of this, below, we will introduce the methodology for two batches/datasets, but note that an analogous procedure is applied in the case of multiple batches/datasets.</p>
+<p>The <code>Seurat</code> method will first perform feature selection to identify features that are informative in all datasets. Using these features, it will perform a canonical correlation analysis; a dimensionality reduction technique that focusses on shared variation between datasets/batches. The CCA dimensions may be viewed as gene modules that are present in each dataset. Within this shared space, it identifies <strong>anchor cells</strong> (one for each donor, in our case). These anchor cells may be considered as cells sharing the same biological state, and systematic differences between them correspond to batch/dataset-specific effects. A correction on the original gene expression matrix is then applied by considering systematic differences across all anchor cells identified for each pair of batches/datasets.</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a><span class="kw">library</span>(Seurat)</span>
+<span id="cb40-2"><a href="#cb40-2"></a>seurat_obj &lt;-<span class="st"> </span><span class="kw">as.Seurat</span>(...) <span class="co"># SCE object</span></span>
+<span id="cb40-3"><a href="#cb40-3"></a>seurat_obj</span></code></pre></div>
+<p>In the code chunk below, I remove cells for patients that have less or equal than 30 cells. If we do not do this, we will get issues downstream with the Seurat functions <code>FindIntegrationAnchors</code> and <code>IntegrateData</code>, which break down when the number of cells per batch is small. This is a known issue</p>
+<ul>
+<li><a href="https://github.com/satijalab/seurat/issues/3930" class="uri">https://github.com/satijalab/seurat/issues/3930</a></li>
+<li><a href="https://github.com/satijalab/seurat/issues/4803" class="uri">https://github.com/satijalab/seurat/issues/4803</a></li>
+<li><a href="https://github.com/satijalab/seurat/issues/4812" class="uri">https://github.com/satijalab/seurat/issues/4812</a></li>
+<li><a href="https://github.com/carmonalab/STACAS/issues/12" class="uri">https://github.com/carmonalab/STACAS/issues/12</a></li>
+</ul>
+<p>and the package maintainers suggest to either remove or manually merge small batches together. We will here simply remove the cells of patient “bezi”.</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a><span class="kw">table</span>(seurat_obj<span class="op">$</span>donor)</span>
+<span id="cb41-2"><a href="#cb41-2"></a><span class="kw">table</span>(seurat_obj<span class="op">$</span>donor)[<span class="kw">table</span>(seurat_obj<span class="op">$</span>donor) <span class="op">&lt;=</span><span class="st"> </span><span class="dv">30</span>]</span>
+<span id="cb41-3"><a href="#cb41-3"></a>seurat_obj &lt;-<span class="st"> </span>seurat_obj[,<span class="op">-</span><span class="kw">which</span>(seurat_obj<span class="op">$</span>donor <span class="op">==</span><span class="st"> </span><span class="kw">names</span>(<span class="kw">table</span>(seurat_obj<span class="op">$</span>donor)[<span class="kw">table</span>(seurat_obj<span class="op">$</span>donor) <span class="op">&lt;=</span><span class="st"> </span><span class="dv">30</span>]))]</span></code></pre></div>
+<p>After this, the <code>SplitObject</code> object function is used to generate a list of <code>Seurat</code> objects, where each list elements hold the data of 1 batch (patient):</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a>seurat_obj.list &lt;-<span class="st"> </span><span class="kw">SplitObject</span>(<span class="dt">object =</span> ..., <span class="co"># the Seurat object</span></span>
+<span id="cb42-2"><a href="#cb42-2"></a>                               <span class="dt">split.by =</span> <span class="st">&quot;donor&quot;</span>)</span>
+<span id="cb42-3"><a href="#cb42-3"></a><span class="kw">nlevels</span>(<span class="kw">as.factor</span>(sce<span class="op">$</span>donor)) <span class="co"># originally 15 patients</span></span>
+<span id="cb42-4"><a href="#cb42-4"></a><span class="kw">length</span>(seurat_obj.list) <span class="co"># 14 patients left</span></span></code></pre></div>
+<p>Next, Seurat will perform the following steps for batch correction:</p>
+<ul>
+<li><p><code>NormalizeData</code>: by default, takes the count assay of the <code>Seurat</code> object and performs a log-transformation, resulting in an additional log-transformed assay. This is performed for each batch separately.</p></li>
+<li><p><code>FindVariableFeatures</code>: Feature selection, using the variance-stabilizing transformation (VST) from <code>Seurat</code>, which amounts to calculating Pearson residuals from a regularized negative binomial regression model, with sequencing depth as a covariate. This is performed for each batch separately.</p></li>
+<li><p><code>SelectIntegrationFeatures</code>: Choose the features to use when integrating multiple datasets or batches. This function ranks features by the number of batches they are deemed variable in, breaking ties by the median variable feature rank across datasets. It returns the top scoring features by this ranking, which are then used in the steps below.</p></li>
+<li><p><code>FindIntegrationAnchors</code>: For each pair of datasets we want to integrate, we identify anchor cells, one from each dataset, that are assumed to share a similar biological state. Anchor cells are identified as mutual nearest neighbors in the shared canonical correlation analysis space. Anchor cells are also scored and weighted according to their quality.</p></li>
+<li><p><code>IntegrateData</code>: Anchor cells are used to calculate a ‘corrected’ data matrix, removing systematic differences between anchor cells. This creates an <code>integrated</code> assay in the <code>Seurat</code> object containing this corrected data matrix, which may then be used for downstream visualization and analysis as such.</p></li>
+</ul>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a><span class="co"># Normalize and identify variable features for each dataset (patient) independently</span></span>
+<span id="cb43-2"><a href="#cb43-2"></a>seurat_obj.list &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="dt">X =</span> seurat_obj.list, <span class="dt">FUN =</span> <span class="cf">function</span>(x) { <span class="co"># loops over each element in list (donor)</span></span>
+<span id="cb43-3"><a href="#cb43-3"></a>    x &lt;-<span class="st"> </span><span class="kw">NormalizeData</span>(x, <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb43-4"><a href="#cb43-4"></a>    x &lt;-<span class="st"> </span><span class="kw">FindVariableFeatures</span>(x, </span>
+<span id="cb43-5"><a href="#cb43-5"></a>                              <span class="dt">selection.method =</span> <span class="st">&quot;vst&quot;</span>, </span>
+<span id="cb43-6"><a href="#cb43-6"></a>                              <span class="dt">nfeatures =</span> <span class="dv">1000</span>,</span>
+<span id="cb43-7"><a href="#cb43-7"></a>                              <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb43-8"><a href="#cb43-8"></a>})</span>
+<span id="cb43-9"><a href="#cb43-9"></a></span>
+<span id="cb43-10"><a href="#cb43-10"></a><span class="co"># Select features that are repeatedly variable across datasets for integration</span></span>
+<span id="cb43-11"><a href="#cb43-11"></a>features &lt;-<span class="st"> </span><span class="kw">SelectIntegrationFeatures</span>(<span class="dt">object.list =</span> ...) <span class="co"># list of seurat objects</span></span>
+<span id="cb43-12"><a href="#cb43-12"></a></span>
+<span id="cb43-13"><a href="#cb43-13"></a><span class="co"># Indentify pairs of cells with similar biological state</span></span>
+<span id="cb43-14"><a href="#cb43-14"></a>anchors &lt;-<span class="st"> </span><span class="kw">FindIntegrationAnchors</span>(<span class="dt">object.list =</span> ..., <span class="co"># list of seurat objects</span></span>
+<span id="cb43-15"><a href="#cb43-15"></a>                                  <span class="dt">anchor.features =</span> ..., <span class="co"># the selected features for integration </span></span>
+<span id="cb43-16"><a href="#cb43-16"></a>                                  <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb43-17"><a href="#cb43-17"></a></span>
+<span id="cb43-18"><a href="#cb43-18"></a><span class="co"># This command creates an &#39;integrated&#39; data assay. We have set the `k.weight` </span></span>
+<span id="cb43-19"><a href="#cb43-19"></a><span class="co"># argument, which specifies the Number of neighbors to consider when weighting </span></span>
+<span id="cb43-20"><a href="#cb43-20"></a><span class="co"># anchors, to 30 (default is 100). This was necessary to avoid errors, since we</span></span>
+<span id="cb43-21"><a href="#cb43-21"></a><span class="co"># have many batches with less than 100 cells.</span></span>
+<span id="cb43-22"><a href="#cb43-22"></a>data.combined &lt;-<span class="st"> </span><span class="kw">IntegrateData</span>(<span class="dt">anchorset =</span> ..., <span class="co"># anchors</span></span>
+<span id="cb43-23"><a href="#cb43-23"></a>                               <span class="dt">k.weight =</span> <span class="dv">30</span>,</span>
+<span id="cb43-24"><a href="#cb43-24"></a>                               <span class="dt">verbose=</span><span class="ot">FALSE</span>)</span>
+<span id="cb43-25"><a href="#cb43-25"></a></span>
+<span id="cb43-26"><a href="#cb43-26"></a>data.combined</span></code></pre></div>
+<p>Now, we have a new <code>Seurat</code> object, which again is a single object (not a list) storing the expression values of all cells <strong>after batch correction</strong>. Note that the original expression values are still present in the <em>originalexp</em> assay of the object.</p>
+<p>Finally, we may use <code>Seurat</code> functions for performing dimension reduction and visualization of the batch corrected data.</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="co"># Run the standard Seurat workflow for visualization and clustering</span></span>
+<span id="cb44-2"><a href="#cb44-2"></a></span>
+<span id="cb44-3"><a href="#cb44-3"></a><span class="co"># Step 1: Scales and centers features in the dataset, prior step to PCA</span></span>
+<span id="cb44-4"><a href="#cb44-4"></a>data.combined &lt;-<span class="st"> </span><span class="kw">ScaleData</span>(<span class="dt">object =</span> data.combined, </span>
+<span id="cb44-5"><a href="#cb44-5"></a>                           <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb44-6"><a href="#cb44-6"></a></span>
+<span id="cb44-7"><a href="#cb44-7"></a><span class="co"># Step 2: Perform PCA to 30 dimensions</span></span>
+<span id="cb44-8"><a href="#cb44-8"></a>data.combined &lt;-<span class="st"> </span><span class="kw">RunPCA</span>(<span class="dt">object =</span> ..., <span class="co"># Seurat object</span></span>
+<span id="cb44-9"><a href="#cb44-9"></a>                        <span class="dt">npcs =</span> ..., <span class="co"># Number of PCs to retain for downstream</span></span>
+<span id="cb44-10"><a href="#cb44-10"></a>                        <span class="dt">reduction.name =</span> <span class="st">&quot;PCA_SeuBatch&quot;</span>, <span class="co"># how we want to name the reduced dimension</span></span>
+<span id="cb44-11"><a href="#cb44-11"></a>                        <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb44-12"><a href="#cb44-12"></a></span>
+<span id="cb44-13"><a href="#cb44-13"></a><span class="co"># Step 3: Perform UMAP on the first 12 principal components</span></span>
+<span id="cb44-14"><a href="#cb44-14"></a>data.combined &lt;-<span class="st"> </span><span class="kw">RunUMAP</span>(<span class="dt">object =</span> ..., <span class="co"># Seurat object</span></span>
+<span id="cb44-15"><a href="#cb44-15"></a>                         <span class="dt">reduction =</span> ..., <span class="co"># name of the reduced dimension we want to start from</span></span>
+<span id="cb44-16"><a href="#cb44-16"></a>                         <span class="dt">reduction.name =</span> <span class="st">&quot;UMAP_SeuBatch&quot;</span>,</span>
+<span id="cb44-17"><a href="#cb44-17"></a>                         <span class="dt">dims =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">12</span>,</span>
+<span id="cb44-18"><a href="#cb44-18"></a>                         <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb44-19"><a href="#cb44-19"></a></span>
+<span id="cb44-20"><a href="#cb44-20"></a><span class="co"># UMAP visualization</span></span>
+<span id="cb44-21"><a href="#cb44-21"></a>p1 &lt;-<span class="st"> </span><span class="kw">DimPlot</span>(<span class="dt">object =</span> ..., <span class="co"># Seurat object</span></span>
+<span id="cb44-22"><a href="#cb44-22"></a>              <span class="dt">reduction =</span> ..., <span class="co"># name of the reduced dimension we want to use</span></span>
+<span id="cb44-23"><a href="#cb44-23"></a>              <span class="dt">group.by =</span> ...) <span class="co"># day variable</span></span>
+<span id="cb44-24"><a href="#cb44-24"></a></span>
+<span id="cb44-25"><a href="#cb44-25"></a>p2 &lt;-<span class="st"> </span><span class="kw">DimPlot</span>(<span class="dt">object =</span> ..., <span class="co"># Seurat object</span></span>
+<span id="cb44-26"><a href="#cb44-26"></a>              <span class="dt">reduction =</span> ..., <span class="co"># name of the reduced dimension we want to use</span></span>
+<span id="cb44-27"><a href="#cb44-27"></a>              <span class="dt">group.by =</span> ...) <span class="co"># donor variable</span></span>
+<span id="cb44-28"><a href="#cb44-28"></a>p1 <span class="op">+</span><span class="st"> </span>p2 <span class="co"># plot side by side</span></span></code></pre></div>
+<p>Alternatively, we can transform the <code>Seurat</code> object back to a <code>SingleCellExperiment</code> object and generate the visualizations using the Bioconductor functions that we used previously:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Convert Seurat object to SingleCellExperiment object</span></span>
+<span id="cb45-2"><a href="#cb45-2"></a>sce_intSeurat &lt;-<span class="st"> </span><span class="kw">as.SingleCellExperiment</span>(data.combined)</span>
+<span id="cb45-3"><a href="#cb45-3"></a></span>
+<span id="cb45-4"><a href="#cb45-4"></a><span class="co"># UMAP without Seurat batch correction</span></span>
+<span id="cb45-5"><a href="#cb45-5"></a>p1 &lt;-<span class="st"> </span><span class="kw">plotUMAP</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb45-6"><a href="#cb45-6"></a>               <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">&quot;Day - no batch&quot;</span>)</span>
+<span id="cb45-7"><a href="#cb45-7"></a>p2 &lt;-<span class="st"> </span>... <span class="co"># color on donor</span></span>
+<span id="cb45-8"><a href="#cb45-8"></a></span>
+<span id="cb45-9"><a href="#cb45-9"></a><span class="co"># UMAP with Seurat batch correction (bioconductor function)</span></span>
+<span id="cb45-10"><a href="#cb45-10"></a>sce_intSeurat &lt;-<span class="st"> </span><span class="kw">runUMAP</span>(<span class="dt">object =</span> sce_intSeurat, </span>
+<span id="cb45-11"><a href="#cb45-11"></a>                         <span class="dt">dimred =</span> ..., <span class="co"># use batch corrected PCA space obtained with Seurat</span></span>
+<span id="cb45-12"><a href="#cb45-12"></a>                         <span class="dt">min_dist =</span> <span class="fl">0.4</span>, <span class="co"># greatly improves visualization here over default of 0.01</span></span>
+<span id="cb45-13"><a href="#cb45-13"></a>                         <span class="dt">n_dimred =</span> <span class="dv">12</span>,</span>
+<span id="cb45-14"><a href="#cb45-14"></a>                         <span class="dt">external_neighbors =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb45-15"><a href="#cb45-15"></a></span>
+<span id="cb45-16"><a href="#cb45-16"></a>p3 &lt;-<span class="st"> </span>...</span>
+<span id="cb45-17"><a href="#cb45-17"></a>p4 &lt;-<span class="st"> </span>...</span>
+<span id="cb45-18"><a href="#cb45-18"></a></span>
+<span id="cb45-19"><a href="#cb45-19"></a>p1 <span class="op">+</span><span class="st"> </span>p3</span>
+<span id="cb45-20"><a href="#cb45-20"></a></span>
+<span id="cb45-21"><a href="#cb45-21"></a>p2 <span class="op">+</span><span class="st"> </span>p4</span></code></pre></div>
+<p>The batch correction seems to have worked very well. Both with and without batch correction, we observe that cells of the same time point cluster together. But when no batch correction is performed, there seems to be an additional level of variability in the data.</p>
+<p>When we color the cells based on the donor variable, we see that without batch correction cells of the same donor cluster together. After batch correction, such donor effects seem to be no longer present.</p>
+<p>Also note that while batch correction remove the between-donor variability, the between-day variability that is of interest is still preserved. As such, based on our visualizations, it looks like the batch correction did not overcorrect and succeeded in removing only the unwanted variation in the data.</p>
+</div>
+<div id="harmony-batch-correction" class="section level2">
+<h2><span class="header-section-number">13.3</span> Harmony batch correction</h2>
+<p><a href="https://www.nature.com/articles/s41592-019-0619-0">Harmony</a> implements a complex data integration strategy, where cells are first clustered using a ‘high-diversity clustering’, favoring clusters consisting of multiple batches/datasets, and then batch effects are corrected within each cluster using a linear correction term. It iterates across these steps until no change is clustering is observed.</p>
+<p>Performing batch correction with <code>harmony</code> is very simple; we only need a single function call and can directly work with our <code>SingleCellExperiment</code> object.</p>
+<p>The function <code>RunHarmony</code> takes the following inputs:</p>
+<ul>
+<li><p><code>object</code>: name of the <code>SingleCellExperiment</code> object</p></li>
+<li><p><code>group.by.vars</code>: the names of the variables for which we want to perform batch correction. Conveniently, this can be multiple variables, so we can correct both for donor and experiment effects (since the correspondence between the two was not perfect)</p></li>
+<li><p><code>reduction</code>: Name of the previously computed reduced dimension space on which batch correction will be performed (not on raw data to improve signal-to-noise ratio). Typically PCA is used</p></li>
+<li><p><code>reduction.save</code>: name to store the batch corrected dimenion reduced space</p></li>
+<li><p><code>verbose</code>: print progress or not.</p></li>
+</ul>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="kw">library</span>(harmony)</span>
+<span id="cb46-2"><a href="#cb46-2"></a></span>
+<span id="cb46-3"><a href="#cb46-3"></a><span class="kw">set.seed</span>(<span class="dv">684864</span>)</span>
+<span id="cb46-4"><a href="#cb46-4"></a>sce &lt;-<span class="st"> </span>harmony<span class="op">::</span><span class="kw">RunHarmony</span>(<span class="dt">object =</span> ..., </span>
+<span id="cb46-5"><a href="#cb46-5"></a>                           <span class="dt">group.by.vars    =</span> ..., <span class="co"># both donor and experiment</span></span>
+<span id="cb46-6"><a href="#cb46-6"></a>                           <span class="dt">reduction =</span> ...,</span>
+<span id="cb46-7"><a href="#cb46-7"></a>                           <span class="dt">reduction.save =</span> <span class="st">&quot;HARMONY_donor_experiment&quot;</span>,</span>
+<span id="cb46-8"><a href="#cb46-8"></a>                           <span class="dt">verbose =</span> ...)</span></code></pre></div>
+<p>The output is an additional element in the reduced dimension space:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="kw">reducedDim</span>(sce, <span class="dt">type=</span><span class="st">&quot;PCA&quot;</span>)[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]</span>
+<span id="cb47-2"><a href="#cb47-2"></a><span class="kw">reducedDim</span>(sce, <span class="dt">type=</span><span class="st">&quot;HARMONY_donor_experiment&quot;</span>)[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]</span></code></pre></div>
+<p>for which the values differ as compared to the original PCA coordinates. This is a consequence of the batch correction.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a><span class="kw">plotReducedDim</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb48-2"><a href="#cb48-2"></a>               <span class="dt">dimred =</span> <span class="st">&quot;PCA&quot;</span>,</span>
+<span id="cb48-3"><a href="#cb48-3"></a>               <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span>
+<span id="cb48-4"><a href="#cb48-4"></a></span>
+<span id="cb48-5"><a href="#cb48-5"></a><span class="kw">plotReducedDim</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb48-6"><a href="#cb48-6"></a>               <span class="dt">dimred =</span> <span class="st">&quot;HARMONY_donor_experiment&quot;</span>,</span>
+<span id="cb48-7"><a href="#cb48-7"></a>               <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>)</span></code></pre></div>
+<p>When coloring on day, both plots look very similar.</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a>... <span class="co"># as above but colored on donor</span></span></code></pre></div>
+<p>This figure is too cluttered to see the donor effects. Below, we therefore generate a separate figure for each time point.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="co"># without batch correction</span></span>
+<span id="cb50-2"><a href="#cb50-2"></a>p1 &lt;-<span class="st"> </span><span class="kw">plotReducedDim</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb50-3"><a href="#cb50-3"></a>                     <span class="dt">dimred =</span> <span class="st">&quot;PCA&quot;</span>,</span>
+<span id="cb50-4"><a href="#cb50-4"></a>                     <span class="dt">colour_by =</span> <span class="st">&quot;donor&quot;</span>)</span>
+<span id="cb50-5"><a href="#cb50-5"></a></span>
+<span id="cb50-6"><a href="#cb50-6"></a>p1 <span class="op">+</span><span class="st"> </span><span class="kw">facet_wrap</span>(<span class="op">~</span>sce<span class="op">$</span>day, <span class="dt">ncol=</span><span class="dv">1</span>)</span></code></pre></div>
+<p>Especially for time points day0 and day1, we observe clear donor effects.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a><span class="co"># same but for harmony batch corrected PCA space</span></span>
+<span id="cb51-2"><a href="#cb51-2"></a>...</span></code></pre></div>
+<p>After batch correction with harmony, the donor effects are largely removed.</p>
+<p>When using UMAP visualization, the discrepancy between the uncorrected and batch corrected data becomes even clearer:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># make UMAP space based on batch-corrected PCA data</span></span>
+<span id="cb52-2"><a href="#cb52-2"></a>sce &lt;-<span class="st"> </span><span class="kw">runUMAP</span>(<span class="dt">object =</span> ..., <span class="co"># use all same bioconductor UMAP settings as above with Seurat corrected space </span></span>
+<span id="cb52-3"><a href="#cb52-3"></a>               <span class="dt">dimred =</span> <span class="st">&#39;HARMONY_donor_experiment&#39;</span>,</span>
+<span id="cb52-4"><a href="#cb52-4"></a>               <span class="dt">n_dimred =</span> ...,</span>
+<span id="cb52-5"><a href="#cb52-5"></a>               <span class="dt">min_dist =</span> ...,</span>
+<span id="cb52-6"><a href="#cb52-6"></a>               <span class="dt">external_neighbors =</span> ...,</span>
+<span id="cb52-7"><a href="#cb52-7"></a>               <span class="dt">name =</span> <span class="st">&quot;UMAP_HARMONY_donor_experiment&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a><span class="co"># No batch versus batch corrected, color by day</span></span>
+<span id="cb53-2"><a href="#cb53-2"></a>p1 &lt;-<span class="st"> </span><span class="kw">plotReducedDim</span>(sce,</span>
+<span id="cb53-3"><a href="#cb53-3"></a>                     <span class="dt">dimred =</span> <span class="st">&quot;UMAP&quot;</span>,</span>
+<span id="cb53-4"><a href="#cb53-4"></a>                     <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">&quot;Day - no batch&quot;</span>)</span>
+<span id="cb53-5"><a href="#cb53-5"></a></span>
+<span id="cb53-6"><a href="#cb53-6"></a>p2 &lt;-<span class="st"> </span><span class="kw">plotReducedDim</span>(sce,</span>
+<span id="cb53-7"><a href="#cb53-7"></a>                     <span class="dt">dimred =</span> <span class="st">&quot;UMAP_HARMONY_donor_experiment&quot;</span>,</span>
+<span id="cb53-8"><a href="#cb53-8"></a>                     <span class="dt">colour_by =</span> <span class="st">&quot;day&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">ggtitle</span>(<span class="st">&quot;Day - batch&quot;</span>)</span>
+<span id="cb53-9"><a href="#cb53-9"></a>p1 <span class="op">+</span><span class="st"> </span>p2</span>
+<span id="cb53-10"><a href="#cb53-10"></a></span>
+<span id="cb53-11"><a href="#cb53-11"></a><span class="co"># No batch versus batch corrected, color by donor</span></span>
+<span id="cb53-12"><a href="#cb53-12"></a>p3 &lt;-<span class="st"> </span>...</span>
+<span id="cb53-13"><a href="#cb53-13"></a></span>
+<span id="cb53-14"><a href="#cb53-14"></a>p4 &lt;-<span class="st"> </span>...</span>
+<span id="cb53-15"><a href="#cb53-15"></a></span>
+<span id="cb53-16"><a href="#cb53-16"></a>p3 <span class="op">+</span><span class="st"> </span>p4</span>
+<span id="cb53-17"><a href="#cb53-17"></a></span>
+<span id="cb53-18"><a href="#cb53-18"></a><span class="co"># No batch versus batch corrected, color by experiment</span></span>
+<span id="cb53-19"><a href="#cb53-19"></a>p5 &lt;-<span class="st"> </span>...</span>
+<span id="cb53-20"><a href="#cb53-20"></a></span>
+<span id="cb53-21"><a href="#cb53-21"></a>p6 &lt;-<span class="st"> </span>...</span>
+<span id="cb53-22"><a href="#cb53-22"></a></span>
+<span id="cb53-23"><a href="#cb53-23"></a>p5 <span class="op">+</span><span class="st"> </span>p6</span></code></pre></div>
+<p>We here show the UMAP visualizations comparing non-corrected versus the batch corrected data, with cells colored based on day, donor and experiment. The interpretation is analogous to the interpretation above for the Seurat batch correction:</p>
+<p>The batch correction seems to have worked very well. Both with and without batch correction, we observe that cells of the same time point cluster together. But when no batch correction is performed, there seems to be an additional level of variability in the data.</p>
+<p>When we color the cells based on the donor/experiment variable, we see that without batch correction cells of the same donor cluster together. After batch correction, such donor/experiment effects seem to be no longer present.</p>
+<p>Also note that while batch correction remove the between-donor/experiment variability, the between-day variability that is of interest is still preserved. As such, based on our visualizations, it looks like the batch correction did not overcorrect and succeeded in removing only the unwanted variation in the data.</p>
+</div>
+</div>
+<div id="clustering" class="section level1">
+<h1><span class="header-section-number">14</span> Clustering</h1>
+<p>In the second lab session, we discussed graph-based clustering, k-means clustering and hierarchical clustering. Here, we will perform hierarchical clustering.</p>
+<div id="hierarchical-clustering" class="section level2">
+<h2><span class="header-section-number">14.1</span> Hierarchical clustering</h2>
+<p>We may split the hierarchical clustering process in two intuitive steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Compute the pairwise distances between all cells. These are by default euclidean distances and, in order to reduce data complexity and increase signal to noise, we may perform this on the top (30) PC’s. Implemented in the <code>dist</code> function.</p></li>
+<li><p>Perform a hierarchical clustering analysis on these distances. Initially, each cell is assigned to its own cluster and then the algorithm proceeds iteratively, at each stage joining the two most similar clusters, continuing until there is just a single cluster. This is implemented in the <code>hclust</code> function.</p></li>
+</ol>
+<p>Note that the <code>hclust</code> function allows for specifying a <code>method</code> argument. The differences between the different methods are beyond the scope of this session, but a brief description is provided in the function help file. In the context of scRNA-seq, we have mostly seen the use of the “ward.D2” method.</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>distsce &lt;-<span class="st"> </span><span class="kw">dist</span>(<span class="kw">reducedDim</span>(sce, <span class="st">&quot;HARMONY_donor_experiment&quot;</span>)[,<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]) <span class="co"># first 10 PCs, harmony corrected</span></span>
+<span id="cb54-2"><a href="#cb54-2"></a>hcl &lt;-<span class="st"> </span><span class="kw">hclust</span>(distsce, <span class="dt">method =</span> <span class="st">&quot;ward.D2&quot;</span>)</span>
+<span id="cb54-3"><a href="#cb54-3"></a><span class="kw">plot</span>(hcl, <span class="dt">labels =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
+<p>Next, we need to “cut the tree”, i.e., choose at which resolution we want to report the (cell-type) clusters. This can be achieved with the <code>cutree</code> function. As an input, <code>cutree</code> takes the dendrogram from the <code>hclust</code> function and a threshold value for cutting the tree. This is either <code>k</code>, the number of clusters we want to report, or <code>h</code>, the height in the dendrogram at which we wan to cut the tree.</p>
+<p>Here we choose <code>k = 4</code>, since we know in advance that we expect four clusters of cells (four time points).</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a>clust_hcl_k4 &lt;-<span class="st"> </span><span class="kw">cutree</span>(hcl, <span class="dt">k =</span> <span class="dv">4</span>)</span>
+<span id="cb55-2"><a href="#cb55-2"></a><span class="kw">table</span>(clust_hcl_k4)</span></code></pre></div>
+<p>Next, we visualize the data in PCA space colored based on time point and based on our inferred cluster labels.</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>sce<span class="op">$</span>clust_hcl_k4 &lt;-<span class="st"> </span><span class="kw">as.factor</span>(clust_hcl_k4)</span>
+<span id="cb56-2"><a href="#cb56-2"></a></span>
+<span id="cb56-3"><a href="#cb56-3"></a><span class="kw">plotReducedDim</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb56-4"><a href="#cb56-4"></a>               <span class="dt">dimred =</span> <span class="st">&quot;HARMONY_donor_experiment&quot;</span>,</span>
+<span id="cb56-5"><a href="#cb56-5"></a>               <span class="dt">colour_by =</span> ...)</span>
+<span id="cb56-6"><a href="#cb56-6"></a><span class="kw">plotReducedDim</span>(<span class="dt">object =</span> sce,</span>
+<span id="cb56-7"><a href="#cb56-7"></a>               <span class="dt">dimred =</span> <span class="st">&quot;HARMONY_donor_experiment&quot;</span>,</span>
+<span id="cb56-8"><a href="#cb56-8"></a>               <span class="dt">colour_by =</span> ...)</span></code></pre></div>
+<p>We see that our inferred clustering largely corresponds with the original day variable.</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a><span class="kw">table</span>(sce<span class="op">$</span>day, sce<span class="op">$</span>clust_hcl_k4)</span></code></pre></div>
+<p>Mapping clusters to timepoints, we note that most cells of day0 are in hierarchical cluster 3 (arbitrary indicator), day1 cells are in cluster 4, day2 cells are mainly in cluster 1 and day3 cells are found back in cluster 2.</p>
+</div>
+</div>
+<div id="trajectory-inference" class="section level1">
+<h1><span class="header-section-number">15</span> Trajectory inference</h1>
+<p>Trajectory inference is a computational procedure that attempts to summarize a dynamic process in a ‘trajectory’. The trajectory tries to find a sensible ordering of the cells according to their progression through this dynamic process. Trajectories can be linear, diverging, converging or cyclic. If there are multiple differentiation paths, each path is called a lineage, and the combination of lineages is called a trajectory.</p>
+<p>Based on the trajectory, one may define a <strong>pseudotime</strong> for each cell, which defines that cell’s progression along one of the differentiation paths: if the pseudotime of a cell is close to zero, then that cell is close to the starting point of the trajectory.</p>
+<div id="computing-the-trajectory" class="section level2">
+<h2><span class="header-section-number">15.1</span> Computing the trajectory</h2>
+<p>Many methods for estimating trajectories exist. Here, we will use <a href="https://bioconductor.org/packages/release/bioc/html/slingshot.html">slingshot</a> to create a trajectory for the Cuomo dataset.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a><span class="kw">library</span>(slingshot)</span>
+<span id="cb58-2"><a href="#cb58-2"></a>sce &lt;-<span class="st"> </span><span class="kw">slingshot</span>(<span class="dt">data =</span> ..., <span class="co"># target object</span></span>
+<span id="cb58-3"><a href="#cb58-3"></a>                 <span class="dt">start.clus =</span> ..., <span class="co"># cluster that corresponds to day0 cells!</span></span>
+<span id="cb58-4"><a href="#cb58-4"></a>                 <span class="dt">end.clus =</span> ..., <span class="co"># cluster that corresponds to day3 cells!</span></span>
+<span id="cb58-5"><a href="#cb58-5"></a>                 <span class="dt">clusterLabels =</span> ..., <span class="co"># clustering to use -&gt; our hierarchical clustering</span></span>
+<span id="cb58-6"><a href="#cb58-6"></a>                 <span class="dt">reducedDim =</span> <span class="st">&quot;HARMONY_donor_experiment&quot;</span>) <span class="co"># dimred to use</span></span></code></pre></div>
+</div>
+<div id="visualizing-the-trajectory" class="section level2">
+<h2><span class="header-section-number">15.2</span> Visualizing the trajectory</h2>
+<p>Using base R plots:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1"></a><span class="kw">plot</span>(<span class="kw">reducedDims</span>(sce)<span class="op">$</span>HARMONY_donor_experiment, </span>
+<span id="cb59-2"><a href="#cb59-2"></a>     <span class="dt">col =</span> <span class="kw">as.factor</span>(sce<span class="op">$</span>clust_hcl_k4), <span class="co"># colored according to inferred clusters</span></span>
+<span id="cb59-3"><a href="#cb59-3"></a>     <span class="dt">pch=</span><span class="dv">16</span>, </span>
+<span id="cb59-4"><a href="#cb59-4"></a>     <span class="dt">asp =</span> <span class="dv">1</span>)</span>
+<span id="cb59-5"><a href="#cb59-5"></a><span class="kw">lines</span>(<span class="kw">SlingshotDataSet</span>(sce), </span>
+<span id="cb59-6"><a href="#cb59-6"></a>      <span class="dt">lwd=</span><span class="dv">3</span>, </span>
+<span id="cb59-7"><a href="#cb59-7"></a>      <span class="dt">type =</span> <span class="st">&#39;lineages&#39;</span>, </span>
+<span id="cb59-8"><a href="#cb59-8"></a>      <span class="dt">col =</span> <span class="st">&#39;orange&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a>... <span class="co"># same but colored according to original time points</span></span></code></pre></div>
+<p>We could also use <code>ggplot2</code> functions to obtained prettier figures that are more easy to annotate:</p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a><span class="co"># full code provided here!</span></span>
+<span id="cb61-2"><a href="#cb61-2"></a><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(dplyr))</span>
+<span id="cb61-3"><a href="#cb61-3"></a></span>
+<span id="cb61-4"><a href="#cb61-4"></a>rd &lt;-<span class="st"> </span><span class="kw">reducedDim</span>(sce, <span class="dt">type=</span><span class="st">&quot;HARMONY_donor_experiment&quot;</span>)[,<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>] <span class="co"># extract first two PCs</span></span>
+<span id="cb61-5"><a href="#cb61-5"></a><span class="kw">colnames</span>(rd) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Dim1&quot;</span>, <span class="st">&quot;Dim2&quot;</span>) <span class="co"># give column names</span></span>
+<span id="cb61-6"><a href="#cb61-6"></a>cl &lt;-<span class="st"> </span>sce<span class="op">$</span>clust_hcl_k4 <span class="co"># store clustering</span></span>
+<span id="cb61-7"><a href="#cb61-7"></a>df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(rd, <span class="st">&quot;cl&quot;</span> =<span class="st"> </span><span class="kw">as.character</span>(cl)) <span class="co"># PCs and clustering together in 1 data frame</span></span>
+<span id="cb61-8"><a href="#cb61-8"></a>sds &lt;-<span class="st"> </span><span class="kw">slingshot</span>(rd, cl) <span class="co"># convert data frame to slingshot object</span></span>
+<span id="cb61-9"><a href="#cb61-9"></a>curves &lt;-<span class="st"> </span><span class="kw">slingCurves</span>(sds, <span class="dt">as.df =</span> <span class="ot">TRUE</span>) <span class="co"># obtain smooth curve for lineages (here only one lineage)</span></span>
+<span id="cb61-10"><a href="#cb61-10"></a></span>
+<span id="cb61-11"><a href="#cb61-11"></a><span class="co"># plot cells as dots in dimension reduced space</span></span>
+<span id="cb61-12"><a href="#cb61-12"></a>p &lt;-<span class="st"> </span><span class="kw">ggplot</span>(df, <span class="kw">aes</span>(<span class="dt">x =</span> Dim1, <span class="dt">y =</span> Dim2)) <span class="op">+</span></span>
+<span id="cb61-13"><a href="#cb61-13"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> cl), <span class="dt">col =</span> <span class="st">&quot;grey70&quot;</span>, <span class="dt">shape =</span> <span class="dv">21</span>) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb61-14"><a href="#cb61-14"></a><span class="st">  </span><span class="kw">theme_classic</span>()</span>
+<span id="cb61-15"><a href="#cb61-15"></a></span>
+<span id="cb61-16"><a href="#cb61-16"></a><span class="co"># add smooth curves</span></span>
+<span id="cb61-17"><a href="#cb61-17"></a>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_path</span>(<span class="dt">data =</span> curves <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">arrange</span>(Order),</span>
+<span id="cb61-18"><a href="#cb61-18"></a>              <span class="kw">aes</span>(<span class="dt">group =</span> Lineage), <span class="dt">size =</span> <span class="fl">1.5</span>) </span>
+<span id="cb61-19"><a href="#cb61-19"></a></span>
+<span id="cb61-20"><a href="#cb61-20"></a><span class="co"># compute and add minimum spanning tree</span></span>
+<span id="cb61-21"><a href="#cb61-21"></a>mst &lt;-<span class="st"> </span><span class="kw">slingMST</span>(sds, <span class="dt">as.df =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb61-22"><a href="#cb61-22"></a>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_point</span>(<span class="dt">data =</span> mst, <span class="dt">size =</span> <span class="dv">4</span>) <span class="op">+</span></span>
+<span id="cb61-23"><a href="#cb61-23"></a><span class="st">  </span><span class="kw">geom_path</span>(<span class="dt">data =</span> mst <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">arrange</span>(Order), <span class="kw">aes</span>(<span class="dt">group =</span> Lineage), <span class="dt">size =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p>We see that the trajectory inferred with <code>slingshot</code> nicely captures the expected developmental process.</p>
+</div>
+</div>
+<div id="differential-gene-expression-tests-along-a-trajectory-using-tradeseq" class="section level1">
+<h1><span class="header-section-number">16</span> Differential gene expression tests along a trajectory using tradeSeq</h1>
+<p>As a next step, we may be interested in identifying the genes are involved in the developmental process. To this end, our group has developed the Bioconductor R package <a href="http://www.bioconductor.org/packages/release/bioc/html/tradeSeq.html">tradeSeq</a>. <code>tradeSeq</code> is a flexible tool that allows for studying differential gene expression along such a trajectory, within or between different lineages. The functionalities of the package are summarized in the following figure:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1"></a>knitr<span class="op">::</span><span class="kw">include_graphics</span>(<span class="st">&quot;./tradeseq_summary.jpeg&quot;</span>)</span></code></pre></div>
+<p><img src="tradeseq_summary.jpeg" /><!-- --></p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1"></a><span class="kw">library</span>(tradeSeq)</span></code></pre></div>
+<p><code>tradeSeq</code> uses a negative binomial generalized additive model (NB-GAM) framework to smooth each gene’s expression in each lineage. Smoothers can be decomposed into a set of basis functions, which are joined together at knot points, often simply called knots (<code>k</code>).</p>
+<p>Ideally, the number of knots should be selected to reach an optimal bias-variance trade-off for the smoother, where one explains as much variability in the expression data as possible with only a few regression coefficients. In order to guide that choice, we developed diagnostic plots using the Akaike Information Criterion (AIC). This is implemented in the <code>evaluateK</code> function in <code>tradeSeq</code>.</p>
+<p>However, in the <a href="https://www.nature.com/articles/s41467-020-14766-3">tradeSeq</a> publication the authors show that the algorithm is not too sensitive for the number of knots, and that values between 5 and 9 often work well. The code below would allow you to find a good value for <code>k</code>, but we will simply use the default value of <code>k = 6</code> downstream.</p>
+<pre><code>### Find knots
+
+# We first need to decide on the number of knots. This is done using the  --&gt;
+# `evaluateK` function. This takes a little time. --&gt;
+
+# takes 9 minutes for me
+set.seed(5)
+icMat &lt;- evaluateK(counts = assays(sce)$counts,
+                   sds = sling$slingshot,
+                   k = 3:10, 
+                   nGenes = 500, 
+                   verbose = T)</code></pre>
+<div id="fit-gam" class="section level2">
+<h2><span class="header-section-number">16.1</span> Fit GAM</h2>
+<p>We fit a negative binomial generalized additive model (NB-GAM), smoothing each gene’s expression along the developmental trajectory. When modeling all the genes (±10.000), this function takes about 20 minutes to complete. For this lab session, we will therefore randomly sample 1.000 genes. In addition, we make sure that three specific genes are also included: “ENSG00000111704”, “ENSG00000164458” and “ENSG00000141448”. These genes are known markers for the different developmental stages nd were use in the publication of <em>Cuomo et al.</em>.</p>
+<p>The <code>tradeSeq</code> model allows us to incorporate fixed effects. While we have estimated the trajectory on the integrated data, we model the raw gene expression data, since <code>tradeSeq</code> is a count model and requires raw counts as input. On the raw counts, we therefore still have substantial variability that may be explained by the patient effects. We therefore incorporate a patient fixed effect to the design matrix.</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1"></a><span class="kw">set.seed</span>(<span class="dv">7</span>)</span>
+<span id="cb65-2"><a href="#cb65-2"></a>subset_genes &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">rownames</span>(sce), <span class="dv">1000</span>, <span class="dt">replace =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb65-3"><a href="#cb65-3"></a></span>
+<span id="cb65-4"><a href="#cb65-4"></a><span class="co"># genes from paper</span></span>
+<span id="cb65-5"><a href="#cb65-5"></a>markers &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;ENSG00000111704&quot;</span>, <span class="st">&quot;ENSG00000164458&quot;</span>, <span class="st">&quot;ENSG00000141448&quot;</span>)</span>
+<span id="cb65-6"><a href="#cb65-6"></a></span>
+<span id="cb65-7"><a href="#cb65-7"></a><span class="co"># make sure the genes from the paper are in there</span></span>
+<span id="cb65-8"><a href="#cb65-8"></a>subset_genes &lt;-<span class="st"> </span><span class="kw">c</span>(subset_genes, markers[<span class="op">!</span>markers <span class="op">%in%</span><span class="st"> </span>subset_genes])</span>
+<span id="cb65-9"><a href="#cb65-9"></a></span>
+<span id="cb65-10"><a href="#cb65-10"></a></span>
+<span id="cb65-11"><a href="#cb65-11"></a><span class="co"># Extract the matrix of pseudotime values or cells&#39; weights along each lineage.</span></span>
+<span id="cb65-12"><a href="#cb65-12"></a>pseudotime &lt;-<span class="st"> </span><span class="kw">slingPseudotime</span>(<span class="dt">x =</span> ..., <span class="co"># SCE object</span></span>
+<span id="cb65-13"><a href="#cb65-13"></a>                              <span class="dt">na =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb65-14"><a href="#cb65-14"></a>cellWeights &lt;-<span class="st"> </span><span class="kw">slingCurveWeights</span>(<span class="dt">x =</span> ...) <span class="co"># SCE object</span></span>
+<span id="cb65-15"><a href="#cb65-15"></a></span>
+<span id="cb65-16"><a href="#cb65-16"></a>patient &lt;-<span class="st"> </span><span class="kw">colData</span>(sce)<span class="op">$</span>donor</span>
+<span id="cb65-17"><a href="#cb65-17"></a>U &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(<span class="op">~</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>patient) <span class="co"># consruct design matrix with intercept</span></span>
+<span id="cb65-18"><a href="#cb65-18"></a></span>
+<span id="cb65-19"><a href="#cb65-19"></a><span class="co"># Fit NB-GAM for each gene: takes ±7min for 1000 genes for me</span></span>
+<span id="cb65-20"><a href="#cb65-20"></a>sce_fit &lt;-<span class="st"> </span><span class="kw">fitGAM</span>(<span class="dt">counts =</span> ..., <span class="co"># count matrix for the selected genes (extract from SCE)</span></span>
+<span id="cb65-21"><a href="#cb65-21"></a>                  <span class="dt">pseudotime =</span> pseudotime, </span>
+<span id="cb65-22"><a href="#cb65-22"></a>                  <span class="dt">cellWeights =</span> cellWeights,</span>
+<span id="cb65-23"><a href="#cb65-23"></a>                  <span class="dt">nknots =</span> <span class="dv">6</span>, <span class="co"># default</span></span>
+<span id="cb65-24"><a href="#cb65-24"></a>                  <span class="dt">U =</span> U,</span>
+<span id="cb65-25"><a href="#cb65-25"></a>                  <span class="dt">verbose =</span> <span class="ot">TRUE</span>) <span class="co"># verbose here prints progress</span></span></code></pre></div>
+<p>To assess if all models have converged;</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1"></a><span class="kw">table</span>(<span class="kw">rowData</span>(sce_fit)<span class="op">$</span>tradeSeq<span class="op">$</span>converged)</span></code></pre></div>
+</div>
+<div id="association-test" class="section level2">
+<h2><span class="header-section-number">16.2</span> Association test</h2>
+<p>Next, we can perform different types of differential expression testing along the trajectory.</p>
+<p>The <code>associationTest</code> assesses whether the average expression of a gene is associated with pseudotime. To prioritize for genes that are also biologically relevant, we may test against a log-fold change cut-off:</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1"></a>assoRes2 &lt;-<span class="st"> </span><span class="kw">associationTest</span>(<span class="dt">models =</span> sce_fit, </span>
+<span id="cb67-2"><a href="#cb67-2"></a>                            <span class="dt">l2fc =</span> <span class="kw">log2</span>(<span class="dv">2</span>))</span>
+<span id="cb67-3"><a href="#cb67-3"></a><span class="kw">sum</span>(<span class="kw">p.adjust</span>(assoRes2<span class="op">$</span>pvalue, <span class="dt">method =</span> <span class="st">&quot;BH&quot;</span>) <span class="op">&lt;</span><span class="st"> </span><span class="fl">0.05</span>, <span class="dt">na.rm=</span>T)<span class="op">/</span><span class="kw">nrow</span>(assoRes2) </span></code></pre></div>
+</div>
+<div id="start-vs-end-top-20" class="section level2">
+<h2><span class="header-section-number">16.3</span> Start vs end top 20</h2>
+<p>Another type of test is to compare the average gene expression of each gene between the start point and the end point of a lineage. This is implemented in the <code>startVsEndTest</code> function.</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1"></a>startRes &lt;-<span class="st"> </span><span class="kw">startVsEndTest</span>(<span class="dt">models =</span> ..., </span>
+<span id="cb68-2"><a href="#cb68-2"></a>                           <span class="dt">l2fc =</span> ...)</span></code></pre></div>
+<p>We can then visualize the gene expression profile along pseudotime of the top 5 genes for which differential expression between start and end point was identified.</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1"></a>oStart &lt;-<span class="st"> </span><span class="kw">order</span>(startRes<span class="op">$</span>waldStat, <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb69-2"><a href="#cb69-2"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>) {</span>
+<span id="cb69-3"><a href="#cb69-3"></a>  sigGeneStart &lt;-<span class="st"> </span>oStart[i] <span class="co"># top 5 most significant genes in the start vs. end test</span></span>
+<span id="cb69-4"><a href="#cb69-4"></a>  <span class="kw">print</span>(<span class="kw">plotSmoothers</span>(sce_fit, </span>
+<span id="cb69-5"><a href="#cb69-5"></a>                <span class="kw">assays</span>(sce_fit)<span class="op">$</span>counts, </span>
+<span id="cb69-6"><a href="#cb69-6"></a>                <span class="dt">gene =</span> sigGeneStart) <span class="op">+</span></span>
+<span id="cb69-7"><a href="#cb69-7"></a><span class="st">          </span><span class="kw">ggtitle</span>(<span class="kw">rownames</span>(sce)[sigGeneStart]))</span>
+<span id="cb69-8"><a href="#cb69-8"></a>}</span></code></pre></div>
+</div>
+<div id="comparison-to-original-paper" class="section level2">
+<h2><span class="header-section-number">16.4</span> Comparison to original paper</h2>
+<p>In the Cuomo paper, the authors highlighted the following genes; “ENSG00000111704”, “ENSG00000164458” and “ENSG00000141448”. In gene symbols, these genes are NANOG, T (yes, there is a gene called “T)” and GATA6. These genes are markers of day0, day1 and day2/day3 cells, respectively.</p>
+<p>We may now visualize the expression of these genes along pseudotime.</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1"></a><span class="kw">plotSmoothers</span>(sce_fit, </span>
+<span id="cb70-2"><a href="#cb70-2"></a>              <span class="kw">assays</span>(sce_fit)<span class="op">$</span>counts, </span>
+<span id="cb70-3"><a href="#cb70-3"></a>              <span class="dt">gene =</span> <span class="kw">which</span>(<span class="kw">rownames</span>(sce_fit) <span class="op">==</span><span class="st"> &quot;ENSG00000111704&quot;</span>)) <span class="op">+</span></span>
+<span id="cb70-4"><a href="#cb70-4"></a><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;ENSG00000111704&quot;</span>)</span>
+<span id="cb70-5"><a href="#cb70-5"></a></span>
+<span id="cb70-6"><a href="#cb70-6"></a>... <span class="co"># for gene ENSG00000164458</span></span>
+<span id="cb70-7"><a href="#cb70-7"></a></span>
+<span id="cb70-8"><a href="#cb70-8"></a>... <span class="co"># for gene ENSG00000141448</span></span></code></pre></div>
+<p><strong>A very nice correspondence with the results presented in the paper!!</strong></p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1"></a>knitr<span class="op">::</span><span class="kw">include_graphics</span>(<span class="st">&quot;./cuomo_traj1.jpeg&quot;</span>)</span></code></pre></div>
+<p><img src="cuomo_traj1.jpeg" /><!-- --></p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1"></a>knitr<span class="op">::</span><span class="kw">include_graphics</span>(<span class="st">&quot;./cuomo_traj2.jpeg&quot;</span>)</span></code></pre></div>
+<p><img src="cuomo_traj2.jpeg" /><!-- --></p>
+<div class="sourceCode" id="cb73"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1"></a>knitr<span class="op">::</span><span class="kw">include_graphics</span>(<span class="st">&quot;./cuomo_traj3.jpeg&quot;</span>)</span></code></pre></div>
+<p><img src="cuomo_traj3.jpeg" /><!-- --></p>
+<p>We also inspect the results in our differential testing output.</p>
+<p>Association test:</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1"></a>assoRes2[markers,]</span></code></pre></div>
+<p>Start versus end test:</p>
+<div class="sourceCode" id="cb75"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1"></a>startRes[...,]</span></code></pre></div>
+<p>Another interesting visualization is implemented in the <code>plotGeneCount</code> function, which colors the cells based on the log-transformed expression value of the target genes.</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1"></a><span class="kw">plotGeneCount</span>(sce<span class="op">$</span>slingshot, </span>
+<span id="cb76-2"><a href="#cb76-2"></a>              <span class="kw">assays</span>(sce_fit)<span class="op">$</span>counts, </span>
+<span id="cb76-3"><a href="#cb76-3"></a>              <span class="dt">gene =</span> <span class="kw">which</span>(<span class="kw">rownames</span>(sce_fit) <span class="op">==</span><span class="st"> &quot;ENSG00000111704&quot;</span>))</span>
+<span id="cb76-4"><a href="#cb76-4"></a>              </span>
+<span id="cb76-5"><a href="#cb76-5"></a>... <span class="co"># for gene ENSG00000164458</span></span>
+<span id="cb76-6"><a href="#cb76-6"></a></span>
+<span id="cb76-7"><a href="#cb76-7"></a>... <span class="co"># for gene ENSG00000141448</span></span></code></pre></div>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAnTGFiNDogQmF0Y2ggY29ycmVjdGlvbiBhbmQgdHJhamVjdG9yeSBpbmZlcmVuY2UgZm9yIHRoZSBDdW9tbyBkYXRhc2V0JwphdXRob3I6ICJLb2VuIFZhbiBkZW4gQmVyZ2UgYW5kIEplcm9lbiBHaWxpcyIKZGF0ZTogIjE1LzEyLzIwMjEiCm91dHB1dDogCiAgaHRtbF9kb2N1bWVudDoKICAgIGNvZGVfZG93bmxvYWQ6IHRydWUKICAgIHRvYzogdHJ1ZQogICAgdG9jX2Zsb2F0OiB0cnVlCi0tLQoKIyBQcmVhbWJsZTogaW5zdGFsbGF0aW9uIG9mIFIgbGlicmFyaWVzCgpgYGB7ciwgZXZhbD1GQUxTRX0KIyBpbnN0YWxsIEJpb2NNYW5hZ2VyIHBhY2thZ2UgaWYgbm90IGluc3RhbGxlZCB5ZXQuCiMgQmlvY01hbmFnZXIgaXMgdGhlIHBhY2thZ2UgaW5zdGFsbGVyIGZvciBCaW9jb25kdWN0b3Igc29mdHdhcmUuCmlmICghcmVxdWlyZU5hbWVzcGFjZSgiQmlvY01hbmFnZXIiLCBxdWlldGx5ID0gVFJVRSkpCiAgICBpbnN0YWxsLnBhY2thZ2VzKCJCaW9jTWFuYWdlciIpCgojIGluc3RhbGwgcGFja2FnZXMgaWYgbm90IHlldCBpbnN0YWxsZWQuCnBrZ3MgPC0gYygiU2luZ2xlQ2VsbEV4cGVyaW1lbnQiLAogICAgICAgICAgIkV4cGVyaW1lbnRIdWIiLAogICAgICAgICAgImVkZ2VSIiwKICAgICAgICAgICJiaW9tYVJ0IiwKICAgICAgICAgICJEcm9wbGV0VXRpbHMiLCAKICAgICAgICAgICJzY1JOQXNlcSIsIAogICAgICAgICAgInNjYXRlciIsIAogICAgICAgICAgInNjdXR0bGUiLCAKICAgICAgICAgICJzY3JhbiIsCiAgICAgICAgICAic2NyeSIsCiAgICAgICAgICAiQmlvY1Npbmd1bGFyIiwgCiAgICAgICAgICAic2NEYmxGaW5kZXIiLAogICAgICAgICAgIlNldXJhdCIsCiAgICAgICAgICAiUENBdG9vbHMiLAogICAgICAgICAgImdsbXBjYSIsCiAgICAgICAgICAiZ2VuZWZpbHRlciIsCiAgICAgICAgICAicGhlYXRtYXAiLAogICAgICAgICAgInRpZHl2ZXJzZSIsCiAgICAgICAgICAibWNsdXN0IiwKICAgICAgICAgICJnZ3Bsb3QyIiwKICAgICAgICAgICJkZXZ0b29scyIsCiAgICAgICAgICAiU2luZ2xlUiIpCm5vdEluc3RhbGxlZCA8LSBwa2dzWyFwa2dzICVpbiUgaW5zdGFsbGVkLnBhY2thZ2VzKClbLDFdXQppZihsZW5ndGgobm90SW5zdGFsbGVkKSA+IDApewogIEJpb2NNYW5hZ2VyOjppbnN0YWxsKG5vdEluc3RhbGxlZCkKfQpgYGAKCiMgaW5zdGFsbCBoYXJtb255IGZyb20gZ2l0aHViCgpgYGB7ciwgZXZhbD1GQUxTRX0KbGlicmFyeShkZXZ0b29scykKaW5zdGFsbF9naXRodWIoImltbXVub2dlbm9taWNzL2hhcm1vbnkiLAogICAgICAgICAgICAgICBkZXBlbmRlbmNpZXMgPSBUUlVFLAogICAgICAgICAgICAgICBmb3JjZSA9IFRSVUUpCmBgYAoKIyBUaGUgQ3VvbW8gZGF0YXNldAoKV2UgaGVyZSBtYWtlIHVzZSBvZiB0aGUgcHVibGljYXRpb24gb2YgQW5uYSBDdW9tbyAqZXQgYWwuKiwgd2hpY2ggd2Ugd2lsbCByZWZlciB0byBhcyB0aGUgYGlQU0MgZGF0YXNldGAuIFRoZSAKcGFwZXIgdGhhdCBkZXNjcmliZXMgdGhpcyBkYXRhc2V0IGNhbiBiZSBmb3VuZCB1c2luZyB0aGlzIApbbGlua10oaHR0cHM6Ly93d3cubmF0dXJlLmNvbS9hcnRpY2xlcy9zNDE0NjctMDIwLTE0NDU3LXopLgoKSW4gdGhlIGV4cGVyaW1lbnQsIHRoZSBhdXRob3JzIGhhcnZlc3RlZCBwbHVyaXBvdGVudCBzdGVtIGNlbGxzIChpUFNDcykKZnJvbSAxMjUgaGVhbHRoeSBodW1hbiBkb25vcnMsIGFuZCBpbmR1Y2VkIHRoZW0gdG8gc3R1ZHkgdGhlIGVuZG9kZXJtIApkaWZmZXJlbnRpYXRpb24gcHJvY2VzcywgaW4gd2hpY2ggaVBTQ3MgZGlmZmVyZW50aWF0ZSB0byBlbmRvZGVybSBjZWxscyBvdmVyIHRoZQpjb3Vyc2Ugb2YgYXBwcm94aW1hdGVseSB0aHJlZSBkYXlzLiBBcyBzdWNoLCB0aGUgYXV0aG9ycyAKY3VsdGVyZWQgdGhlIGlQU0NzIGNlbGwgbGluZXMgYW5kIGFsbG93ZWQgdGhlbSB0byBkaWZmZXJlbnRpYXRlIGZvciB0aHJlZSBkYXlzLiAKRHVyaW5nIHRoZSBleHBlcmltZW50LCBjZWxscyB3ZXJlIGhhcnZlc3RlZCBhdCBmb3VyIGRpZmZlcmVudCB0aW1lIHBvaW50czogCmRheTAgKGRpcmVjdGx5IGF0IGluY3ViYXRpb24pLCBkYXkxLCBkYXkyIGFuZCBkYXkzLiBLbm93aW5nIHRoZSBwcm9jZXNzIG9mIAplbmRvZGVybSBkaWZmZXJlbnRpYXRpb24sIHRoZXNlIHRpbWUgcG9pbnRzIHNob3VsZCByb3VnaGx5IGNvcnJlc3BvbmQgdG8gZGlmZmVyZW50IApjZWxsIHR5cGVzOiBkYXkwIGFyZSAodW5kaWZmZXJlbnRpYXRlZCkgaVBTQ3MsIGRheTEgYXJlIG1vc3RseSBtZXNlbmRvZGVybSBjZWxscywgZGF5MgphcmUgbW9zdGx5ICJpbnRlcm1lZGlhdGUiIGNlbGxzIGFuZCBkYXkzIGFyZSBtb3N0bHkgZnVsbHkgZGlmZmVyZW50aWF0ZWQgZW5kb2Rlcm0gY2VsbHMuCgpUaGlzIGRhdGFzZXQgd2FzIGdlbmVyYXRlZCB1c2luZyB0aGUgKipTTUFSVC1TZXEyKiogc2NSTkEtc2VxIHByb3RvY29sLgoKVGhlIGZpbmFsIGdvYWwgb2YgdGhlIGV4cGVyaW1lbnQgd2FzIHRvIGNoYXJhY3Rlcml6ZSBwb3B1bGF0aW9uIHZhcmlhdGlvbiBpbiB0aGUKcHJvY2VzcyBvZiBlbmRvZGVybSBkaWZmZXJlbnRpYXRpb24uCgojIERvd25sb2FkIGRhdGEKCkZvciB0aGlzIGxhYiBzZXNzaW9uLCB3ZSB3aWxsIHdvcmsgd2l0aCBhIHN1YnNldCBvZiB0aGUgZGF0YSwgaS5lLiwgdGhlIGRhdGEKZm9yIHRoZSBmaXJzdCAoYWxwaGFiZXRpY2FsbHkpIDE1IHBhdGllbnRzIGluIHRoZSBleHBlcmltZW50LiBUaGVzZSBhcmUgdGhlCmRhdGEgeW91IGFscmVhZHkgZG93bmxvYWRlZCBmb3IgbGFiIHNlc3Npb24gMiB1c2luZyB0aGUgKkJlbG5ldCBmaWxlc2VuZGVyKiAKbGluay4KClRoZSBvcmlnaW5hbCBkYXRhICgxMjUgcGF0aWVudCkgY291bGQgYmUgZG93bmxvYWRlZCBmcm9tIApbWmVub2RvXShodHRwczovL3plbm9kby5vcmcvcmVjb3JkLzM2MjUwMjQjLllXZmFodGxCeEIxKS4gQXQgdGhlIGJvdHRvbSBvZiB0aGlzCndlYi1wYWdlLCB3ZSBjYW4gZG93bmxvYWQgdGhlIGZpbGVzIGByYXdfY291bnRzLmNzdi56aXBgIGFuZCAKYGNlbGxfbWV0YWRhdGFfY29scy50c3ZgIGFuZCBzdG9yZSB0aGVzZSBmaWxlcyBsb2NhbGx5LiBXZSBkbyBub3QgcmVjb21tZW5kIApkb2luZyB0aGlzIGR1cmluZyB0aGUgbGFiIHNlc3Npb24sIHRvIGF2b2lkIG92ZXJsb2FkaW5nIHRoZSBXaUZpIG5ldHdvcmsuCgojIEltcG9ydCBkYXRhCgpGaXJzdCB3ZSByZWFkIGluIHRoZSBjb3VudCBtYXRyaXg6CgpgYGB7ciwgZXZhbD1GQUxTRSwgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0KbGlicmFyeShTaW5nbGVDZWxsRXhwZXJpbWVudCkKc2NlIDwtIHJlYWRSRFMoIi9Vc2Vycy9qZy9EZXNrdG9wL3NjZV8xNV9jdW9tby5yZHMiKSAjIGNoYW5nZSB0byBZT1VSIHBhdGgKYGBgCgojIEV4cGxvcmUgbWV0YWRhdGEKCkV4cGxvcmF0aW9uIG9mIHRoZSBtZXRhZGF0YSBpcyBlc3NlbnRpYWwgdG8gZ2V0IGEgYmV0dGVyIGlkZWEgb2Ygd2hhdCB0aGUKZXhwZXJpbWVudCB3YXMgYWJvdXQgYW5kIGhvdyBpdCB3YXMgb3JnYW5pemVkLgoKYGBge3IsIGV2YWw9RkFMU0V9CmNvbERhdGEoc2NlKVsxOjUsMToxMF0KY29sbmFtZXMoY29sRGF0YShzY2UpKQpgYGAKCkFzIHN0YXRlZCBpbiB0aGUgcGFwZXIsIGNlbGxzIHdlcmUgc2FtcGxlZCBvbiA0IHRpbWUgcG9pbnRzLiBFYWNoIG9mIHRoZXNlIAp0aW1lIHBvaW50cyBpcyByb3VnaGx5IGV4cGVjdGVkIHRvIGNvcnJlc3BvbmQgd2l0aCBkaWZmZXJlbnQgY2VsbCB0eXBlcyAoZGF5MCA9IGlQU0MsCmRheTEgPSBtZXNlbmRvZGVybSwgZGF5MiA9IGludGVybWVkaWF0ZSBhbmQgZGF5MyA9IGVuZG9kZXJtKS4KCmBgYHtyLCBldmFsPUZBTFNFfQp0YWJsZShjb2xEYXRhKHNjZSkkZGF5KQpgYGAKCkFzIHN0YXRlZCBpbiB0aGUgcGFwZXIsIGNlbGxzIHdlcmUgaGFydmVzdGVkIGZyb20gMTI1IHBhdGllbnRzLiBIZXJlLCB3ZSBhcmUKd29ya2luZyBvbiBhIHN1YnNldCB3aXRoIDE1IHBhdGllbnRzLiBUaGUgbnVtYmVyIG9mIGNlbGxzIGhhcnZlc3RlZCBwZXIgcGF0aWVudCAKKG92ZXIgYWxsIHRpbWUgcG9pbnRzKSByYW5nZXMgZnJvbSAzMSB0byA2MzcuCgpgYGB7ciwgZXZhbD1GQUxTRX0KbGVuZ3RoKHRhYmxlKGNvbERhdGEoc2NlKSRkb25vcikpICMgbnVtYmVyIG9mIGRvbm9ycwpyYW5nZSh0YWJsZShjb2xEYXRhKHNjZSkkZG9ub3IpKSAjIGNlbGxzIHBlciBkb25vcgpgYGAKCkJlbG93LCB3ZSBsb29rIGF0IGhvdyBtYW55IGNlbGxzIGFyZSBoYXJ2ZXN0IHBlciBwYXRlbnQgYW5kIHBlciB0aW1lIHBvaW50LgoKYGBge3IsIGV2YWw9RkFMU0V9CnRhYmxlKGNvbERhdGEoc2NlKSRkb25vcixjb2xEYXRhKHNjZSkkZGF5KQpgYGAKCldlIHNlZSB0aGF0IGZvciBtYW55IHBhdGllbnRzIHRoZSBkYXRhIGlzIGNvbXBsZXRlLCBpLmUuIGNlbGxzIHdlcmUgc2FtcGxlZApvbiBhbGwgdGltZSBwb2ludHMuCgpQcmFjdGljYWxseSwgdGhlIGNlbGxzIHdlcmUgcHJlcGFyZWQgaW4gMjggYmF0Y2hlcy4gU2luY2Ugd2UgaGVyZSBvbmx5IGxvb2sKYXQgYSBzdWJzZXQgb2YgdGhlIGRhdGEsIHdlIHNlZSB0aGF0IG9ubHkgMTQgb2YgdGhlc2UgYmF0Y2hlcyBhcmUgcmVwcmVzZW50ZWQuCgpgYGB7ciwgZXZhbD1GQUxTRX0KbGVuZ3RoKHRhYmxlKGNvbERhdGEoc2NlKSRleHBlcmltZW50KSkKdGFibGUoY29sRGF0YShzY2UpJGV4cGVyaW1lbnQsIGNvbERhdGEoc2NlKSRkYXkpCmBgYAoKIyBPYnRhaW5pbmcgYW5kIGluY2x1ZGluZyByb3dEYXRhCgpUaGUgYHJvd0RhdGFgIHNsb3Qgb2YgYSBgU2luZ2xlQ2VsbEV4cGVyaW1lbnRgIG9iamVjdCBhbGxvd3MgZm9yIHN0b3JpbmcgCmluZm9ybWF0aW9uIG9uIHRoZSBmZWF0dXJlcywgaS5lLiB0aGUgZ2VuZXMsIGluIGEgZGF0YXNldC4gSW4gb3VyIG9iamVjdCwKdGhlIGByb3dEYXRhYCBzbG90IGN1cnJlbnRseSBjb250YWlucyB0aGUgZm9sbG93aW5nOgoKYGBge3IsIGV2YWw9RkFMU0V9CmhlYWQocm93RGF0YShzY2UpKQpgYGAKClRvIGltcHJvdmUgb3VyIGdlbmUtbGV2ZWwgaW5mb3JtYXRpb24sIHdlIG1heToKCjEuIFNwbGl0IGBWMWAgaW50byB0d28gY29sdW1ucywgb25lIHdpdGggdGhlIEVOU0VNQkwgSUQgYW5kIHRoZSBvdGhlciB3aXRoIAp0aGUgZ2VuZSBzeW1ib2wuCgoyLiBEaXNwbGF5IHdoaWNoIGNocm9tb3NvbWUgdGhlIGdlbmUgaXMgbG9jYXRlZAoKTWFueSBtb3JlIG9wdGlvbnMgYXJlIHBvc3NpYmxlLCBidXQgYXJlIG5vdCBuZWNlc3NhcnkgZm9yIHVzIHJpZ2h0IG5vdy4KCmBgYHtyLCBldmFsPUZBTFNFfQpyb3dEYXRhKHNjZSkgPC0gZGF0YS5mcmFtZShFbnNlbWJsID0gZ3N1YigiXy4qIiwgIiIsIHJvd0RhdGEoc2NlKSRWMSksCiAgICAgICAgICAgICAgICAgICAgICAgICAgIFN5bWJvbCA9IGdzdWIoIl5bXl9dKl8iLCAiIiwgcm93RGF0YShzY2UpJFYxKSkKaGVhZChyb3dEYXRhKHNjZSkpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0V9CmxpYnJhcnkoImJpb21hUnQiKQplbnNlbWJsNzUgPC0gdXNlRW5zZW1ibChiaW9tYXJ0ID0gJ2dlbmVzJywgCiAgICAgICAgICAgICAgICAgICAgICAgIGRhdGFzZXQgPSAnaHNhcGllbnNfZ2VuZV9lbnNlbWJsJywKICAgICAgICAgICAgICAgICAgICAgICAgdmVyc2lvbiA9IDc1KQoKR2VuZUluZm8gPC0gZ2V0Qk0oYXR0cmlidXRlcyA9IGMoImVuc2VtYmxfZ2VuZV9pZCIsICMgVG8gbWF0Y2ggd2l0aCByb3duYW1lcyBTQ0UKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgImNocm9tb3NvbWVfbmFtZSIpLCAjIEluZm8gb24gY2hyb21vc2UKICAgICAgICAgICAgICAgICAgbWFydCA9IGVuc2VtYmw3NSkKR2VuZUluZm8gPC0gR2VuZUluZm9bbWF0Y2gocm93RGF0YShzY2UpJEVuc2VtYmwsIEdlbmVJbmZvJGVuc2VtYmxfZ2VuZV9pZCksXQoKcm93RGF0YShzY2UpIDwtIGNiaW5kKHJvd0RhdGEoc2NlKSwgR2VuZUluZm8pCmhlYWQocm93RGF0YShzY2UpKQphbGwocm93RGF0YShzY2UpJEVuc2VtYmwgPT0gcm93RGF0YShzY2UpJGVuc2VtYmxfZ2VuZV9pZCkgCiMgaWRlbnRpY2FsLCBhcyBkZXNpcmVkLCBzbyB3ZSBjb3VsZCBvcHRpb25hbGx5IHJlbW92ZSBvbmUgb2YgdGhlIHR3bwpgYGAKCiMgRmlsdGVyaW5nIG5vbi1pbmZvcm1hdGl2ZSBnZW5lcwoKTGV0IHVzIGZpcnN0IHRyeSB0aGUgdmVyeSBzaW1wbGUgYW5kIHZlcnkgbGVuaWVudCBmaWx0ZXJpbmcgY3JpdGVyaW9uIHRoYXQgd2UKYWRvcHRlZCBmb3IgdGhlIE1hY29za28gZGF0YXNldC4KCmBgYHtyLCBldmFsPUZBTFNFfQprZWVwIDwtIHJvd1N1bXMoYXNzYXlzKHNjZSkkY291bnRzID4gMCkgPiAxMAp0YWJsZShrZWVwKQpgYGAKCldlIHNlZSB0aGF0IHRoaXMgZmlsdGVyaW5nIHN0cmF0ZWd5IGRvZXMgbm90IHJlbW92ZSBhbnkgZ2VuZXMgZm9yIHRoaXMgZGF0YXNldC4KSW4gZ2VuZXJhbCwgZGF0YXNldHMgZnJvbSBwbGF0ZS1iYXNlZCBzY1JOQS1zZXEgZGF0YXNldCBoYXZlIGEgZmFyIGhpZ2hlcgpzZXF1ZW5jaW5nIGRlcHRoIHRoYW4gZGF0YSBmcm9tIGRyb3BsZXQtYmFzZWQgcHJvdG9jb2xzLiBBcyByZXF1aXJpbmcgYSBtaW5pbXVtCmV4cHJlc3Npb24gb2YgMSBjb3VudCBpbiBhdCBsZWFzdCAxMCBjZWxscyBpcyBhIHZlcnkgbGVuaWVudCBjcml0ZXJpb24gaWYgd2UgCmNvbnNpZGVyIHRoYXQgd2UgYXJlIHdvcmtpbmcgMzYuMDAwIGNlbGxzLCB3ZSBzaG91bGQgY29uc2lkZXIgYWRvcHRpbmcgYSBtb3JlIHN0cmluZ2VudApmaWx0ZXJpbmcgY3JpdGVyaXVtLgpCZWxvdyB3ZSBkbyBzbyB1c2luZyB0aGUgYGZpbHRlckJ5RXhwcmAgZnJvbSBgZWRnZVJgOgoKYGBge3IsIGV2YWw9RkFMU0UsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9CmxpYnJhcnkoZWRnZVIpCgp0YWJsZShjb2xEYXRhKHNjZSkkZGF5KQoKa2VlcDIgPC0gZWRnZVI6OmZpbHRlckJ5RXhwcih5PXNjZSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBncm91cCA9IGNvbERhdGEoc2NlKSRkYXksCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbWluLmNvdW50ID0gNSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICBtaW4ucHJvcCA9IDAuNCkKdGFibGUoa2VlcDIpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0V9CnNjZSA8LSBzY2Vba2VlcDIsXQpgYGAKCiMgUXVhbGl0eSBjb250cm9sCgojIyBDYWxjdWxhdGUgUUMgdmFyaWFibGVzCgpgYGB7ciwgZXZhbD1GQUxTRX0KbGlicmFyeShzY2F0ZXIpCgojIGNoZWNrIEVSQ0Mgc3Bpa2UtaW4gdHJhbnNjcmlwdHMKc3VtKGdyZXBsKCJeRVJDQy0iLCByb3dEYXRhKHNjZSkkU3ltYm9sKSkgIyBubyBzcGlrZS1pbiB0cmFuc2NyaXB0cyBhdmFpbGFibGUKCmlzLm1pdG8gPC0gZ3JlcGwoIl5NVCIsIHJvd0RhdGEoc2NlKSRjaHJvbW9zb21lX25hbWUpCnN1bShpcy5taXRvKSAjIDEzIG1pdG9jaG9uZHJpYWwgZ2VuZXMKCmRmIDwtIHBlckNlbGxRQ01ldHJpY3Moc2NlLCBzdWJzZXRzPWxpc3QoTWl0bz1pcy5taXRvKSkKaGVhZChkZikKCiMjIGFkZCB0aGUgUUMgdmFyaWFibGVzIHRvIHNjZSBvYmplY3QKY29sRGF0YShzY2UpIDwtIGNiaW5kKGNvbERhdGEoc2NlKSwgZGYpCmBgYAoKIyMgRXhwbG9yYXRvcnkgZGF0YSBhbmFseXNpcwoKSW4gdGhlIGZpZ3VyZSBiZWxvdywgd2Ugc2VlIHRoYXQgc2V2ZXJhbCBjZWxscyBoYXZlIGEgdmVyeSBsb3cgbnVtYmVyIG9mIApleHByZXNzZWQgZ2VuZXMsIGFuZCB3aGVyZSBtb3N0IG9mIHRoZSBtb2xlY3VsZXMgYXJlIGRlcml2ZWQgZnJvbSAKbWl0b2Nob25kcmlhbCBnZW5lcy4gVGhpcyBpbmRpY2F0ZXMgbGlrZWx5IGRhbWFnZWQgY2VsbHMsIHByZXN1bWFibHkgYmVjYXVzZSAKb2YgbG9zcyBvZiBjeXRvcGxhc21pYyBSTkEgZnJvbSBwZXJmb3JhdGVkIGNlbGxzLCBzbyB3ZSBzaG91bGQgcmVtb3ZlIHRoZXNlIGZvciAKdGhlIGRvd25zdHJlYW0gYW5hbHlzaXMuCgpgYGB7ciwgZXZhbD1GQUxTRX0KIyBOdW1iZXIgb2YgZ2VuZXMgdnMgbGlicmFyeSBzaXplCnBsb3RDb2xEYXRhKHNjZSwgeCA9ICJzdW0iLCB5PSJkZXRlY3RlZCIsIGNvbG91cl9ieT0iZGF5IikgCgojIE1pdG9jaG9uZHJpYWwgZ2VuZXMKcGxvdENvbERhdGEoc2NlLCB4ID0gImRldGVjdGVkIiwgeT0ic3Vic2V0c19NaXRvX3BlcmNlbnQiLCBjb2xvdXJfYnk9ImRheSIpCmBgYAoKIyMgUUMgdXNpbmcgYWRhcHRpdmUgdGhyZXNob2xkcwoKQmVsb3csIHdlIHJlbW92ZSBjZWxscyB0aGF0IGFyZSBvdXRseWluZyB3aXRoIHJlc3BlY3QgdG8KCiAxLiBBIGxvdyBzZXF1ZW5jaW5nIGRlcHRoIChudW1iZXIgb2YgVU1Jcyk7CiAyLiBBIGxvdyBudW1iZXIgb2YgZ2VuZXMgZGV0ZWN0ZWQ7CiAzLiBBIGhpZ2ggcGVyY2VudGFnZSBvZiByZWFkcyBmcm9tIG1pdG9jaG9uZHJpYWwgZ2VuZXMuCiAKV2UgcmVtb3ZlIGEgdG90YWwgb2YgJDMwMSQgY2VsbHMsIG1haW5seSBkdWUgdG8gbG93IHNlcXVlbmNpbmcgZGVwdGggYW5kCmxvdyBudW1iZXIgb2YgZ2VuZXMgZGV0ZWN0ZWQuCgpgYGB7ciwgZXZhbD1GQUxTRX0KbG93TGliIDwtIGlzT3V0bGllcihkZiRzdW0sIHR5cGU9Imxvd2VyIiwgbG9nPVRSVUUpCmxvd0ZlYXR1cmVzIDwtIGlzT3V0bGllcihkZiRkZXRlY3RlZCwgdHlwZT0ibG93ZXIiLCBsb2c9VFJVRSkKaGlnaE1pdG8gPC0gaXNPdXRsaWVyKGRmJHN1YnNldHNfTWl0b19wZXJjZW50LCB0eXBlPSJoaWdoZXIiKQoKdGFibGUobG93TGliKQp0YWJsZShsb3dGZWF0dXJlcykKdGFibGUoaGlnaE1pdG8pCgpkaXNjYXJkQ2VsbHMgPC0gKGxvd0xpYiB8IGxvd0ZlYXR1cmVzIHwgaGlnaE1pdG8pCnRhYmxlKGRpc2NhcmRDZWxscykKY29sRGF0YShzY2UpJGRpc2NhcmRDZWxscyA8LSBkaXNjYXJkQ2VsbHMKCiMgdmlzdWFsaXplIGNlbGxzIHRvIGJlIHJlbW92ZWQKcGxvdENvbERhdGEoc2NlLCB4ID0gImRldGVjdGVkIiwgeT0ic3Vic2V0c19NaXRvX3BlcmNlbnQiLCBjb2xvdXJfYnkgPSAiZGlzY2FyZENlbGxzIikKcGxvdENvbERhdGEoc2NlLCB4ID0gInN1bSIsIHk9ImRldGVjdGVkIiwgY29sb3VyX2J5PSJkaXNjYXJkQ2VsbHMiKQpgYGAKCmBgYHtyLCBldmFsPUZBTFNFfQojIHZpc3VhbGl6ZSBjZWxscyB0byBiZSByZW1vdmVkCnBsb3RDb2xEYXRhKHNjZSwgeCA9ICJkZXRlY3RlZCIsIHk9InN1YnNldHNfTWl0b19wZXJjZW50IiwgY29sb3VyX2J5ID0gImRvbm9yIikKcGxvdENvbERhdGEoc2NlLCB4ID0gInN1bSIsIHk9ImRldGVjdGVkIiwgY29sb3VyX2J5PSJkb25vciIpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0V9CiMgdmlzdWFsaXplIGNlbGxzIHRvIGJlIHJlbW92ZWQKcGxvdENvbERhdGEoc2NlLCB4ID0gImRldGVjdGVkIiwgeT0ic3Vic2V0c19NaXRvX3BlcmNlbnQiLCBjb2xvdXJfYnkgPSAiZXhwZXJpbWVudCIpCnBsb3RDb2xEYXRhKHNjZSwgeCA9ICJzdW0iLCB5PSJkZXRlY3RlZCIsIGNvbG91cl9ieT0iZXhwZXJpbWVudCIpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0V9CnRhYmxlKHNjZSRkb25vciwgc2NlJGRpc2NhcmRDZWxscykKdGFibGUoc2NlJGRvbm9yLCBzY2UkZGlzY2FyZENlbGxzKS9yb3dTdW1zKHRhYmxlKHNjZSRkb25vciwgc2NlJGRpc2NhcmRDZWxscykpCiNmcmFjdGlvbnMgb2YgcmVtb3ZlZCBjZWxscyBwZXIgZG9ub3IKYGBgCgpNb3N0IHJlbW92ZWQgY2VsbHMgKGZyYWN0aW9uKSBhcmUgZnJvbSBwYXRpZW50cyBgZGl4aGAgYW5kIGBiYWJ6YC4KCmBgYHtyLCBldmFsPUZBTFNFfQp0YWJsZShzY2UkZXhwZXJpbWVudCwgc2NlJGRpc2NhcmRDZWxscykKdGFibGUoc2NlJGV4cGVyaW1lbnQsIHNjZSRkb25vcikKYGBgCgpNb3N0IGxvdyBsaWJyYXJ5IHNpemVzIHNlZW0gdG8gY29tZSBmcm9tIHBhdGllbnQgYGRpeGhgOyBmb3IgcGF0aWVudCBgYmFiemAKdGhlIGVmZmVjdCBpcyBsZXNzIHByb25vdW5jZWQuCgpgYGB7ciwgZXZhbD1GQUxTRX0KcGxvdENvbERhdGEoc2NlWyxzY2UkZG9ub3I9PSJkaXhoIl0sIHggPSAic3VtIiwgeT0iZGV0ZWN0ZWQiKQpwbG90Q29sRGF0YShzY2VbLHNjZSRkb25vcj09ImJhYnoiXSwgeCA9ICJzdW0iLCB5PSJkZXRlY3RlZCIpCmBgYAoKQXMgc3VjaCwgd2UgYXJlIG1haW5seSByZW1vdmluZyBjZWxscyBmcm9tIHNwZWNpZmljIHBhdGllbnRzIGFuZCB0aGUgcmVzcGVjdGl2ZQpiYXRjaGVzIGluIHdoaWNoIHRoZXkgd2VyZSBzZXF1ZW5jZWQuIEhvd2V2ZXIsIHdlIHdhbnQgdG8gYmUgY2FyZWZ1bDsgd2Ugb25seQp3YW50IHRvIHJlbW92ZSB0ZWNobmljYWwgYXJ0ZWZhY3RzLCB3aGlsZSByZXRhaW5pbmcgYXMgbXVjaCBvZiB0aGUgYmlvbG9neSBhcwpwb3NzaWJsZS4gSW4gb3VyIGV4cGxvcmF0b3J5IGZpZ3VyZSwgd2Ugc2VlIHRoYXQgdGhlIGNlbGxzIHdlIGFyZSByZW1vdmluZyBiYXNlZApvbiB0aGUgbnVtYmVyIG9mIGdlbmVzIGRldGVjdGVkLCBhcmUgcXVpdGUgZmFyIGFwYXJ0IGZyb20gdGhlIGJ1bGsgb2YgdGhlIGRhdGEKY2xvdWQ7IGFzIHN1Y2gsIHRoZXNlIGNlbGxzIG1heSBiZSBjb25zaWRlcmVkIHN1c3BpY2lvdXMuIEZvciB0aGUgY3JpdGVyaW9uIG9mCmxpYnJhcnkgc2l6ZSwgd2Ugc2VlIHRoYXQgdGhlIGNlbGxzIHJlbW92ZWQgdGhlcmUgYXJlIHN0aWxsIHN0cm9uZ2x5IGNvbm5lY3RlZAp0byB0aGUgZGF0YSBjbG91ZC4gQXMgc3VjaCwgd2UgbWF5IHdhbnQgdG8gcmVsYXggdGhlIGZpbHRlcmluZyBjcml0ZXJpb24gdGhlcmUgYQpsaXR0bGUgYml0LiBXaGVuIHdlIHRoaW5rIG9mIGhvdyB0aGUgYWRhcHRpdmUgdGhyZXNob2xkIHN0cmF0ZWd5IHdvcmtzLCB3ZQptYXkgd2FudCB0byByZW1vdmUgY2VsbHMgdGhhdCBhcmUgNE1BRHMgYXdheSBmcm9tIHRoZSBjZW50ZXIsIHJhdGhlciB0aGFuCnRoZSBkZWZhdWx0IDMgTUFEcy4KCmBgYHtyLCBldmFsPUZBTFNFfQojIHByZXZpb3VzbHkKbG93TGliIDwtIGlzT3V0bGllcihkZiRzdW0sIHR5cGU9Imxvd2VyIiwgbG9nPVRSVUUpCnRhYmxlKGxvd0xpYikKCiMgYWZ0ZXIgc2VlaW5nIGFwcHJvcHJpYXRlIGV4cGxvcmF0b3J5IGZpZ3VyZQpsb3dMaWIgPC0gaXNPdXRsaWVyKGRmJHN1bSwgbm1hZHM9NCwgdHlwZT0ibG93ZXIiLCBsb2c9VFJVRSkKdGFibGUobG93TGliKQoKZGlzY2FyZENlbGxzIDwtIChsb3dMaWIgfCBsb3dGZWF0dXJlcyB8IGhpZ2hNaXRvKQp0YWJsZShkaXNjYXJkQ2VsbHMpCmNvbERhdGEoc2NlKSRkaXNjYXJkQ2VsbHMgPC0gZGlzY2FyZENlbGxzCmBgYAoKTm90ZSB0aGF0IHRoZXNlIHN0ZXBzIGFyZSBub3QgZXhhY3Q7IGRpZmZlcmVudCBhbmFseXN0cyB3aWxsIGFycml2ZSB0byBkaWZmZXJlbnQKZmlsdGVyaW5nIGNyaXRlcmlhIGZvciBtYW55IG9mIHRoZSBzdGVwcy4gVGhlIGtleSBpZGVhcyBhcmUgdGhhdAp3ZSBsZXQgYXBwcm9wcmlhdGUgZXhwbG9yYXRvcnkgZmlndXJlcyBndWlkZSB1cyB0byBtYWtlIHJlYXNvbmFibGUgY2hvaWNlczsKaS5lLiwgd2UgbG9vayBhdCB0aGUgZGF0YSByYXRoZXIgdGhhbiBibGluZGx5IGZvbGxvd2luZyBhIHN0YW5kYXJkaXplZCBwaXBlbGluZQp0aGF0IG1heSB3b3JrIHdlbGwgaW4gbWFueSBjYXNlcywgYnV0IG1heWJlIG5vdCBvdXIgcGFydGljdWxhciBkYXRhc2V0LgoKYGBge3IsIGV2YWw9RkFMU0V9CiMgcmVtb3ZlIGNlbGxzIGlkZW50aWZpZWQgdXNpbmcgYWRhcHRpdmUgdGhyZXNob2xkcwpzY2UgPC0gc2NlWywgIWNvbERhdGEoc2NlKSRkaXNjYXJkQ2VsbHNdCmBgYAoKIyBOb3JtYWxpemF0aW9uCgpGb3Igbm9ybWFsaXphdGlvbiwgdGhlIHNpemUgZmFjdG9ycyAkc19pJCBjb21wdXRlZCBoZXJlIGFyZSBzaW1wbHkgc2NhbGVkIApsaWJyYXJ5IHNpemVzOgoKXFsgTl9pID0gXHN1bV9nIFlfe2dpfSBcXQpcWyBzX2kgPSBOX2kgLyBcYmFye059X2kgXF0KCmBgYHtyLCBldmFsPUZBTFNFfQpzY2UgPC0gbG9nTm9ybUNvdW50cyhzY2UpCgojIG5vdGUgd2UgYWxzbyByZXR1cm5lZCBsb2cgY291bnRzOiBzZWUgdGhlIGFkZGl0aW9uYWwgbG9nY291bnRzIGFzc2F5LgpzY2UKCiMgeW91IGNhbiBleHRyYWN0IHNpemUgZmFjdG9ycyB1c2luZwpzZiA8LSBsaWJyYXJ5U2l6ZUZhY3RvcnMoc2NlKQptZWFuKHNmKSAjIGVxdWFsIHRvIDEgZHVlIHRvIHNjYWxpbmcuCnBsb3QoeD0gbG9nKGNvbFN1bXMoYXNzYXlzKHNjZSkkY291bnRzKSksIAogICAgIHk9c2YpCmBgYAoKLS0tCgotLS0gZW5kIGxhYiBzZXNzaW9uIDEgLS0tCgotLS0KCgojIEZlYXR1cmUgc2VsZWN0aW9uCgojIyBIaWdobHkgdmFyaWFibGUgZ2VuZXMKCmBgYHtyLCBldmFsPUZBTFNFfQpsaWJyYXJ5KHNjcmFuKQpyb3duYW1lcyhzY2UpIDwtIHJvd0RhdGEoc2NlKSRFbnNlbWJsCmRlYyA8LSBtb2RlbEdlbmVWYXIoc2NlKQpoZWFkKGRlYykKYGBgCgpgYGB7ciwgZXZhbD1GQUxTRX0KZml0IDwtIG1ldGFkYXRhKGRlYykKcGxvdChmaXQkbWVhbiwgZml0JHZhciwgCiAgICAgeGxhYj0iTWVhbiBvZiBsb2ctZXhwcmVzc2lvbiIsCiAgICB5bGFiPSJWYXJpYW5jZSBvZiBsb2ctZXhwcmVzc2lvbiIpCmN1cnZlKGZpdCR0cmVuZCh4KSwgY29sPSJkb2RnZXJibHVlIiwgYWRkPVRSVUUsIGx3ZD0yKQpgYGAKCmBgYHtyLCBldmFsPUZBTFNFfQojIGdldCB0b3AgMTAwMCBoaWdobHkgdmFyaWFibGUgZ2VuZXMKaHZnIDwtIGdldFRvcEhWR3MoZGVjLCAKICAgICAgICAgICAgICAgICAgbj0xMDAwKQpoZWFkKGh2ZykKCiMgcGxvdCB0aGVzZSAKcGxvdChmaXQkbWVhbiwgZml0JHZhciwgCiAgICAgY29sID0gYygib3JhbmdlIiwgImRhcmtzZWFncmVlbjMiKVsobmFtZXMoZml0JG1lYW4pICVpbiUgaHZnKSsxXSwKICAgICB4bGFiPSJNZWFuIG9mIGxvZy1leHByZXNzaW9uIiwKICAgIHlsYWI9IlZhcmlhbmNlIG9mIGxvZy1leHByZXNzaW9uIikKY3VydmUoZml0JHRyZW5kKHgpLCBjb2w9ImRvZGdlcmJsdWUiLCBhZGQ9VFJVRSwgbHdkPTIpCmxlZ2VuZCgidG9wbGVmdCIsIAogICAgICAgbGVnZW5kID0gYygiU2VsZWN0ZWQiLCAiTm90IHNlbGVjdGVkIiksIAogICAgICAgY29sID0gYygiZGFya3NlYWdyZWVuMyIsICJvcmFuZ2UiKSwKICAgICAgIHBjaCA9IDE2LAogICAgICAgYnR5PSduJykKYGBgCgojIERpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbgoKIyMgTGluZWFyIGRpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbjogUENBIHdpdGggZmVhdHVyZSBzZWxlY3Rpb24KCmBgYHtyLCBldmFsPUZBTFNFfQpzZXQuc2VlZCgxMjM0KQpzY2UgPC0gcnVuUENBKHNjZSwgCiAgICAgICAgICAgICAgbmNvbXBvbmVudHM9MzAsIAogICAgICAgICAgICAgIHN1YnNldF9yb3c9aHZnKQpwbG90UENBKHNjZSwgCiAgICAgICAgY29sb3VyX2J5ID0gImRheSIpCmBgYAoKUENBIGhhcyBiZWVuIHBlcmZvcm1lZC4gVGhlIFBDQSBpbmZvcm1hdGlvbiBoYXMgYmVlbiBhdXRvbWF0aWNhbGx5IHN0b3JlZCBpbiB0aGUKYHJlZHVjZWREaW1gIHNsb3Qgb2YgdGhlIGBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0LgoKYGBge3IsIGV2YWw9RkFMU0V9CnJlZHVjZWREaW1OYW1lcyhzY2UpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0V9CmhlYWQocmVkdWNlZERpbShzY2UsCiAgICAgICAgICAgdHlwZT0iUENBIikpCmBgYAoKVGhlIGBwbG90UENBYCBmdW5jdGlvbiBvZiB0aGUgYHNjYXRlcmAgcGFja2FnZSBub3cgYWxsb3dzIHVzIHRvIHZpc3VhbGl6ZQp0aGUgY2VsbHMgaW4gUENBIHNwYWNlLCBiYXNlZCBvbiB0aGUgUENBIGluZm9ybWF0aW9uIHN0b3JlZCBpbiBvdXIgb2JqZWN0OgoKYGBge3IsIGV2YWw9RkFMU0V9CnBsb3RQQ0Eoc2NlLCAKICAgICAgICBjb2xvdXJfYnkgPSAiZGF5IikKYGBgCgpXZSBzZWUgdGhhdCBmb3IgdGhpcyBkYXRhc2V0LCBQQ0EgaXMgYWJsZSB0byBkaXN0aW5ndWlzaCBiZXR3ZWVuIHRoZSBkaWZmZXJlbnQKZGV2ZWxvcG1lbnRhbCBzdGFnZXMgcXVpdGUgd2VsbC4KCiMjIEEgZ2VuZXJhbGl6YXRpb24gb2YgUENBIGZvciBleHBvbmVudGlhbCBmYW1pbHkgZGlzdHJpYnV0aW9ucy4KCmBgYHtyLCBldmFsPUZBTFNFfQpsaWJyYXJ5KGdsbXBjYSkKc2V0LnNlZWQoMjExMTAzKQpwb2lwY2EgPC0gZ2xtcGNhKFkgPSBhc3NheXMoc2NlKSRjb3VudHNbaHZnLF0sCiAgICAgICAgICAgICAgICAgTCA9IDIsIAogICAgICAgICAgICAgICAgIGZhbSA9ICJwb2kiLAogICAgICAgICAgICAgICAgIG1pbmliYXRjaCA9ICJzdG9jaGFzdGljIikKcmVkdWNlZERpbShzY2UsICJQb2lQQ0EiKSA8LSBwb2lwY2EkZmFjdG9ycwpwbG90UmVkdWNlZERpbShzY2UsIAogICAgICAgICAgICAgICBkaW1yZWQ9IlBvaVBDQSIsCiAgICAgICAgICAgICAgIGNvbG91cl9ieSA9ICJkYXkiKQpgYGAKClVzaW5nIGBnbG1wY2FgLCB3ZSBvYnNlcnZlIGEgc2ltaWxhciByZWR1Y2VkIGRpbWVuc2lvbiBwbG90IGFzIGZvciB0aGUgY2xhc3NpY2FsIFBDQSBhcHByb2FjaCwKd2l0aCByZWFzb25hYmxlIHNlcGFyYXRpb24gYmV0d2VlbiBjZWxscyBvZiBkaWZmZXJlbnQgZGV2ZWxvcG1lbnRhbCBzdGFnZXMuCgojIyBOb24tbGluZWFyIGRpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbjogVC1TTkUKCmBgYHtyLCBldmFsPUZBTFNFfQpzZXQuc2VlZCg4Nzc4KQpzY2UgPC0gcnVuVFNORShzY2UsIAogICAgICAgICAgICAgICBkaW1yZWQgPSAnUENBJywKICAgICAgICAgICAgICAgZXh0ZXJuYWxfbmVpZ2hib3JzPVRSVUUpCnBsb3RUU05FKHNjZSwKICAgICAgICAgY29sb3VyX2J5ID0gImRheSIpCmBgYAoKSW4gdGhpcyAyRCB0LVNORSBzcGFjZSwgaXQgaXMgY2xlYXIgdGhhdCBjZWxscyBvZiBkaWZmZXJlbnQgZGV2ZWxvcG1lbnRhbCBzdGFnZXMKY2x1c3RlciBzZXBhcmF0ZWx5LiBIb3dldmVyLCB0aGVyZSBhcHBlYXJzIHRvIGJlIHNvbWUKaGV0ZXJvZ2VuZWl0eS4gV2Ugb2JzZXJ2ZSBtdWx0aXBsZSBjbHVzdGVycyBvZiBjZWxscyAKc2FtcGxlZCBhdCB0aGUgc2FtZSB0aW1lIHBvaW50LiBJbiBhZGRpdGlvbiwgd2hpbGUgc3RpbGwgY2x1c3RlcmluZyBzZXBhcmF0ZWx5LApzb21lIGNsdXN0ZXJzIG9mIGNlbGxzIG9mIGRpZmZlcmVudCB0aW1lIHBvaW50cyBhcmUgc3RpbGwgdmVyeSBjbG9zZSB0b2dldGhlciBpbiAyRCBzcGFjZS4KCldlIHdpbGwgZXhwbG9yZSB0aGlzIHBoZW5vbWVub24gaW4gbW9yZSBkZXRhaWwgbGF0ZXIuCgojIyBOb24tbGluZWFyIGRpbWVuc2lvbmFsaXR5IHJlZHVjdGlvbjogVU1BUAoKYGBge3IsIGV2YWw9RkFMU0V9CnNldC5zZWVkKDY1MTg3KQpzY2UgPC0gcnVuVU1BUChzY2UsIAogICAgICAgICAgICAgICBkaW1yZWQgPSAiUENBIiwKICAgICAgICAgICAgICAgbWluX2Rpc3QgPSAwLjQsCiAgICAgICAgICAgICAgIG5fZGltcmVkID0gMTIsCiAgICAgICAgICAgICAgIGV4dGVybmFsX25laWdoYm9ycyA9IFRSVUUpCgpwbG90VU1BUChzY2UsCiAgICAgICAgIGNvbG91cl9ieSA9ICJkYXkiKQpgYGAKCldlIG9ic2VydmUgYSB2ZXJ5IHNpbWlsYXIgcGF0dGVybiBhcyBmb3IgdGhlIHQtU05FIGFib3ZlIGluIHRoaXMgVU1BUDsgCmNlbGxzIG9mIGRpZmZlcmVudCBkZXZlbG9wbWVudGFsIHN0YWdlcyBjbHVzdGVyIHNlcGFyYXRlbHksIGhvd2V2ZXIsIHRoZXJlIApzZWVtcyB0byBiZSBhbiBhZGRpdGlvbmFsIGxldmVsIG9mIGhldGVyb2dlbmVpdHkgaW4gdGhlIGRhdGEuCgotLS0KCi0tLSBlbmQgbGFiIHNlc3Npb24gMiAtLS0KCi0tLQoKIyBCYXRjaCBjb3JyZWN0aW9uCgojIyBPYnNlcnZlZCBwYXRpZW50L2V4cGVyaW1lbnQgZWZmZWN0CgpJbiB0aGlzIGV4cGVyaW1lbnQsIG91ciBtYWluIGludGVyZXN0IGlzIHRvIHN0dWR5IHRoZSBlbmRvZGVybSBkaWZmZXJlbnRpYXRpb24KcHJvY2VzcywgaS5lLiB0aGUgNC1kYXkgZGlmZmVyZW50aWF0aW9uIHByb2Nlc3Mgb2YgaW5kdWNlZCBwbHVyaXBvdGVudCBzdGVtIApjZWxscyAoaVBTQ3MpIGF0IGRheTAsIHZpYSBtZXNlbmRvZGVybSBjZWxscyAoZGF5MSkgYW5kIGFub3RoZXIgaW50ZXJtZWRpYXRlIApzdGFnZSAoZGF5MikgdG8gZW5kb2Rlcm0gY2VsbHMgKGRheTMpLgoKSG93ZXZlciwgd2Ugd2lsbCBuZWVkIHRvIGFjY291bnQgZm9yIHRoZSBmYWN0IHRoYXQgdGhlIGNlbGxzIGhhdmUgYmVlbiBzYW1wbGVkCmZyb20gMTUgZGlmZmVyZW50IHN1YmplY3QsIHRodXMgaW50cm9kdWNpbmcgYWRkaXRpb25hbCBiaW9sb2dpY2FsIGhldGVyb2dlbmVpdHkuClRoZXJlIGFyZSB0d28gdmFyaWFibGVzIGluIHRoZSBgY29sRGF0YWAgb2Ygb3VyIGBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0CnRoYXQgYXJlIHVzZWZ1bCBmb3IgZXhwbG9yaW5nIHRoaXM6CgpgYGB7ciwgZXZhbD1GQUxTRX0KdGFibGUoc2NlJGRvbm9yLHNjZSRleHBlcmltZW50KQpgYGAKCldlIGhhdmUgY2VsbHMgZnJvbSAxNSBkaWZmZXJlbnQgcGF0aWVudHMgYW5kIDE0IGRpZmZlcmVudCAiZXhwZXJpbWVudHMiIAooPSBzZXF1ZW5jaW5nIGJhdGNoZXMpLgoKV2Ugbm93IHdpbGwgYXNzZXNzIGlmIHRoaXMgYWRkaXRpb25hbCBzb3VyY2Ugb2YgaGV0ZXJvZ2VuZWl0eSBpcyBhbHNvCnBpY2tlZCB1cCBpbiB0aGUgcmVkdWNlZCBkaW1lbnNpb24gcGxvdC4KCmBgYHtyLCBldmFsPUZBTFNFfQojIHRpbWUgZWZmZWN0IGluIFBDQSBzcGFjZSwgYWxsIHRpbWUgcG9pbnRzCnBsb3RQQ0Eob2JqZWN0ID0gLi4uLCAjIFNDRSBvYmplY3QKICAgICAgICBjb2xvdXJfYnkgPSAuLi4pICMgZGF5IHZhcmlhYmxlCgojIGRvbm9yIChudWlzYW5jZSkgZWZmZWN0IGluIFBDQSBzcGFjZSwgYWxsIHRpbWUgcG9pbnRzCi4uLgoKIyBleHBlcmltZW50IChudWlzYW5jZSkgZWZmZWN0IGluIFBDQSBzcGFjZSwgYWxsIHRpbWUgcG9pbnRzCi4uLgpgYGAKCldlIHNlZSB0aGF0IHdpdGhpbiBhIGNlcnRhaW4gdGltZSBwb2ludCwgY2VsbHMgb2YgdGhlIHNhbWUgcGF0aWVudC9leHBlcmltZW50CnNlZW0gdG8gY2x1c3RlciB0b2dldGhlciBhdCBsZWFzdCB0byBzb21lIGV4dGVudC4gVGhpcyBlZmZlY3QgYmVjb21lcyBjbGVhcmVyCndoZW4gd2UgdmlzdWFsaXplIHRoZSBkYXRhIG9mIHRoZSBkaWZmZXJlbnQgdGltZSBwb2ludHMgc2VwYXJhdGVseS4KCmBgYHtyLCBldmFsPUZBTFNFfQojIGRvbm9yIGVmZmVjdCBpbiBQQ0Egc3BhY2UsIHBlciB0aW1lIHBvaW50CnBsb3RQQ0Eoc2NlWyxzY2UkZGF5PT0iZGF5MCJdLCAKICAgICAgICBjb2xvdXJfYnkgPSAuLi4pICMgZGF5IDAKCi4uLiAjIGRheSAxCgouLi4gIyBkYXkgMgoKLi4uICMgZGF5IDMKYGBgCgpBbmFsb2dvdXNseSwgd2UgbWF5IGluc3BlY3QgdGhlIGVmZmVjdCBvZiBwYXRpZW50IGFuZCBleHBlcmltZW50IGluIHRoZSBVTUFQCnZpc3VhbGl6YXRpb24gd2UgY3JlYXRlZCBlYXJsaWVyLgoKYGBge3IsIGV2YWw9RkFMU0V9CiMgdGltZSBlZmZlY3QKcGxvdFVNQVAoLi4uLAogICAgICAgICAuLi4pCgojIG51aXNhbmNlIGVmZmVjdHMgaW4gVU1BUCBzcGFjZSwgYWxsIHRpbWUgcG9pbnRzCi4uLgoKLi4uCmBgYAoKQXMgZXhwZWN0ZWQsIHdlIHNlZSB0aGF0IHRoZSBhZGRpdGlvbmFsIGhldGVyb2dlbmVpdHkgb2JzZXJ2ZWQgaW4gdGhlIGNsdXN0ZXJzCmNvbG9yZWQgYmFzZWQgb24gdGhlIHRpbWUgcG9pbnRzIGNhbiBiZSBleHBsYWluZWQgYnkgdGhlIHBhdGllbnQgZWZmZWN0cy4KCkluIHRoaXMgZXhwZXJpbWVudCwgdGhlIHByaW1hcnkgaW50ZXJlc3QgYXJlIHRoZSBjaGFuZ2VzIGluIGdlbmUgZXhwcmVzc2lvbiAKYWNyb3NzIHRoZSBmb3VyIGRheXMsIHJlZmxlY3RpbmcgZGlmZmVyZW50aWF0aW9uIGZyb20gaW5kdWNlZCBwbHVyaXBvdGVudCBzdGVtIApjZWxscyB0byBlbmRvZGVybSBjZWxscy4gSW4gY29udHJhc3QsIHRoZSBiZXR3ZWVuLXBhdGllbnQgZWZmZWN0cyBhcmUgbm90IG9mCmludGVyZXN0IGhlcmUuIFVzaW5nIGJhdGNoIGNvcnJlY3Rpb24sIHdlIHdpbGwgYWltIHRvICJjb3JyZWN0IiBmb3IgdGhlIGRvbm9yIAplZmZlY3RzLCB3aGlsZSBob3BlZnVsbHkgcmV0YWluaW5nIHRoZSBtYWluIGJpb2xvZ2ljYWwgdmFyaWF0aW9uIG9mIGludGVyZXN0IQoKV2Ugd2lsbCBleHBsb3JlIHR3byBwb3B1bGFyIHN0cmF0ZWdpZXMgZm9yIGJhdGNoIGNvcnJlY3Rpb24gZm9yIHNjUk5BLVNlcSBkYXRhOgoqKlNldXJhdCBDQ0EqKiBhbmQgKipIYXJtb255KiouCgojIyBTZXVyYXQgQ0NBIGJhdGNoIGNvcnJlY3Rpb24KCldlIHdpbGwgZmlyc3QgaW50ZWdyYXRlIHRoZSBkYXRhIGFjcm9zcyB0aGUgZGlmZmVyZW50IGRvbm9ycyB1c2luZyBgU2V1cmF0YC4gClRoaXMgcHJvY2VkdXJlIGlzIGltcGxlbWVudGVkIHRvIGludGVncmF0ZSBkYXRhc2V0cy9iYXRjaGVzIGluIGEgcGFpcndpc2UgCmZhc2hpb24uIEluIHRoZSBjYXNlIG9mIG11bHRpcGxlIGJhdGNoZXMvZGF0YXNldHMsIGl0IGludGVncmF0ZXMgdGhlbSBpbiBhIApib3R0b20tdXAgc3RyYXRlZ3ksIHN0YXJ0aW5nIHdpdGggaW50ZWdyYXRpbmcgcGFpcndpc2Ugc2FtcGxlcyBmaXJzdC4gQmVjYXVzZSBvZgp0aGlzLCBiZWxvdywgd2Ugd2lsbCBpbnRyb2R1Y2UgdGhlIG1ldGhvZG9sb2d5IGZvciB0d28gYmF0Y2hlcy9kYXRhc2V0cywgYnV0IApub3RlIHRoYXQgYW4gYW5hbG9nb3VzIHByb2NlZHVyZSBpcyBhcHBsaWVkIGluIHRoZSBjYXNlIG9mIG11bHRpcGxlIApiYXRjaGVzL2RhdGFzZXRzLgoKVGhlIGBTZXVyYXRgIG1ldGhvZCB3aWxsIGZpcnN0IHBlcmZvcm0gZmVhdHVyZSBzZWxlY3Rpb24gdG8gaWRlbnRpZnkgZmVhdHVyZXMgCnRoYXQgYXJlIGluZm9ybWF0aXZlIGluIGFsbCBkYXRhc2V0cy4gVXNpbmcgdGhlc2UgZmVhdHVyZXMsIGl0IHdpbGwgcGVyZm9ybSBhIApjYW5vbmljYWwgY29ycmVsYXRpb24gYW5hbHlzaXM7IGEgZGltZW5zaW9uYWxpdHkgcmVkdWN0aW9uIHRlY2huaXF1ZSB0aGF0IApmb2N1c3NlcyBvbiBzaGFyZWQgdmFyaWF0aW9uIGJldHdlZW4gZGF0YXNldHMvYmF0Y2hlcy4gVGhlIENDQSBkaW1lbnNpb25zIG1heSAKYmUgdmlld2VkIGFzIGdlbmUgbW9kdWxlcyB0aGF0IGFyZSBwcmVzZW50IGluIGVhY2ggZGF0YXNldC4gV2l0aGluIHRoaXMgc2hhcmVkIApzcGFjZSwgaXQgaWRlbnRpZmllcyAqKmFuY2hvciBjZWxscyoqIChvbmUgZm9yIGVhY2ggZG9ub3IsIGluIG91ciBjYXNlKS4gVGhlc2UgCmFuY2hvciBjZWxscyBtYXkgYmUgY29uc2lkZXJlZCBhcyBjZWxscyBzaGFyaW5nIHRoZSBzYW1lIGJpb2xvZ2ljYWwgc3RhdGUsIGFuZCAKc3lzdGVtYXRpYyBkaWZmZXJlbmNlcyBiZXR3ZWVuIHRoZW0gY29ycmVzcG9uZCB0byBiYXRjaC9kYXRhc2V0LXNwZWNpZmljIAplZmZlY3RzLiBBIGNvcnJlY3Rpb24gb24gdGhlIG9yaWdpbmFsIGdlbmUgZXhwcmVzc2lvbiBtYXRyaXggaXMgdGhlbiBhcHBsaWVkIGJ5IApjb25zaWRlcmluZyBzeXN0ZW1hdGljIGRpZmZlcmVuY2VzIGFjcm9zcyBhbGwgYW5jaG9yIGNlbGxzIGlkZW50aWZpZWQgZm9yIGVhY2ggCnBhaXIgb2YgYmF0Y2hlcy9kYXRhc2V0cy4KCmBgYHtyLCBldmFsPUZBTFNFLCB3YXJuaW5nPUZBTFNFLCBtZXNzYWdlPUZBTFNFfQpsaWJyYXJ5KFNldXJhdCkKc2V1cmF0X29iaiA8LSBhcy5TZXVyYXQoLi4uKSAjIFNDRSBvYmplY3QKc2V1cmF0X29iagpgYGAKCkluIHRoZSBjb2RlIGNodW5rIGJlbG93LCBJIHJlbW92ZSBjZWxscyBmb3IgcGF0aWVudHMgdGhhdCBoYXZlIGxlc3Mgb3IgZXF1YWwgdGhhbiAKMzAgY2VsbHMuIElmIHdlIGRvIG5vdCBkbyB0aGlzLCB3ZSB3aWxsIGdldCBpc3N1ZXMgZG93bnN0cmVhbSB3aXRoIHRoZSBTZXVyYXQKZnVuY3Rpb25zIGBGaW5kSW50ZWdyYXRpb25BbmNob3JzYCBhbmQgYEludGVncmF0ZURhdGFgLCB3aGljaCBicmVhayBkb3duCndoZW4gdGhlIG51bWJlciBvZiBjZWxscyBwZXIgYmF0Y2ggaXMgc21hbGwuIFRoaXMgaXMgYSBrbm93biBpc3N1ZQoKLSBodHRwczovL2dpdGh1Yi5jb20vc2F0aWphbGFiL3NldXJhdC9pc3N1ZXMvMzkzMAotIGh0dHBzOi8vZ2l0aHViLmNvbS9zYXRpamFsYWIvc2V1cmF0L2lzc3Vlcy80ODAzCi0gaHR0cHM6Ly9naXRodWIuY29tL3NhdGlqYWxhYi9zZXVyYXQvaXNzdWVzLzQ4MTIKLSBodHRwczovL2dpdGh1Yi5jb20vY2FybW9uYWxhYi9TVEFDQVMvaXNzdWVzLzEyCgphbmQgdGhlIHBhY2thZ2UgbWFpbnRhaW5lcnMgc3VnZ2VzdCB0byBlaXRoZXIgcmVtb3ZlIG9yIG1hbnVhbGx5IG1lcmdlIHNtYWxsCmJhdGNoZXMgdG9nZXRoZXIuIFdlIHdpbGwgaGVyZSBzaW1wbHkgcmVtb3ZlIHRoZSBjZWxscyBvZiBwYXRpZW50ICJiZXppIi4KCmBgYHtyLCBldmFsPUZBTFNFfQp0YWJsZShzZXVyYXRfb2JqJGRvbm9yKQp0YWJsZShzZXVyYXRfb2JqJGRvbm9yKVt0YWJsZShzZXVyYXRfb2JqJGRvbm9yKSA8PSAzMF0Kc2V1cmF0X29iaiA8LSBzZXVyYXRfb2JqWywtd2hpY2goc2V1cmF0X29iaiRkb25vciA9PSBuYW1lcyh0YWJsZShzZXVyYXRfb2JqJGRvbm9yKVt0YWJsZShzZXVyYXRfb2JqJGRvbm9yKSA8PSAzMF0pKV0KYGBgCgpBZnRlciB0aGlzLCB0aGUgYFNwbGl0T2JqZWN0YCBvYmplY3QgZnVuY3Rpb24gaXMgdXNlZCB0byBnZW5lcmF0ZSBhIGxpc3Qgb2YKYFNldXJhdGAgb2JqZWN0cywgd2hlcmUgZWFjaCBsaXN0IGVsZW1lbnRzIGhvbGQgdGhlIGRhdGEgb2YgMSBiYXRjaCAocGF0aWVudCk6CgpgYGB7ciwgZXZhbD1GQUxTRX0Kc2V1cmF0X29iai5saXN0IDwtIFNwbGl0T2JqZWN0KG9iamVjdCA9IC4uLiwgIyB0aGUgU2V1cmF0IG9iamVjdAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3BsaXQuYnkgPSAiZG9ub3IiKQpubGV2ZWxzKGFzLmZhY3RvcihzY2UkZG9ub3IpKSAjIG9yaWdpbmFsbHkgMTUgcGF0aWVudHMKbGVuZ3RoKHNldXJhdF9vYmoubGlzdCkgIyAxNCBwYXRpZW50cyBsZWZ0CmBgYAoKTmV4dCwgU2V1cmF0IHdpbGwgcGVyZm9ybSB0aGUgZm9sbG93aW5nIHN0ZXBzIGZvciBiYXRjaCBjb3JyZWN0aW9uOgoKLSBgTm9ybWFsaXplRGF0YWA6IGJ5IGRlZmF1bHQsIHRha2VzIHRoZSBjb3VudCBhc3NheSBvZiB0aGUgYFNldXJhdGAgb2JqZWN0IGFuZApwZXJmb3JtcyBhIGxvZy10cmFuc2Zvcm1hdGlvbiwgcmVzdWx0aW5nIGluIGFuIGFkZGl0aW9uYWwgbG9nLXRyYW5zZm9ybWVkIGFzc2F5LgpUaGlzIGlzIHBlcmZvcm1lZCBmb3IgZWFjaCBiYXRjaCBzZXBhcmF0ZWx5LgoKLSBgRmluZFZhcmlhYmxlRmVhdHVyZXNgOiBGZWF0dXJlIHNlbGVjdGlvbiwgdXNpbmcgdGhlIHZhcmlhbmNlLXN0YWJpbGl6aW5nCnRyYW5zZm9ybWF0aW9uIChWU1QpIGZyb20gYFNldXJhdGAsIHdoaWNoIGFtb3VudHMgdG8gY2FsY3VsYXRpbmcgUGVhcnNvbgpyZXNpZHVhbHMgZnJvbSBhIHJlZ3VsYXJpemVkIG5lZ2F0aXZlIGJpbm9taWFsIHJlZ3Jlc3Npb24gbW9kZWwsIHdpdGggc2VxdWVuY2luZyAKZGVwdGggYXMgYSBjb3ZhcmlhdGUuIFRoaXMgaXMgcGVyZm9ybWVkIGZvciBlYWNoIGJhdGNoIHNlcGFyYXRlbHkuCgotIGBTZWxlY3RJbnRlZ3JhdGlvbkZlYXR1cmVzYDogQ2hvb3NlIHRoZSBmZWF0dXJlcyB0byB1c2Ugd2hlbiBpbnRlZ3JhdGluZyAKbXVsdGlwbGUgZGF0YXNldHMgb3IgYmF0Y2hlcy4gVGhpcyBmdW5jdGlvbiByYW5rcyBmZWF0dXJlcyBieSB0aGUgbnVtYmVyIG9mIApiYXRjaGVzIHRoZXkgYXJlIGRlZW1lZCB2YXJpYWJsZSBpbiwgYnJlYWtpbmcgdGllcyBieSB0aGUgbWVkaWFuIHZhcmlhYmxlIApmZWF0dXJlIHJhbmsgYWNyb3NzIGRhdGFzZXRzLiBJdCByZXR1cm5zIHRoZSB0b3Agc2NvcmluZyBmZWF0dXJlcyBieSB0aGlzIApyYW5raW5nLCB3aGljaCBhcmUgdGhlbiB1c2VkIGluIHRoZSBzdGVwcyBiZWxvdy4KCi0gYEZpbmRJbnRlZ3JhdGlvbkFuY2hvcnNgOiBGb3IgZWFjaCBwYWlyIG9mIGRhdGFzZXRzIHdlIHdhbnQgdG8gaW50ZWdyYXRlLCB3ZSAKaWRlbnRpZnkgYW5jaG9yIGNlbGxzLCBvbmUgZnJvbSBlYWNoIGRhdGFzZXQsIHRoYXQgYXJlIGFzc3VtZWQgdG8gc2hhcmUgYSAKc2ltaWxhciBiaW9sb2dpY2FsIHN0YXRlLiBBbmNob3IgY2VsbHMgYXJlIGlkZW50aWZpZWQgYXMgbXV0dWFsIG5lYXJlc3QgCm5laWdoYm9ycyBpbiB0aGUgc2hhcmVkIGNhbm9uaWNhbCBjb3JyZWxhdGlvbiBhbmFseXNpcyBzcGFjZS4gQW5jaG9yIGNlbGxzIGFyZSAKYWxzbyBzY29yZWQgYW5kIHdlaWdodGVkIGFjY29yZGluZyB0byB0aGVpciBxdWFsaXR5LgoKLSBgSW50ZWdyYXRlRGF0YWA6IEFuY2hvciBjZWxscyBhcmUgdXNlZCB0byBjYWxjdWxhdGUgYSAnY29ycmVjdGVkJyBkYXRhIG1hdHJpeCwKcmVtb3Zpbmcgc3lzdGVtYXRpYyBkaWZmZXJlbmNlcyBiZXR3ZWVuIGFuY2hvciBjZWxscy4gVGhpcyBjcmVhdGVzIGFuIApgaW50ZWdyYXRlZGAgYXNzYXkgaW4gdGhlIGBTZXVyYXRgIG9iamVjdCBjb250YWluaW5nIHRoaXMgY29ycmVjdGVkIGRhdGEgbWF0cml4LCAKd2hpY2ggbWF5IHRoZW4gYmUgdXNlZCBmb3IgZG93bnN0cmVhbSB2aXN1YWxpemF0aW9uIGFuZCBhbmFseXNpcyBhcyBzdWNoLgoKYGBge3IsIGV2YWw9RkFMU0UsIHdhcm5pbmc9RkFMU0UsIG1lc3NhZ2U9RkFMU0V9CiMgTm9ybWFsaXplIGFuZCBpZGVudGlmeSB2YXJpYWJsZSBmZWF0dXJlcyBmb3IgZWFjaCBkYXRhc2V0IChwYXRpZW50KSBpbmRlcGVuZGVudGx5CnNldXJhdF9vYmoubGlzdCA8LSBsYXBwbHkoWCA9IHNldXJhdF9vYmoubGlzdCwgRlVOID0gZnVuY3Rpb24oeCkgeyAjIGxvb3BzIG92ZXIgZWFjaCBlbGVtZW50IGluIGxpc3QgKGRvbm9yKQogICAgeCA8LSBOb3JtYWxpemVEYXRhKHgsIHZlcmJvc2UgPSBGQUxTRSkKICAgIHggPC0gRmluZFZhcmlhYmxlRmVhdHVyZXMoeCwgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNlbGVjdGlvbi5tZXRob2QgPSAidnN0IiwgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5mZWF0dXJlcyA9IDEwMDAsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZlcmJvc2UgPSBGQUxTRSkKfSkKCiMgU2VsZWN0IGZlYXR1cmVzIHRoYXQgYXJlIHJlcGVhdGVkbHkgdmFyaWFibGUgYWNyb3NzIGRhdGFzZXRzIGZvciBpbnRlZ3JhdGlvbgpmZWF0dXJlcyA8LSBTZWxlY3RJbnRlZ3JhdGlvbkZlYXR1cmVzKG9iamVjdC5saXN0ID0gLi4uKSAjIGxpc3Qgb2Ygc2V1cmF0IG9iamVjdHMKCiMgSW5kZW50aWZ5IHBhaXJzIG9mIGNlbGxzIHdpdGggc2ltaWxhciBiaW9sb2dpY2FsIHN0YXRlCmFuY2hvcnMgPC0gRmluZEludGVncmF0aW9uQW5jaG9ycyhvYmplY3QubGlzdCA9IC4uLiwgIyBsaXN0IG9mIHNldXJhdCBvYmplY3RzCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhbmNob3IuZmVhdHVyZXMgPSAuLi4sICMgdGhlIHNlbGVjdGVkIGZlYXR1cmVzIGZvciBpbnRlZ3JhdGlvbiAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZlcmJvc2UgPSBGQUxTRSkKCiMgVGhpcyBjb21tYW5kIGNyZWF0ZXMgYW4gJ2ludGVncmF0ZWQnIGRhdGEgYXNzYXkuIFdlIGhhdmUgc2V0IHRoZSBgay53ZWlnaHRgIAojIGFyZ3VtZW50LCB3aGljaCBzcGVjaWZpZXMgdGhlIE51bWJlciBvZiBuZWlnaGJvcnMgdG8gY29uc2lkZXIgd2hlbiB3ZWlnaHRpbmcgCiMgYW5jaG9ycywgdG8gMzAgKGRlZmF1bHQgaXMgMTAwKS4gVGhpcyB3YXMgbmVjZXNzYXJ5IHRvIGF2b2lkIGVycm9ycywgc2luY2Ugd2UKIyBoYXZlIG1hbnkgYmF0Y2hlcyB3aXRoIGxlc3MgdGhhbiAxMDAgY2VsbHMuCmRhdGEuY29tYmluZWQgPC0gSW50ZWdyYXRlRGF0YShhbmNob3JzZXQgPSAuLi4sICMgYW5jaG9ycwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgay53ZWlnaHQgPSAzMCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHZlcmJvc2U9RkFMU0UpCgpkYXRhLmNvbWJpbmVkCmBgYAoKTm93LCB3ZSBoYXZlIGEgbmV3IGBTZXVyYXRgIG9iamVjdCwgd2hpY2ggYWdhaW4gaXMgYSBzaW5nbGUgb2JqZWN0IChub3QgYSBsaXN0KQpzdG9yaW5nIHRoZSBleHByZXNzaW9uIHZhbHVlcyBvZiBhbGwgY2VsbHMgKiphZnRlciBiYXRjaCBjb3JyZWN0aW9uKiouIE5vdGUgdGhhdAp0aGUgb3JpZ2luYWwgZXhwcmVzc2lvbiB2YWx1ZXMgYXJlIHN0aWxsIHByZXNlbnQgaW4gdGhlICpvcmlnaW5hbGV4cCogYXNzYXkgb2YKdGhlIG9iamVjdC4KCkZpbmFsbHksIHdlIG1heSB1c2UgYFNldXJhdGAgZnVuY3Rpb25zIGZvciBwZXJmb3JtaW5nIGRpbWVuc2lvbiByZWR1Y3Rpb24gYW5kCnZpc3VhbGl6YXRpb24gb2YgdGhlIGJhdGNoIGNvcnJlY3RlZCBkYXRhLgoKYGBge3IsIGV2YWw9RkFMU0V9CiMgUnVuIHRoZSBzdGFuZGFyZCBTZXVyYXQgd29ya2Zsb3cgZm9yIHZpc3VhbGl6YXRpb24gYW5kIGNsdXN0ZXJpbmcKCiMgU3RlcCAxOiBTY2FsZXMgYW5kIGNlbnRlcnMgZmVhdHVyZXMgaW4gdGhlIGRhdGFzZXQsIHByaW9yIHN0ZXAgdG8gUENBCmRhdGEuY29tYmluZWQgPC0gU2NhbGVEYXRhKG9iamVjdCA9IGRhdGEuY29tYmluZWQsIAogICAgICAgICAgICAgICAgICAgICAgICAgICB2ZXJib3NlID0gRkFMU0UpCgojIFN0ZXAgMjogUGVyZm9ybSBQQ0EgdG8gMzAgZGltZW5zaW9ucwpkYXRhLmNvbWJpbmVkIDwtIFJ1blBDQShvYmplY3QgPSAuLi4sICMgU2V1cmF0IG9iamVjdAogICAgICAgICAgICAgICAgICAgICAgICBucGNzID0gLi4uLCAjIE51bWJlciBvZiBQQ3MgdG8gcmV0YWluIGZvciBkb3duc3RyZWFtCiAgICAgICAgICAgICAgICAgICAgICAgIHJlZHVjdGlvbi5uYW1lID0gIlBDQV9TZXVCYXRjaCIsICMgaG93IHdlIHdhbnQgdG8gbmFtZSB0aGUgcmVkdWNlZCBkaW1lbnNpb24KICAgICAgICAgICAgICAgICAgICAgICAgdmVyYm9zZSA9IEZBTFNFKQoKIyBTdGVwIDM6IFBlcmZvcm0gVU1BUCBvbiB0aGUgZmlyc3QgMTIgcHJpbmNpcGFsIGNvbXBvbmVudHMKZGF0YS5jb21iaW5lZCA8LSBSdW5VTUFQKG9iamVjdCA9IC4uLiwgIyBTZXVyYXQgb2JqZWN0CiAgICAgICAgICAgICAgICAgICAgICAgICByZWR1Y3Rpb24gPSAuLi4sICMgbmFtZSBvZiB0aGUgcmVkdWNlZCBkaW1lbnNpb24gd2Ugd2FudCB0byBzdGFydCBmcm9tCiAgICAgICAgICAgICAgICAgICAgICAgICByZWR1Y3Rpb24ubmFtZSA9ICJVTUFQX1NldUJhdGNoIiwKICAgICAgICAgICAgICAgICAgICAgICAgIGRpbXMgPSAxOjEyLAogICAgICAgICAgICAgICAgICAgICAgICAgdmVyYm9zZSA9IEZBTFNFKQoKIyBVTUFQIHZpc3VhbGl6YXRpb24KcDEgPC0gRGltUGxvdChvYmplY3QgPSAuLi4sICMgU2V1cmF0IG9iamVjdAogICAgICAgICAgICAgIHJlZHVjdGlvbiA9IC4uLiwgIyBuYW1lIG9mIHRoZSByZWR1Y2VkIGRpbWVuc2lvbiB3ZSB3YW50IHRvIHVzZQogICAgICAgICAgICAgIGdyb3VwLmJ5ID0gLi4uKSAjIGRheSB2YXJpYWJsZQoKcDIgPC0gRGltUGxvdChvYmplY3QgPSAuLi4sICMgU2V1cmF0IG9iamVjdAogICAgICAgICAgICAgIHJlZHVjdGlvbiA9IC4uLiwgIyBuYW1lIG9mIHRoZSByZWR1Y2VkIGRpbWVuc2lvbiB3ZSB3YW50IHRvIHVzZQogICAgICAgICAgICAgIGdyb3VwLmJ5ID0gLi4uKSAjIGRvbm9yIHZhcmlhYmxlCnAxICsgcDIgIyBwbG90IHNpZGUgYnkgc2lkZQpgYGAKCkFsdGVybmF0aXZlbHksIHdlIGNhbiB0cmFuc2Zvcm0gdGhlIGBTZXVyYXRgIG9iamVjdCBiYWNrIHRvIGEgCmBTaW5nbGVDZWxsRXhwZXJpbWVudGAgb2JqZWN0IGFuZCBnZW5lcmF0ZSB0aGUgdmlzdWFsaXphdGlvbnMgdXNpbmcgdGhlIApCaW9jb25kdWN0b3IgZnVuY3Rpb25zIHRoYXQgd2UgdXNlZCBwcmV2aW91c2x5OgoKYGBge3IsIGV2YWw9RkFMU0V9CiMgQ29udmVydCBTZXVyYXQgb2JqZWN0IHRvIFNpbmdsZUNlbGxFeHBlcmltZW50IG9iamVjdApzY2VfaW50U2V1cmF0IDwtIGFzLlNpbmdsZUNlbGxFeHBlcmltZW50KGRhdGEuY29tYmluZWQpCgojIFVNQVAgd2l0aG91dCBTZXVyYXQgYmF0Y2ggY29ycmVjdGlvbgpwMSA8LSBwbG90VU1BUChvYmplY3QgPSBzY2UsCiAgICAgICAgICAgICAgIGNvbG91cl9ieSA9ICJkYXkiKSArIGdndGl0bGUoIkRheSAtIG5vIGJhdGNoIikKcDIgPC0gLi4uICMgY29sb3Igb24gZG9ub3IKCiMgVU1BUCB3aXRoIFNldXJhdCBiYXRjaCBjb3JyZWN0aW9uIChiaW9jb25kdWN0b3IgZnVuY3Rpb24pCnNjZV9pbnRTZXVyYXQgPC0gcnVuVU1BUChvYmplY3QgPSBzY2VfaW50U2V1cmF0LCAKICAgICAgICAgICAgICAgICAgICAgICAgIGRpbXJlZCA9IC4uLiwgIyB1c2UgYmF0Y2ggY29ycmVjdGVkIFBDQSBzcGFjZSBvYnRhaW5lZCB3aXRoIFNldXJhdAogICAgICAgICAgICAgICAgICAgICAgICAgbWluX2Rpc3QgPSAwLjQsICMgZ3JlYXRseSBpbXByb3ZlcyB2aXN1YWxpemF0aW9uIGhlcmUgb3ZlciBkZWZhdWx0IG9mIDAuMDEKICAgICAgICAgICAgICAgICAgICAgICAgIG5fZGltcmVkID0gMTIsCiAgICAgICAgICAgICAgICAgICAgICAgICBleHRlcm5hbF9uZWlnaGJvcnMgPSBUUlVFKQoKcDMgPC0gLi4uCnA0IDwtIC4uLgoKcDEgKyBwMwoKcDIgKyBwNApgYGAKClRoZSBiYXRjaCBjb3JyZWN0aW9uIHNlZW1zIHRvIGhhdmUgd29ya2VkIHZlcnkgd2VsbC4gQm90aCB3aXRoIGFuZCB3aXRob3V0CmJhdGNoIGNvcnJlY3Rpb24sIHdlIG9ic2VydmUgdGhhdCBjZWxscyBvZiB0aGUgc2FtZSB0aW1lIHBvaW50IGNsdXN0ZXIgdG9nZXRoZXIuCkJ1dCB3aGVuIG5vIGJhdGNoIGNvcnJlY3Rpb24gaXMgcGVyZm9ybWVkLCB0aGVyZSBzZWVtcyB0byBiZSBhbiBhZGRpdGlvbmFsIGxldmVsCm9mIHZhcmlhYmlsaXR5IGluIHRoZSBkYXRhLgoKV2hlbiB3ZSBjb2xvciB0aGUgY2VsbHMgYmFzZWQgb24gdGhlIGRvbm9yIHZhcmlhYmxlLCB3ZSBzZWUgdGhhdCB3aXRob3V0IGJhdGNoIApjb3JyZWN0aW9uIGNlbGxzIG9mIHRoZSBzYW1lIGRvbm9yIGNsdXN0ZXIgdG9nZXRoZXIuIEFmdGVyIGJhdGNoIGNvcnJlY3Rpb24sCnN1Y2ggZG9ub3IgZWZmZWN0cyBzZWVtIHRvIGJlIG5vIGxvbmdlciBwcmVzZW50LgoKQWxzbyBub3RlIHRoYXQgd2hpbGUgYmF0Y2ggY29ycmVjdGlvbiByZW1vdmUgdGhlIGJldHdlZW4tZG9ub3IgdmFyaWFiaWxpdHksCnRoZSBiZXR3ZWVuLWRheSB2YXJpYWJpbGl0eSB0aGF0IGlzIG9mIGludGVyZXN0IGlzIHN0aWxsIHByZXNlcnZlZC4gQXMgc3VjaCwKYmFzZWQgb24gb3VyIHZpc3VhbGl6YXRpb25zLCBpdCBsb29rcyBsaWtlIHRoZSBiYXRjaCBjb3JyZWN0aW9uIGRpZCBub3QgCm92ZXJjb3JyZWN0IGFuZCBzdWNjZWVkZWQgaW4gcmVtb3Zpbmcgb25seSB0aGUgdW53YW50ZWQgdmFyaWF0aW9uIGluIHRoZSBkYXRhLgoKIyMgSGFybW9ueSBiYXRjaCBjb3JyZWN0aW9uCgpbSGFybW9ueV0oaHR0cHM6Ly93d3cubmF0dXJlLmNvbS9hcnRpY2xlcy9zNDE1OTItMDE5LTA2MTktMCkgaW1wbGVtZW50cyBhIApjb21wbGV4IGRhdGEgaW50ZWdyYXRpb24gc3RyYXRlZ3ksIHdoZXJlIGNlbGxzIGFyZSBmaXJzdCBjbHVzdGVyZWQgdXNpbmcgYSAKJ2hpZ2gtZGl2ZXJzaXR5IGNsdXN0ZXJpbmcnLCBmYXZvcmluZyBjbHVzdGVycyBjb25zaXN0aW5nIG9mIG11bHRpcGxlIApiYXRjaGVzL2RhdGFzZXRzLCBhbmQgdGhlbiBiYXRjaCBlZmZlY3RzIGFyZSBjb3JyZWN0ZWQgd2l0aGluIGVhY2ggY2x1c3RlciAKdXNpbmcgYSBsaW5lYXIgY29ycmVjdGlvbiB0ZXJtLiBJdCBpdGVyYXRlcyBhY3Jvc3MgdGhlc2Ugc3RlcHMgdW50aWwgbm8gY2hhbmdlIAppcyBjbHVzdGVyaW5nIGlzIG9ic2VydmVkLgoKUGVyZm9ybWluZyBiYXRjaCBjb3JyZWN0aW9uIHdpdGggYGhhcm1vbnlgIGlzIHZlcnkgc2ltcGxlOyB3ZSBvbmx5IG5lZWQgYSBzaW5nbGUKZnVuY3Rpb24gY2FsbCBhbmQgY2FuIGRpcmVjdGx5IHdvcmsgd2l0aCBvdXIgYFNpbmdsZUNlbGxFeHBlcmltZW50YCBvYmplY3QuCgpUaGUgZnVuY3Rpb24gYFJ1bkhhcm1vbnlgIHRha2VzIHRoZSBmb2xsb3dpbmcgaW5wdXRzOgoKLSBgb2JqZWN0YDogbmFtZSBvZiB0aGUgYFNpbmdsZUNlbGxFeHBlcmltZW50YCBvYmplY3QKCi0gYGdyb3VwLmJ5LnZhcnNgOiB0aGUgbmFtZXMgb2YgdGhlIHZhcmlhYmxlcyBmb3Igd2hpY2ggd2Ugd2FudCB0byBwZXJmb3JtIGJhdGNoCmNvcnJlY3Rpb24uIENvbnZlbmllbnRseSwgdGhpcyBjYW4gYmUgbXVsdGlwbGUgdmFyaWFibGVzLCBzbyB3ZSBjYW4gY29ycmVjdCBib3RoCmZvciBkb25vciBhbmQgZXhwZXJpbWVudCBlZmZlY3RzIChzaW5jZSB0aGUgY29ycmVzcG9uZGVuY2UgYmV0d2VlbiB0aGUgdHdvIHdhcwpub3QgcGVyZmVjdCkKCi0gYHJlZHVjdGlvbmA6IE5hbWUgb2YgdGhlIHByZXZpb3VzbHkgY29tcHV0ZWQgcmVkdWNlZCBkaW1lbnNpb24gc3BhY2Ugb24gd2hpY2gKYmF0Y2ggY29ycmVjdGlvbiB3aWxsIGJlIHBlcmZvcm1lZCAobm90IG9uIHJhdyBkYXRhIHRvIGltcHJvdmUgc2lnbmFsLXRvLW5vaXNlCnJhdGlvKS4gVHlwaWNhbGx5IFBDQSBpcyB1c2VkCgotIGByZWR1Y3Rpb24uc2F2ZWA6IG5hbWUgdG8gc3RvcmUgdGhlIGJhdGNoIGNvcnJlY3RlZCBkaW1lbmlvbiByZWR1Y2VkIHNwYWNlCgotIGB2ZXJib3NlYDogcHJpbnQgcHJvZ3Jlc3Mgb3Igbm90LgoKYGBge3IsIGV2YWw9RkFMU0V9CmxpYnJhcnkoaGFybW9ueSkKCnNldC5zZWVkKDY4NDg2NCkKc2NlIDwtIGhhcm1vbnk6OlJ1bkhhcm1vbnkob2JqZWN0ID0gLi4uLCAKICAgICAgICAgICAgICAgICAgICAgICAgICAgZ3JvdXAuYnkudmFycwk9IC4uLiwgIyBib3RoIGRvbm9yIGFuZCBleHBlcmltZW50CiAgICAgICAgICAgICAgICAgICAgICAgICAgIHJlZHVjdGlvbiA9IC4uLiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVkdWN0aW9uLnNhdmUgPSAiSEFSTU9OWV9kb25vcl9leHBlcmltZW50IiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgdmVyYm9zZSA9IC4uLikKYGBgCgpUaGUgb3V0cHV0IGlzIGFuIGFkZGl0aW9uYWwgZWxlbWVudCBpbiB0aGUgcmVkdWNlZCBkaW1lbnNpb24gc3BhY2U6CgpgYGB7ciwgZXZhbD1GQUxTRX0KcmVkdWNlZERpbShzY2UsIHR5cGU9IlBDQSIpWzE6NSwxOjJdCnJlZHVjZWREaW0oc2NlLCB0eXBlPSJIQVJNT05ZX2Rvbm9yX2V4cGVyaW1lbnQiKVsxOjUsMToyXQpgYGAKCmZvciB3aGljaCB0aGUgdmFsdWVzIGRpZmZlciBhcyBjb21wYXJlZCB0byB0aGUgb3JpZ2luYWwgUENBIGNvb3JkaW5hdGVzLiBUaGlzCmlzIGEgY29uc2VxdWVuY2Ugb2YgdGhlIGJhdGNoIGNvcnJlY3Rpb24uCgpgYGB7ciwgZXZhbD1GQUxTRX0KcGxvdFJlZHVjZWREaW0ob2JqZWN0ID0gc2NlLAogICAgICAgICAgICAgICBkaW1yZWQgPSAiUENBIiwKICAgICAgICAgICAgICAgY29sb3VyX2J5ID0gImRheSIpCgpwbG90UmVkdWNlZERpbShvYmplY3QgPSBzY2UsCiAgICAgICAgICAgICAgIGRpbXJlZCA9ICJIQVJNT05ZX2Rvbm9yX2V4cGVyaW1lbnQiLAogICAgICAgICAgICAgICBjb2xvdXJfYnkgPSAiZGF5IikKYGBgCgpXaGVuIGNvbG9yaW5nIG9uIGRheSwgYm90aCBwbG90cyBsb29rIHZlcnkgc2ltaWxhci4KCmBgYHtyLCBldmFsPUZBTFNFfQouLi4gIyBhcyBhYm92ZSBidXQgY29sb3JlZCBvbiBkb25vcgpgYGAKClRoaXMgZmlndXJlIGlzIHRvbyBjbHV0dGVyZWQgdG8gc2VlIHRoZSBkb25vciBlZmZlY3RzLiBCZWxvdywgd2UgdGhlcmVmb3JlCmdlbmVyYXRlIGEgc2VwYXJhdGUgZmlndXJlIGZvciBlYWNoIHRpbWUgcG9pbnQuCgpgYGB7ciwgZXZhbD1GQUxTRSwgZmlnLmhlaWdodD0xMCwgZmlnLndpZHRoPTR9CiMgd2l0aG91dCBiYXRjaCBjb3JyZWN0aW9uCnAxIDwtIHBsb3RSZWR1Y2VkRGltKG9iamVjdCA9IHNjZSwKICAgICAgICAgICAgICAgICAgICAgZGltcmVkID0gIlBDQSIsCiAgICAgICAgICAgICAgICAgICAgIGNvbG91cl9ieSA9ICJkb25vciIpCgpwMSArIGZhY2V0X3dyYXAofnNjZSRkYXksIG5jb2w9MSkKYGBgCgpFc3BlY2lhbGx5IGZvciB0aW1lIHBvaW50cyBkYXkwIGFuZCBkYXkxLCB3ZSBvYnNlcnZlIGNsZWFyIGRvbm9yIGVmZmVjdHMuCgpgYGB7ciwgZXZhbD1GQUxTRSwgZmlnLmhlaWdodD0xMCwgZmlnLndpZHRoPTR9CiMgc2FtZSBidXQgZm9yIGhhcm1vbnkgYmF0Y2ggY29ycmVjdGVkIFBDQSBzcGFjZQouLi4KYGBgCgpBZnRlciBiYXRjaCBjb3JyZWN0aW9uIHdpdGggaGFybW9ueSwgdGhlIGRvbm9yIGVmZmVjdHMgYXJlIGxhcmdlbHkgcmVtb3ZlZC4KCldoZW4gdXNpbmcgVU1BUCB2aXN1YWxpemF0aW9uLCB0aGUgZGlzY3JlcGFuY3kgYmV0d2VlbiB0aGUgdW5jb3JyZWN0ZWQgYW5kCmJhdGNoIGNvcnJlY3RlZCBkYXRhIGJlY29tZXMgZXZlbiBjbGVhcmVyOgoKYGBge3IsIGV2YWw9RkFMU0V9CiMgbWFrZSBVTUFQIHNwYWNlIGJhc2VkIG9uIGJhdGNoLWNvcnJlY3RlZCBQQ0EgZGF0YQpzY2UgPC0gcnVuVU1BUChvYmplY3QgPSAuLi4sICMgdXNlIGFsbCBzYW1lIGJpb2NvbmR1Y3RvciBVTUFQIHNldHRpbmdzIGFzIGFib3ZlIHdpdGggU2V1cmF0IGNvcnJlY3RlZCBzcGFjZSAKICAgICAgICAgICAgICAgZGltcmVkID0gJ0hBUk1PTllfZG9ub3JfZXhwZXJpbWVudCcsCiAgICAgICAgICAgICAgIG5fZGltcmVkID0gLi4uLAogICAgICAgICAgICAgICBtaW5fZGlzdCA9IC4uLiwKICAgICAgICAgICAgICAgZXh0ZXJuYWxfbmVpZ2hib3JzID0gLi4uLAogICAgICAgICAgICAgICBuYW1lID0gIlVNQVBfSEFSTU9OWV9kb25vcl9leHBlcmltZW50IikKYGBgCgpgYGB7ciwgZXZhbD1GQUxTRX0KIyBObyBiYXRjaCB2ZXJzdXMgYmF0Y2ggY29ycmVjdGVkLCBjb2xvciBieSBkYXkKcDEgPC0gcGxvdFJlZHVjZWREaW0oc2NlLAogICAgICAgICAgICAgICAgICAgICBkaW1yZWQgPSAiVU1BUCIsCiAgICAgICAgICAgICAgICAgICAgIGNvbG91cl9ieSA9ICJkYXkiKSArIGdndGl0bGUoIkRheSAtIG5vIGJhdGNoIikKCnAyIDwtIHBsb3RSZWR1Y2VkRGltKHNjZSwKICAgICAgICAgICAgICAgICAgICAgZGltcmVkID0gIlVNQVBfSEFSTU9OWV9kb25vcl9leHBlcmltZW50IiwKICAgICAgICAgICAgICAgICAgICAgY29sb3VyX2J5ID0gImRheSIpICsgZ2d0aXRsZSgiRGF5IC0gYmF0Y2giKQpwMSArIHAyCgojIE5vIGJhdGNoIHZlcnN1cyBiYXRjaCBjb3JyZWN0ZWQsIGNvbG9yIGJ5IGRvbm9yCnAzIDwtIC4uLgoKcDQgPC0gLi4uCgpwMyArIHA0CgojIE5vIGJhdGNoIHZlcnN1cyBiYXRjaCBjb3JyZWN0ZWQsIGNvbG9yIGJ5IGV4cGVyaW1lbnQKcDUgPC0gLi4uCgpwNiA8LSAuLi4KCnA1ICsgcDYKYGBgCgpXZSBoZXJlIHNob3cgdGhlIFVNQVAgdmlzdWFsaXphdGlvbnMgY29tcGFyaW5nIG5vbi1jb3JyZWN0ZWQgdmVyc3VzIHRoZSBiYXRjaApjb3JyZWN0ZWQgZGF0YSwgd2l0aCBjZWxscyBjb2xvcmVkIGJhc2VkIG9uIGRheSwgZG9ub3IgYW5kIGV4cGVyaW1lbnQuIFRoZQppbnRlcnByZXRhdGlvbiBpcyBhbmFsb2dvdXMgdG8gdGhlIGludGVycHJldGF0aW9uIGFib3ZlIGZvciB0aGUgU2V1cmF0CmJhdGNoIGNvcnJlY3Rpb246CgpUaGUgYmF0Y2ggY29ycmVjdGlvbiBzZWVtcyB0byBoYXZlIHdvcmtlZCB2ZXJ5IHdlbGwuIEJvdGggd2l0aCBhbmQgd2l0aG91dApiYXRjaCBjb3JyZWN0aW9uLCB3ZSBvYnNlcnZlIHRoYXQgY2VsbHMgb2YgdGhlIHNhbWUgdGltZSBwb2ludCBjbHVzdGVyIHRvZ2V0aGVyLgpCdXQgd2hlbiBubyBiYXRjaCBjb3JyZWN0aW9uIGlzIHBlcmZvcm1lZCwgdGhlcmUgc2VlbXMgdG8gYmUgYW4gYWRkaXRpb25hbCBsZXZlbApvZiB2YXJpYWJpbGl0eSBpbiB0aGUgZGF0YS4KCldoZW4gd2UgY29sb3IgdGhlIGNlbGxzIGJhc2VkIG9uIHRoZSBkb25vci9leHBlcmltZW50IHZhcmlhYmxlLCB3ZSBzZWUgdGhhdAp3aXRob3V0IGJhdGNoIGNvcnJlY3Rpb24gY2VsbHMgb2YgdGhlIHNhbWUgZG9ub3IgY2x1c3RlciB0b2dldGhlci4gQWZ0ZXIgCmJhdGNoIGNvcnJlY3Rpb24sIHN1Y2ggZG9ub3IvZXhwZXJpbWVudCBlZmZlY3RzIHNlZW0gdG8gYmUgbm8gbG9uZ2VyIHByZXNlbnQuCgpBbHNvIG5vdGUgdGhhdCB3aGlsZSBiYXRjaCBjb3JyZWN0aW9uIHJlbW92ZSB0aGUgYmV0d2Vlbi1kb25vci9leHBlcmltZW50IAp2YXJpYWJpbGl0eSwgdGhlIGJldHdlZW4tZGF5IHZhcmlhYmlsaXR5IHRoYXQgaXMgb2YgaW50ZXJlc3QgaXMgc3RpbGwgcHJlc2VydmVkLiAKQXMgc3VjaCwgYmFzZWQgb24gb3VyIHZpc3VhbGl6YXRpb25zLCBpdCBsb29rcyBsaWtlIHRoZSBiYXRjaCBjb3JyZWN0aW9uIGRpZCBub3QgCm92ZXJjb3JyZWN0IGFuZCBzdWNjZWVkZWQgaW4gcmVtb3Zpbmcgb25seSB0aGUgdW53YW50ZWQgdmFyaWF0aW9uIGluIHRoZSBkYXRhLgoKIyBDbHVzdGVyaW5nCgpJbiB0aGUgc2Vjb25kIGxhYiBzZXNzaW9uLCB3ZSBkaXNjdXNzZWQgZ3JhcGgtYmFzZWQgY2x1c3RlcmluZywgay1tZWFucyAKY2x1c3RlcmluZyBhbmQgaGllcmFyY2hpY2FsIGNsdXN0ZXJpbmcuIEhlcmUsIHdlIHdpbGwgcGVyZm9ybSBoaWVyYXJjaGljYWwgCmNsdXN0ZXJpbmcuCgojIyBIaWVyYXJjaGljYWwgY2x1c3RlcmluZwoKV2UgbWF5IHNwbGl0IHRoZSBoaWVyYXJjaGljYWwgY2x1c3RlcmluZyBwcm9jZXNzIGluIHR3byBpbnR1aXRpdmUgc3RlcHM6CgoxLiBDb21wdXRlIHRoZSBwYWlyd2lzZSBkaXN0YW5jZXMgYmV0d2VlbiBhbGwgY2VsbHMuIFRoZXNlIGFyZSBieSBkZWZhdWx0CmV1Y2xpZGVhbiBkaXN0YW5jZXMgYW5kLCBpbiBvcmRlciB0byByZWR1Y2UgZGF0YSBjb21wbGV4aXR5IGFuZCBpbmNyZWFzZSBzaWduYWwKdG8gbm9pc2UsIHdlIG1heSBwZXJmb3JtIHRoaXMgb24gdGhlIHRvcCAoMzApIFBDJ3MuIEltcGxlbWVudGVkIGluIHRoZSBgZGlzdGAKZnVuY3Rpb24uCgoyLiBQZXJmb3JtIGEgaGllcmFyY2hpY2FsIGNsdXN0ZXJpbmcgYW5hbHlzaXMgb24gdGhlc2UgZGlzdGFuY2VzLiBJbml0aWFsbHksIAplYWNoIGNlbGwgaXMgYXNzaWduZWQgdG8gaXRzIG93biBjbHVzdGVyIGFuZCB0aGVuIHRoZSAKYWxnb3JpdGhtIHByb2NlZWRzIGl0ZXJhdGl2ZWx5LCBhdCBlYWNoIHN0YWdlIGpvaW5pbmcgdGhlIHR3byBtb3N0IHNpbWlsYXIgCmNsdXN0ZXJzLCBjb250aW51aW5nIHVudGlsIHRoZXJlIGlzIGp1c3QgYSBzaW5nbGUgY2x1c3Rlci4gVGhpcyBpcyBpbXBsZW1lbnRlZCAKaW4gdGhlIGBoY2x1c3RgIGZ1bmN0aW9uLgoKTm90ZSB0aGF0IHRoZSBgaGNsdXN0YCBmdW5jdGlvbiBhbGxvd3MgZm9yIHNwZWNpZnlpbmcgYSBgbWV0aG9kYCBhcmd1bWVudC4KVGhlIGRpZmZlcmVuY2VzIGJldHdlZW4gdGhlIGRpZmZlcmVudCBtZXRob2RzIGFyZSBiZXlvbmQgdGhlIHNjb3BlIG9mIHRoaXMKc2Vzc2lvbiwgYnV0IGEgYnJpZWYgZGVzY3JpcHRpb24gaXMgcHJvdmlkZWQgaW4gdGhlIGZ1bmN0aW9uIGhlbHAgZmlsZS4KSW4gdGhlIGNvbnRleHQgb2Ygc2NSTkEtc2VxLCB3ZSBoYXZlIG1vc3RseSBzZWVuIHRoZSB1c2Ugb2YgdGhlICJ3YXJkLkQyIgptZXRob2QuCgpgYGB7ciwgZXZhbD1GQUxTRX0KZGlzdHNjZSA8LSBkaXN0KHJlZHVjZWREaW0oc2NlLCAiSEFSTU9OWV9kb25vcl9leHBlcmltZW50IilbLDE6MTBdKSAjIGZpcnN0IDEwIFBDcywgaGFybW9ueSBjb3JyZWN0ZWQKaGNsIDwtIGhjbHVzdChkaXN0c2NlLCBtZXRob2QgPSAid2FyZC5EMiIpCnBsb3QoaGNsLCBsYWJlbHMgPSBGQUxTRSkKYGBgCgpOZXh0LCB3ZSBuZWVkIHRvICJjdXQgdGhlIHRyZWUiLCBpLmUuLCBjaG9vc2UgYXQgd2hpY2ggcmVzb2x1dGlvbiB3ZSB3YW50IHRvCnJlcG9ydCB0aGUgKGNlbGwtdHlwZSkgY2x1c3RlcnMuIFRoaXMgY2FuIGJlIGFjaGlldmVkIHdpdGggdGhlIGBjdXRyZWVgIApmdW5jdGlvbi4gQXMgYW4gaW5wdXQsIGBjdXRyZWVgIHRha2VzIHRoZSBkZW5kcm9ncmFtIGZyb20gdGhlIGBoY2x1c3RgIGZ1bmN0aW9uCmFuZCBhIHRocmVzaG9sZCB2YWx1ZSBmb3IgY3V0dGluZyB0aGUgdHJlZS4gVGhpcyBpcyBlaXRoZXIgYGtgLCB0aGUgbnVtYmVyIG9mCmNsdXN0ZXJzIHdlIHdhbnQgdG8gcmVwb3J0LCBvciBgaGAsIHRoZSBoZWlnaHQgaW4gdGhlIGRlbmRyb2dyYW0gYXQgd2hpY2gKd2Ugd2FuIHRvIGN1dCB0aGUgdHJlZS4KCkhlcmUgd2UgY2hvb3NlIGBrID0gNGAsIHNpbmNlIHdlIGtub3cgaW4gYWR2YW5jZSB0aGF0IHdlIGV4cGVjdCBmb3VyIGNsdXN0ZXJzIG9mCmNlbGxzIChmb3VyIHRpbWUgcG9pbnRzKS4KCmBgYHtyLCBldmFsPUZBTFNFfQpjbHVzdF9oY2xfazQgPC0gY3V0cmVlKGhjbCwgayA9IDQpCnRhYmxlKGNsdXN0X2hjbF9rNCkKYGBgCgpOZXh0LCB3ZSB2aXN1YWxpemUgdGhlIGRhdGEgaW4gUENBIHNwYWNlIGNvbG9yZWQgYmFzZWQgb24gdGltZSBwb2ludCBhbmQgYmFzZWQKb24gb3VyIGluZmVycmVkIGNsdXN0ZXIgbGFiZWxzLgoKYGBge3IsIGV2YWw9RkFMU0V9CnNjZSRjbHVzdF9oY2xfazQgPC0gYXMuZmFjdG9yKGNsdXN0X2hjbF9rNCkKCnBsb3RSZWR1Y2VkRGltKG9iamVjdCA9IHNjZSwKICAgICAgICAgICAgICAgZGltcmVkID0gIkhBUk1PTllfZG9ub3JfZXhwZXJpbWVudCIsCiAgICAgICAgICAgICAgIGNvbG91cl9ieSA9IC4uLikKcGxvdFJlZHVjZWREaW0ob2JqZWN0ID0gc2NlLAogICAgICAgICAgICAgICBkaW1yZWQgPSAiSEFSTU9OWV9kb25vcl9leHBlcmltZW50IiwKICAgICAgICAgICAgICAgY29sb3VyX2J5ID0gLi4uKQpgYGAKCldlIHNlZSB0aGF0IG91ciBpbmZlcnJlZCBjbHVzdGVyaW5nIGxhcmdlbHkgY29ycmVzcG9uZHMgd2l0aCB0aGUgb3JpZ2luYWwKZGF5IHZhcmlhYmxlLgoKYGBge3IsIGV2YWw9RkFMU0V9CnRhYmxlKHNjZSRkYXksIHNjZSRjbHVzdF9oY2xfazQpCmBgYAoKTWFwcGluZyBjbHVzdGVycyB0byB0aW1lcG9pbnRzLCB3ZSBub3RlIHRoYXQgbW9zdCBjZWxscyBvZiBkYXkwIGFyZSBpbiAKaGllcmFyY2hpY2FsIGNsdXN0ZXIgMyAoYXJiaXRyYXJ5IGluZGljYXRvciksIGRheTEgY2VsbHMgYXJlIGluIGNsdXN0ZXIgNCwgCmRheTIgY2VsbHMgYXJlIG1haW5seSBpbiBjbHVzdGVyIDEgYW5kIGRheTMgY2VsbHMgYXJlIGZvdW5kIGJhY2sgaW4gY2x1c3RlciAyLgoKIyBUcmFqZWN0b3J5IGluZmVyZW5jZQoKVHJhamVjdG9yeSBpbmZlcmVuY2UgaXMgYSBjb21wdXRhdGlvbmFsIHByb2NlZHVyZSB0aGF0IGF0dGVtcHRzIHRvIHN1bW1hcml6ZSAKYSBkeW5hbWljIHByb2Nlc3MgaW4gYSAndHJhamVjdG9yeScuIFRoZSB0cmFqZWN0b3J5IHRyaWVzIHRvIGZpbmQgYSBzZW5zaWJsZSAKb3JkZXJpbmcgb2YgdGhlIGNlbGxzIGFjY29yZGluZyB0byB0aGVpciBwcm9ncmVzc2lvbiB0aHJvdWdoIHRoaXMgZHluYW1pYyAKcHJvY2Vzcy4gVHJhamVjdG9yaWVzIGNhbiBiZSBsaW5lYXIsIGRpdmVyZ2luZywgY29udmVyZ2luZyBvciBjeWNsaWMuIElmIHRoZXJlIAphcmUgbXVsdGlwbGUgZGlmZmVyZW50aWF0aW9uIHBhdGhzLCBlYWNoIHBhdGggaXMgY2FsbGVkIGEgbGluZWFnZSwgYW5kIHRoZSAKY29tYmluYXRpb24gb2YgbGluZWFnZXMgaXMgY2FsbGVkIGEgdHJhamVjdG9yeS4KCkJhc2VkIG9uIHRoZSB0cmFqZWN0b3J5LCBvbmUgbWF5IGRlZmluZSBhICoqcHNldWRvdGltZSoqIGZvciBlYWNoIGNlbGwsIHdoaWNoIApkZWZpbmVzIHRoYXQgY2VsbCdzIHByb2dyZXNzaW9uIGFsb25nIG9uZSBvZiB0aGUgZGlmZmVyZW50aWF0aW9uIHBhdGhzOiBpZiB0aGUgCnBzZXVkb3RpbWUgb2YgYSBjZWxsIGlzIGNsb3NlIHRvIHplcm8sIHRoZW4gdGhhdCBjZWxsIGlzIGNsb3NlIHRvIHRoZSBzdGFydGluZyAKcG9pbnQgb2YgdGhlIHRyYWplY3RvcnkuCgojIyBDb21wdXRpbmcgdGhlIHRyYWplY3RvcnkKCk1hbnkgbWV0aG9kcyBmb3IgZXN0aW1hdGluZyB0cmFqZWN0b3JpZXMgZXhpc3QuIEhlcmUsIHdlIHdpbGwgdXNlIApbc2xpbmdzaG90XShodHRwczovL2Jpb2NvbmR1Y3Rvci5vcmcvcGFja2FnZXMvcmVsZWFzZS9iaW9jL2h0bWwvc2xpbmdzaG90Lmh0bWwpIAp0byBjcmVhdGUgYSB0cmFqZWN0b3J5IGZvciB0aGUgQ3VvbW8gZGF0YXNldC4KCmBgYHtyLCBldmFsPUZBTFNFLCBtZXNzYWdlPUZBTFNFLCB3YXJuaW5nPUZBTFNFfQpsaWJyYXJ5KHNsaW5nc2hvdCkKc2NlIDwtIHNsaW5nc2hvdChkYXRhID0gLi4uLCAjIHRhcmdldCBvYmplY3QKICAgICAgICAgICAgICAgICBzdGFydC5jbHVzID0gLi4uLCAjIGNsdXN0ZXIgdGhhdCBjb3JyZXNwb25kcyB0byBkYXkwIGNlbGxzIQogICAgICAgICAgICAgICAgIGVuZC5jbHVzID0gLi4uLCAjIGNsdXN0ZXIgdGhhdCBjb3JyZXNwb25kcyB0byBkYXkzIGNlbGxzIQogICAgICAgICAgICAgICAgIGNsdXN0ZXJMYWJlbHMgPSAuLi4sICMgY2x1c3RlcmluZyB0byB1c2UgLT4gb3VyIGhpZXJhcmNoaWNhbCBjbHVzdGVyaW5nCiAgICAgICAgICAgICAgICAgcmVkdWNlZERpbSA9ICJIQVJNT05ZX2Rvbm9yX2V4cGVyaW1lbnQiKSAjIGRpbXJlZCB0byB1c2UKYGBgCgojIyBWaXN1YWxpemluZyB0aGUgdHJhamVjdG9yeQoKVXNpbmcgYmFzZSBSIHBsb3RzOgoKYGBge3IsIGV2YWw9RkFMU0V9CnBsb3QocmVkdWNlZERpbXMoc2NlKSRIQVJNT05ZX2Rvbm9yX2V4cGVyaW1lbnQsIAogICAgIGNvbCA9IGFzLmZhY3RvcihzY2UkY2x1c3RfaGNsX2s0KSwgIyBjb2xvcmVkIGFjY29yZGluZyB0byBpbmZlcnJlZCBjbHVzdGVycwogICAgIHBjaD0xNiwgCiAgICAgYXNwID0gMSkKbGluZXMoU2xpbmdzaG90RGF0YVNldChzY2UpLCAKICAgICAgbHdkPTMsIAogICAgICB0eXBlID0gJ2xpbmVhZ2VzJywgCiAgICAgIGNvbCA9ICdvcmFuZ2UnKQpgYGAKCmBgYHtyLCBldmFsPUZBTFNFfQouLi4gIyBzYW1lIGJ1dCBjb2xvcmVkIGFjY29yZGluZyB0byBvcmlnaW5hbCB0aW1lIHBvaW50cwpgYGAKCldlIGNvdWxkIGFsc28gdXNlIGBnZ3Bsb3QyYCBmdW5jdGlvbnMgdG8gb2J0YWluZWQgcHJldHRpZXIgZmlndXJlcyB0aGF0IGFyZQptb3JlIGVhc3kgdG8gYW5ub3RhdGU6CgpgYGB7ciwgZXZhbD1GQUxTRX0KIyBmdWxsIGNvZGUgcHJvdmlkZWQgaGVyZSEKc3VwcHJlc3NQYWNrYWdlU3RhcnR1cE1lc3NhZ2VzKGxpYnJhcnkoZHBseXIpKQoKcmQgPC0gcmVkdWNlZERpbShzY2UsIHR5cGU9IkhBUk1PTllfZG9ub3JfZXhwZXJpbWVudCIpWywxOjJdICMgZXh0cmFjdCBmaXJzdCB0d28gUENzCmNvbG5hbWVzKHJkKSA8LSBjKCJEaW0xIiwgIkRpbTIiKSAjIGdpdmUgY29sdW1uIG5hbWVzCmNsIDwtIHNjZSRjbHVzdF9oY2xfazQgIyBzdG9yZSBjbHVzdGVyaW5nCmRmIDwtIGRhdGEuZnJhbWUocmQsICJjbCIgPSBhcy5jaGFyYWN0ZXIoY2wpKSAjIFBDcyBhbmQgY2x1c3RlcmluZyB0b2dldGhlciBpbiAxIGRhdGEgZnJhbWUKc2RzIDwtIHNsaW5nc2hvdChyZCwgY2wpICMgY29udmVydCBkYXRhIGZyYW1lIHRvIHNsaW5nc2hvdCBvYmplY3QKY3VydmVzIDwtIHNsaW5nQ3VydmVzKHNkcywgYXMuZGYgPSBUUlVFKSAjIG9idGFpbiBzbW9vdGggY3VydmUgZm9yIGxpbmVhZ2VzIChoZXJlIG9ubHkgb25lIGxpbmVhZ2UpCgojIHBsb3QgY2VsbHMgYXMgZG90cyBpbiBkaW1lbnNpb24gcmVkdWNlZCBzcGFjZQpwIDwtIGdncGxvdChkZiwgYWVzKHggPSBEaW0xLCB5ID0gRGltMikpICsKICBnZW9tX3BvaW50KGFlcyhmaWxsID0gY2wpLCBjb2wgPSAiZ3JleTcwIiwgc2hhcGUgPSAyMSkgKyAKICB0aGVtZV9jbGFzc2ljKCkKCiMgYWRkIHNtb290aCBjdXJ2ZXMKcCArIGdlb21fcGF0aChkYXRhID0gY3VydmVzICU+JSBhcnJhbmdlKE9yZGVyKSwKICAgICAgICAgICAgICBhZXMoZ3JvdXAgPSBMaW5lYWdlKSwgc2l6ZSA9IDEuNSkgCgojIGNvbXB1dGUgYW5kIGFkZCBtaW5pbXVtIHNwYW5uaW5nIHRyZWUKbXN0IDwtIHNsaW5nTVNUKHNkcywgYXMuZGYgPSBUUlVFKQpwICsgZ2VvbV9wb2ludChkYXRhID0gbXN0LCBzaXplID0gNCkgKwogIGdlb21fcGF0aChkYXRhID0gbXN0ICU+JSBhcnJhbmdlKE9yZGVyKSwgYWVzKGdyb3VwID0gTGluZWFnZSksIHNpemUgPSAyKQpgYGAKCldlIHNlZSB0aGF0IHRoZSB0cmFqZWN0b3J5IGluZmVycmVkIHdpdGggYHNsaW5nc2hvdGAgbmljZWx5IGNhcHR1cmVzIHRoZQpleHBlY3RlZCBkZXZlbG9wbWVudGFsIHByb2Nlc3MuCgojIERpZmZlcmVudGlhbCBnZW5lIGV4cHJlc3Npb24gdGVzdHMgYWxvbmcgYSB0cmFqZWN0b3J5IHVzaW5nIHRyYWRlU2VxCgpBcyBhIG5leHQgc3RlcCwgd2UgbWF5IGJlIGludGVyZXN0ZWQgaW4gaWRlbnRpZnlpbmcgdGhlIGdlbmVzIGFyZSBpbnZvbHZlZCBpbiAKdGhlIGRldmVsb3BtZW50YWwgcHJvY2Vzcy4gVG8gdGhpcyBlbmQsIG91ciBncm91cCBoYXMgZGV2ZWxvcGVkIHRoZSBCaW9jb25kdWN0b3IKUiBwYWNrYWdlIFt0cmFkZVNlcV0oaHR0cDovL3d3dy5iaW9jb25kdWN0b3Iub3JnL3BhY2thZ2VzL3JlbGVhc2UvYmlvYy9odG1sL3RyYWRlU2VxLmh0bWwpLgpgdHJhZGVTZXFgIGlzIGEgZmxleGlibGUgdG9vbCB0aGF0IGFsbG93cyBmb3Igc3R1ZHlpbmcgZGlmZmVyZW50aWFsIGdlbmUKZXhwcmVzc2lvbiBhbG9uZyBzdWNoIGEgdHJhamVjdG9yeSwgd2l0aGluIG9yIGJldHdlZW4gZGlmZmVyZW50IGxpbmVhZ2VzLgpUaGUgZnVuY3Rpb25hbGl0aWVzIG9mIHRoZSBwYWNrYWdlIGFyZSBzdW1tYXJpemVkIGluIHRoZSBmb2xsb3dpbmcgZmlndXJlOgoKYGBge3J9CmtuaXRyOjppbmNsdWRlX2dyYXBoaWNzKCIuL3RyYWRlc2VxX3N1bW1hcnkuanBlZyIpCmBgYAoKYGBge3IsIGV2YWw9RkFMU0UsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9CmxpYnJhcnkodHJhZGVTZXEpCmBgYAoKYHRyYWRlU2VxYCB1c2VzIGEgbmVnYXRpdmUgYmlub21pYWwgZ2VuZXJhbGl6ZWQgYWRkaXRpdmUgbW9kZWwgKE5CLUdBTSkgCmZyYW1ld29yayB0byBzbW9vdGggZWFjaCBnZW5l4oCZcyBleHByZXNzaW9uIGluIGVhY2ggbGluZWFnZS4gU21vb3RoZXJzIGNhbiBiZSAKZGVjb21wb3NlZCBpbnRvIGEgc2V0IG9mIGJhc2lzIGZ1bmN0aW9ucywgd2hpY2ggYXJlIGpvaW5lZCB0b2dldGhlciBhdCBrbm90IApwb2ludHMsIG9mdGVuIHNpbXBseSBjYWxsZWQga25vdHMgKGBrYCkuCgpJZGVhbGx5LCB0aGUgbnVtYmVyIG9mIGtub3RzIHNob3VsZCBiZSBzZWxlY3RlZCB0byByZWFjaCBhbiBvcHRpbWFsIApiaWFzLXZhcmlhbmNlIHRyYWRlLW9mZiBmb3IgdGhlIHNtb290aGVyLCB3aGVyZSBvbmUgZXhwbGFpbnMgYXMgbXVjaCAKdmFyaWFiaWxpdHkgaW4gdGhlIGV4cHJlc3Npb24gZGF0YSBhcyBwb3NzaWJsZSB3aXRoIG9ubHkgYSBmZXcgcmVncmVzc2lvbiAKY29lZmZpY2llbnRzLiBJbiBvcmRlciB0byBndWlkZSB0aGF0IGNob2ljZSwgd2UgZGV2ZWxvcGVkIGRpYWdub3N0aWMgcGxvdHMgCnVzaW5nIHRoZSBBa2Fpa2UgSW5mb3JtYXRpb24gQ3JpdGVyaW9uIChBSUMpLiBUaGlzIGlzIGltcGxlbWVudGVkIGluIHRoZSAKYGV2YWx1YXRlS2AgZnVuY3Rpb24gaW4gYHRyYWRlU2VxYC4KCkhvd2V2ZXIsIGluIHRoZSBbdHJhZGVTZXFdKGh0dHBzOi8vd3d3Lm5hdHVyZS5jb20vYXJ0aWNsZXMvczQxNDY3LTAyMC0xNDc2Ni0zKSAKcHVibGljYXRpb24gdGhlIGF1dGhvcnMgc2hvdyB0aGF0IHRoZSAgYWxnb3JpdGhtIGlzIG5vdCB0b28gc2Vuc2l0aXZlIGZvciB0aGUKbnVtYmVyIG9mIGtub3RzLCBhbmQgdGhhdCB2YWx1ZXMgYmV0d2VlbiA1IGFuZCA5IG9mdGVuIHdvcmsgd2VsbC4gVGhlIGNvZGUKYmVsb3cgd291bGQgYWxsb3cgeW91IHRvIGZpbmQgYSBnb29kIHZhbHVlIGZvciBga2AsIGJ1dCB3ZSB3aWxsIHNpbXBseSB1c2UKdGhlIGRlZmF1bHQgdmFsdWUgb2YgYGsgPSA2YCBkb3duc3RyZWFtLgoKYGBgCiMjIyBGaW5kIGtub3RzCgojIFdlIGZpcnN0IG5lZWQgdG8gZGVjaWRlIG9uIHRoZSBudW1iZXIgb2Yga25vdHMuIFRoaXMgaXMgZG9uZSB1c2luZyB0aGUgIC0tPgojIGBldmFsdWF0ZUtgIGZ1bmN0aW9uLiBUaGlzIHRha2VzIGEgbGl0dGxlIHRpbWUuIC0tPgoKIyB0YWtlcyA5IG1pbnV0ZXMgZm9yIG1lCnNldC5zZWVkKDUpCmljTWF0IDwtIGV2YWx1YXRlSyhjb3VudHMgPSBhc3NheXMoc2NlKSRjb3VudHMsCiAgICAgICAgICAgICAgICAgICBzZHMgPSBzbGluZyRzbGluZ3Nob3QsCiAgICAgICAgICAgICAgICAgICBrID0gMzoxMCwgCiAgICAgICAgICAgICAgICAgICBuR2VuZXMgPSA1MDAsIAogICAgICAgICAgICAgICAgICAgdmVyYm9zZSA9IFQpCmBgYAoKIyMgRml0IEdBTQoKV2UgZml0IGEgbmVnYXRpdmUgYmlub21pYWwgZ2VuZXJhbGl6ZWQgYWRkaXRpdmUgbW9kZWwgKE5CLUdBTSksIHNtb290aGluZyBlYWNoIApnZW5l4oCZcyBleHByZXNzaW9uIGFsb25nIHRoZSBkZXZlbG9wbWVudGFsIHRyYWplY3RvcnkuIFdoZW4gbW9kZWxpbmcgYWxsIHRoZSAKZ2VuZXMgKMKxMTAuMDAwKSwgdGhpcyBmdW5jdGlvbiB0YWtlcyBhYm91dCAyMCBtaW51dGVzIHRvIGNvbXBsZXRlLiBGb3IgdGhpcwpsYWIgc2Vzc2lvbiwgd2Ugd2lsbCB0aGVyZWZvcmUgcmFuZG9tbHkgc2FtcGxlIDEuMDAwIGdlbmVzLiBJbiBhZGRpdGlvbiwgd2UgbWFrZQpzdXJlIHRoYXQgdGhyZWUgc3BlY2lmaWMgZ2VuZXMgYXJlIGFsc28gaW5jbHVkZWQ6ICJFTlNHMDAwMDAxMTE3MDQiLCAKIkVOU0cwMDAwMDE2NDQ1OCIgYW5kICJFTlNHMDAwMDAxNDE0NDgiLiBUaGVzZSBnZW5lcyBhcmUga25vd24gbWFya2VycyBmb3IgdGhlIApkaWZmZXJlbnQgZGV2ZWxvcG1lbnRhbCBzdGFnZXMgbmQgd2VyZSB1c2UgaW4gdGhlIHB1YmxpY2F0aW9uIG9mICpDdW9tbyBldCBhbC4qLgoKVGhlIGB0cmFkZVNlcWAgbW9kZWwgYWxsb3dzIHVzIHRvIGluY29ycG9yYXRlIGZpeGVkIGVmZmVjdHMuIFdoaWxlIHdlIGhhdmUgCmVzdGltYXRlZCB0aGUgdHJhamVjdG9yeSBvbiB0aGUgaW50ZWdyYXRlZCBkYXRhLCB3ZSBtb2RlbCB0aGUgcmF3IGdlbmUgCmV4cHJlc3Npb24gZGF0YSwgc2luY2UgYHRyYWRlU2VxYCBpcyBhIGNvdW50IG1vZGVsIGFuZCByZXF1aXJlcyByYXcgY291bnRzIGFzIAppbnB1dC4gT24gdGhlIHJhdyBjb3VudHMsIHdlIHRoZXJlZm9yZSBzdGlsbCBoYXZlIHN1YnN0YW50aWFsIHZhcmlhYmlsaXR5IHRoYXQgCm1heSBiZSBleHBsYWluZWQgYnkgdGhlIHBhdGllbnQgZWZmZWN0cy4gV2UgdGhlcmVmb3JlIGluY29ycG9yYXRlIGEgcGF0aWVudCAKZml4ZWQgZWZmZWN0IHRvIHRoZSBkZXNpZ24gbWF0cml4LgoKYGBge3IsIGV2YWw9RkFMU0V9CnNldC5zZWVkKDcpCnN1YnNldF9nZW5lcyA8LSBzYW1wbGUocm93bmFtZXMoc2NlKSwgMTAwMCwgcmVwbGFjZSA9IEZBTFNFKQoKIyBnZW5lcyBmcm9tIHBhcGVyCm1hcmtlcnMgPC0gYygiRU5TRzAwMDAwMTExNzA0IiwgIkVOU0cwMDAwMDE2NDQ1OCIsICJFTlNHMDAwMDAxNDE0NDgiKQoKIyBtYWtlIHN1cmUgdGhlIGdlbmVzIGZyb20gdGhlIHBhcGVyIGFyZSBpbiB0aGVyZQpzdWJzZXRfZ2VuZXMgPC0gYyhzdWJzZXRfZ2VuZXMsIG1hcmtlcnNbIW1hcmtlcnMgJWluJSBzdWJzZXRfZ2VuZXNdKQoKCiMgRXh0cmFjdCB0aGUgbWF0cml4IG9mIHBzZXVkb3RpbWUgdmFsdWVzIG9yIGNlbGxzJyB3ZWlnaHRzIGFsb25nIGVhY2ggbGluZWFnZS4KcHNldWRvdGltZSA8LSBzbGluZ1BzZXVkb3RpbWUoeCA9IC4uLiwgIyBTQ0Ugb2JqZWN0CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5hID0gRkFMU0UpCmNlbGxXZWlnaHRzIDwtIHNsaW5nQ3VydmVXZWlnaHRzKHggPSAuLi4pICMgU0NFIG9iamVjdAoKcGF0aWVudCA8LSBjb2xEYXRhKHNjZSkkZG9ub3IKVSA8LSBtb2RlbC5tYXRyaXgofiAwICsgcGF0aWVudCkgIyBjb25zcnVjdCBkZXNpZ24gbWF0cml4IHdpdGggaW50ZXJjZXB0CgojIEZpdCBOQi1HQU0gZm9yIGVhY2ggZ2VuZTogdGFrZXMgwrE3bWluIGZvciAxMDAwIGdlbmVzIGZvciBtZQpzY2VfZml0IDwtIGZpdEdBTShjb3VudHMgPSAuLi4sICMgY291bnQgbWF0cml4IGZvciB0aGUgc2VsZWN0ZWQgZ2VuZXMgKGV4dHJhY3QgZnJvbSBTQ0UpCiAgICAgICAgICAgICAgICAgIHBzZXVkb3RpbWUgPSBwc2V1ZG90aW1lLCAKICAgICAgICAgICAgICAgICAgY2VsbFdlaWdodHMgPSBjZWxsV2VpZ2h0cywKICAgICAgICAgICAgICAgICAgbmtub3RzID0gNiwgIyBkZWZhdWx0CiAgICAgICAgICAgICAgICAgIFUgPSBVLAogICAgICAgICAgICAgICAgICB2ZXJib3NlID0gVFJVRSkgIyB2ZXJib3NlIGhlcmUgcHJpbnRzIHByb2dyZXNzCmBgYAoKVG8gYXNzZXNzIGlmIGFsbCBtb2RlbHMgaGF2ZSBjb252ZXJnZWQ7CgpgYGB7ciwgZXZhbD1GQUxTRX0KdGFibGUocm93RGF0YShzY2VfZml0KSR0cmFkZVNlcSRjb252ZXJnZWQpCmBgYAoKIyMgQXNzb2NpYXRpb24gdGVzdAoKTmV4dCwgd2UgY2FuIHBlcmZvcm0gZGlmZmVyZW50IHR5cGVzIG9mIGRpZmZlcmVudGlhbCBleHByZXNzaW9uIHRlc3RpbmcgYWxvbmcKdGhlIHRyYWplY3RvcnkuCgpUaGUgYGFzc29jaWF0aW9uVGVzdGAgYXNzZXNzZXMgd2hldGhlciB0aGUgYXZlcmFnZSBleHByZXNzaW9uIG9mIGEgZ2VuZSBpcyAKYXNzb2NpYXRlZCB3aXRoIHBzZXVkb3RpbWUuIFRvIHByaW9yaXRpemUgZm9yIGdlbmVzIHRoYXQgYXJlIGFsc28gYmlvbG9naWNhbGx5IApyZWxldmFudCwgd2UgbWF5IHRlc3QgYWdhaW5zdCBhIGxvZy1mb2xkIGNoYW5nZSBjdXQtb2ZmOgoKYGBge3IsIGV2YWw9RkFMU0V9CmFzc29SZXMyIDwtIGFzc29jaWF0aW9uVGVzdChtb2RlbHMgPSBzY2VfZml0LCAKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGwyZmMgPSBsb2cyKDIpKQpzdW0ocC5hZGp1c3QoYXNzb1JlczIkcHZhbHVlLCBtZXRob2QgPSAiQkgiKSA8IDAuMDUsIG5hLnJtPVQpL25yb3coYXNzb1JlczIpIApgYGAKCiMjIFN0YXJ0IHZzIGVuZCB0b3AgMjAKCkFub3RoZXIgdHlwZSBvZiB0ZXN0IGlzIHRvIGNvbXBhcmUgdGhlIGF2ZXJhZ2UgZ2VuZSBleHByZXNzaW9uIG9mIGVhY2ggZ2VuZSAKYmV0d2VlbiB0aGUgc3RhcnQgcG9pbnQgYW5kIHRoZSBlbmQgcG9pbnQgb2YgYSBsaW5lYWdlLiBUaGlzIGlzIGltcGxlbWVudGVkCmluIHRoZSBgc3RhcnRWc0VuZFRlc3RgIGZ1bmN0aW9uLgoKYGBge3IsIGV2YWw9RkFMU0V9CnN0YXJ0UmVzIDwtIHN0YXJ0VnNFbmRUZXN0KG1vZGVscyA9IC4uLiwgCiAgICAgICAgICAgICAgICAgICAgICAgICAgIGwyZmMgPSAuLi4pCmBgYAoKV2UgY2FuIHRoZW4gdmlzdWFsaXplIHRoZSBnZW5lIGV4cHJlc3Npb24gcHJvZmlsZSBhbG9uZyBwc2V1ZG90aW1lIG9mIHRoZSB0b3AgNQpnZW5lcyBmb3Igd2hpY2ggZGlmZmVyZW50aWFsIGV4cHJlc3Npb24gYmV0d2VlbiBzdGFydCBhbmQgZW5kIHBvaW50IHdhcyAKaWRlbnRpZmllZC4KCmBgYHtyLCBldmFsPUZBTFNFfQpvU3RhcnQgPC0gb3JkZXIoc3RhcnRSZXMkd2FsZFN0YXQsIGRlY3JlYXNpbmcgPSBUUlVFKQpmb3IgKGkgaW4gMTo1KSB7CiAgc2lnR2VuZVN0YXJ0IDwtIG9TdGFydFtpXSAjIHRvcCA1IG1vc3Qgc2lnbmlmaWNhbnQgZ2VuZXMgaW4gdGhlIHN0YXJ0IHZzLiBlbmQgdGVzdAogIHByaW50KHBsb3RTbW9vdGhlcnMoc2NlX2ZpdCwgCiAgICAgICAgICAgICAgICBhc3NheXMoc2NlX2ZpdCkkY291bnRzLCAKICAgICAgICAgICAgICAgIGdlbmUgPSBzaWdHZW5lU3RhcnQpICsKICAgICAgICAgIGdndGl0bGUocm93bmFtZXMoc2NlKVtzaWdHZW5lU3RhcnRdKSkKfQpgYGAKCiMjIENvbXBhcmlzb24gdG8gb3JpZ2luYWwgcGFwZXIKCkluIHRoZSBDdW9tbyBwYXBlciwgdGhlIGF1dGhvcnMgaGlnaGxpZ2h0ZWQgdGhlIGZvbGxvd2luZyBnZW5lczsKIkVOU0cwMDAwMDExMTcwNCIsICJFTlNHMDAwMDAxNjQ0NTgiIGFuZCAiRU5TRzAwMDAwMTQxNDQ4Ii4gSW4gZ2VuZSBzeW1ib2xzLAp0aGVzZSBnZW5lcyBhcmUgTkFOT0csIFQgKHllcywgdGhlcmUgaXMgYSBnZW5lIGNhbGxlZCAiVCkiIGFuZCBHQVRBNi4gVGhlc2UKZ2VuZXMgYXJlIG1hcmtlcnMgb2YgZGF5MCwgZGF5MSBhbmQgZGF5Mi9kYXkzIGNlbGxzLCByZXNwZWN0aXZlbHkuCgpXZSBtYXkgbm93IHZpc3VhbGl6ZSB0aGUgZXhwcmVzc2lvbiBvZiB0aGVzZSBnZW5lcyBhbG9uZyBwc2V1ZG90aW1lLgoKYGBge3IsIGV2YWw9RkFMU0V9CnBsb3RTbW9vdGhlcnMoc2NlX2ZpdCwgCiAgICAgICAgICAgICAgYXNzYXlzKHNjZV9maXQpJGNvdW50cywgCiAgICAgICAgICAgICAgZ2VuZSA9IHdoaWNoKHJvd25hbWVzKHNjZV9maXQpID09ICJFTlNHMDAwMDAxMTE3MDQiKSkgKwogIGdndGl0bGUoIkVOU0cwMDAwMDExMTcwNCIpCgouLi4gIyBmb3IgZ2VuZSBFTlNHMDAwMDAxNjQ0NTgKCi4uLiAjIGZvciBnZW5lIEVOU0cwMDAwMDE0MTQ0OApgYGAKCioqQSB2ZXJ5IG5pY2UgY29ycmVzcG9uZGVuY2Ugd2l0aCB0aGUgcmVzdWx0cyBwcmVzZW50ZWQgaW4gdGhlIHBhcGVyISEqKgoKYGBge3J9CmtuaXRyOjppbmNsdWRlX2dyYXBoaWNzKCIuL2N1b21vX3RyYWoxLmpwZWciKQprbml0cjo6aW5jbHVkZV9ncmFwaGljcygiLi9jdW9tb190cmFqMi5qcGVnIikKa25pdHI6OmluY2x1ZGVfZ3JhcGhpY3MoIi4vY3VvbW9fdHJhajMuanBlZyIpCmBgYAoKV2UgYWxzbyBpbnNwZWN0IHRoZSByZXN1bHRzIGluIG91ciBkaWZmZXJlbnRpYWwgdGVzdGluZyBvdXRwdXQuCgpBc3NvY2lhdGlvbiB0ZXN0OgoKYGBge3IsIGV2YWw9RkFMU0V9CmFzc29SZXMyW21hcmtlcnMsXQpgYGAKClN0YXJ0IHZlcnN1cyBlbmQgdGVzdDoKCmBgYHtyLCBldmFsPUZBTFNFfQpzdGFydFJlc1suLi4sXQpgYGAKCkFub3RoZXIgaW50ZXJlc3RpbmcgdmlzdWFsaXphdGlvbiBpcyBpbXBsZW1lbnRlZCBpbiB0aGUgYHBsb3RHZW5lQ291bnRgIApmdW5jdGlvbiwgd2hpY2ggY29sb3JzIHRoZSBjZWxscyBiYXNlZCBvbiB0aGUgbG9nLXRyYW5zZm9ybWVkIGV4cHJlc3Npb24KdmFsdWUgb2YgdGhlIHRhcmdldCBnZW5lcy4KCmBgYHtyLCBldmFsPUZBTFNFfQpwbG90R2VuZUNvdW50KHNjZSRzbGluZ3Nob3QsIAogICAgICAgICAgICAgIGFzc2F5cyhzY2VfZml0KSRjb3VudHMsIAogICAgICAgICAgICAgIGdlbmUgPSB3aGljaChyb3duYW1lcyhzY2VfZml0KSA9PSAiRU5TRzAwMDAwMTExNzA0IikpCiAgICAgICAgICAgICAgCi4uLiAjIGZvciBnZW5lIEVOU0cwMDAwMDE2NDQ1OAoKLi4uICMgZm9yIGdlbmUgRU5TRzAwMDAwMTQxNDQ4CmBgYAoK</div>
+<div class="footer">
+    <hr>
+    This work is licensed under the <a href= "https://creativecommons.org/licenses/by-nc-sa/4.0">
+    CC BY-NC-SA 4.0</a> licence.
+</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("lab4_CuomoTemplate.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
