@@ -1323,14 +1323,16 @@ may consider not running this code, or running it on a subset of the data
 Alternatively, you may consider reducing the input space for the t-SNE 
 algorithm, e.g. by setting `n_dimred = 5`.
 
-```{r}
+```{r, fig.height=4, fig.width=4}
 # (For me it takes 3min30 with n_dimred = 5)
 sce <- runTSNE(sce, 
                dimred = 'PCA',
                n_dimred = 5,
                external_neighbors=TRUE)
-plotTSNE(sce,
+gg <- plotTSNE(sce,
          colour_by = "cluster")
+
+gg
 ```
 
 ## Non-linear dimensionality reduction: UMAP
@@ -1342,20 +1344,24 @@ inference, where this is important.
 Running UMAP on a `SingleCellExperiment` object can be achieved with the
 `runUMAP` function of the `scater` package.
 
-```{r}
+```{r, fig.height=4, fig.width=4}
 # Using top 10% highly variable genes and top 30 PCs
 sce <- runUMAP(sce, 
                dimred = 'PCA', 
                external_neighbors = TRUE)
-plotUMAP(sce,
+gg <- plotUMAP(sce,
          colour_by = "cluster")
 
+gg
+
 # Using top 10% highly variable genes and top 10 PCs
-plotUMAP(runUMAP(sce, 
+gg <- plotUMAP(runUMAP(sce, 
                dimred = 'PCA', 
                external_neighbors = TRUE,
                n_dimred = 10),
   colour_by = "cluster")
+
+gg
 ```
 
 ---
