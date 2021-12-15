@@ -1378,7 +1378,7 @@ sce <- readRDS("./sce_after_labsession2.rds") # change to YOUR path!
 
 # Add cluster information from publication
 
-```{r, message=FALSE, warning=FALSE}
+```{r,eval=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 sce$cluster_lowRes <- fct_recode(colData(sce)$cluster, 
            "Horizontal_cells" = "1",
@@ -1528,7 +1528,7 @@ we may then adopt a faster algorithm.
 
 ### Build graph (SNN graph)
 
-```{r}
+```{r,eval=FALSE}
 # Build a shared nearest-neighbor graph from PCA space
 graph <- buildSNNGraph(sce, 
                        use.dimred = 'PCA')
@@ -1552,7 +1552,7 @@ result in communities that are not well connected.
 The [`leiden` algorithm](https://www.nature.com/articles/s41598-019-41695-z), 
 instead, guarantees well-connected communities.
 
-```{r}
+```{r,eval=FALSE}
 set.seed(464688)
 # Walktrap community finding algorithm on the SNN graph
 # DO NOT RUN -> takes 20 minutes
@@ -1585,7 +1585,7 @@ colData(sce)$cluster_leiden2 <- cluster_leiden2
 A direct comparison of the Louvain and Leiden clustering results using a table 
 of the cluster labels, shows good agreement.
 
-```{r}
+```{r,eval=FALSE}
 table(cluster_louvain, cluster_leiden2)
 ```
              
@@ -1608,7 +1608,7 @@ For the remaining clusters, we see that
 To make a visualization that gives us very similar information, we may use a 
 heatmap:
 
-```{r}
+```{r,eval=FALSE}
 library(pheatmap)
 pheatmap::pheatmap(table(cluster_louvain, cluster_leiden2))
 ```
@@ -1620,7 +1620,7 @@ partitions agree perfectly, and it is zero if the two partitions are unrelated.
 In some cases, the ARI may also be negative if the partitions are much more 
 different than what could be expected by chance.
 
-```{r}
+```{r,eval=FALSE}
 library(mclust)
 mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))], 
                           cluster_leiden2[-which(cluster_leiden2 %in% c(9:14))])
@@ -1628,7 +1628,7 @@ mclust::adjustedRandIndex(cluster_louvain[-which(cluster_leiden2 %in% c(9:14))],
 
 ### Visualization
 
-```{r}
+```{r,eval=FALSE}
 # Visualization. Add the cluster labels to the previously generated TSNE
 # coordinates
 plotTSNE(sce, 
