@@ -1098,7 +1098,7 @@ expression along such a trajectory, within or between different lineages.
 The functionalities of the package are summarized in the following figure:
 
 ```{r}
-knitr::include_graphics("./../tradeseq_summary.jpeg")
+knitr::include_graphics("./tradeseq_summary.jpeg")
 ```
 
 ```{r, eval=FALSE, message=FALSE, warning=FALSE}
