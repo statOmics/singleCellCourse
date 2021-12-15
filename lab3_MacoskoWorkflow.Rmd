@@ -1329,10 +1329,10 @@ sce <- runTSNE(sce,
                dimred = 'PCA',
                n_dimred = 5,
                external_neighbors=TRUE)
-gg <- plotTSNE(sce,
-         colour_by = "cluster")
-
-gg
+# gg <- plotTSNE(sce,
+#          colour_by = "cluster")
+# 
+# gg
 ```
 
 ## Non-linear dimensionality reduction: UMAP
@@ -1349,19 +1349,19 @@ Running UMAP on a `SingleCellExperiment` object can be achieved with the
 sce <- runUMAP(sce, 
                dimred = 'PCA', 
                external_neighbors = TRUE)
-gg <- plotUMAP(sce,
-         colour_by = "cluster")
-
-gg
+# gg <- plotUMAP(sce,
+#          colour_by = "cluster")
+# 
+# gg
 
 # Using top 10% highly variable genes and top 10 PCs
-gg <- plotUMAP(runUMAP(sce, 
-               dimred = 'PCA', 
-               external_neighbors = TRUE,
-               n_dimred = 10),
-  colour_by = "cluster")
-
-gg
+# gg <- plotUMAP(runUMAP(sce, 
+#                dimred = 'PCA', 
+#                external_neighbors = TRUE,
+#                n_dimred = 10),
+#   colour_by = "cluster")
+# 
+# gg
 ```
 
 ---
