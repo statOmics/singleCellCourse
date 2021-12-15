@@ -761,10 +761,10 @@ Bioconductor functions that we used previously:
 # Convert Seurat object to SingleCellExperiment object
 sce_intSeurat <- as.SingleCellExperiment(data.combined)
 
-# t-SNE without Seurat batch correction
+# UMAP without Seurat batch correction
 p1 <- plotUMAP(sce,
                colour_by = "day") + ggtitle("Day - no batch")
-p2 <- plotTSNE(sce,
+p2 <- plotUMAP(sce,
                colour_by = "donor") + ggtitle("Donor - no batch")
 
 # UMAP with Seurat batch correction
