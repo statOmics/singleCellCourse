@@ -81,7 +81,7 @@ In the first and second sessions, we already performed several steps:
 To guide you with these next steps, we provide with an Rmarkdown template
 that you can fill out:
 
-[lab3_macoskoTemplate] make later and put in root with all eval=FALSE?
+[lab4_CuomoTemplate.html](./lab4_CuomoTemplate.html)
 
 We also provide the solution to this exercise here (sections clustering,
 marker gene detection and annotation):
